@@ -1,0 +1,940 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
+<meta name="theme-color" content="#0c100e">
+<title>Nomatoka · Field Terminal UI Prototype v0.6</title>
+<style>
+:root{color-scheme:dark;--ink:#0b110e;--paper:#151b17;--panel:#1c241e;--panel2:#242d25;--gold:#edb449;--dim-gold:#937747;--text:#e3e3d5;--muted:#abb4a2;--quiet:#7c8b7b;--stroke:#526154;--red:#ff796b;--cyan:#8dc7b9;--line:rgba(220,222,190,.15);--top:55px;--nav:66px;--safe-bottom:env(safe-area-inset-bottom,0px);--dock-h:157px;--alert-offset:174px;font-family:system-ui,-apple-system,Roboto,"Segoe UI",sans-serif}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#080b09;color:var(--text);overscroll-behavior:none}button,textarea,input{font:inherit}button{cursor:pointer;color:inherit}button:disabled{opacity:.42;cursor:default}button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--gold);outline-offset:2px}button{-webkit-tap-highlight-color:transparent}svg{display:block}.ico{width:20px;height:20px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;flex:none}.ico.sm{width:16px;height:16px}.ico.big{width:24px;height:24px}
+#shell{height:var(--viewport-height,100dvh);width:100%;max-width:1080px;margin:0 auto;display:flex;flex-direction:column;overflow:hidden;border-left:1px solid #2f3a31;border-right:1px solid #2f3a31;background:#0b100d;box-shadow:0 0 0 2px #060806,0 0 60px #000}
+.top{height:var(--top);flex:0 0 var(--top);display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 9px;border-bottom:2px solid #73613e;background:linear-gradient(#232924,#141a16 58%,#111713);z-index:20;position:relative;box-shadow:0 2px 8px #0007}.top button,.maptools button,.dock-icon,.tiny-btn,.minibtn,.nav button,.small-action,.drawer-close{min-height:44px;min-width:44px;border:1px solid #586756;border-radius:8px;background:linear-gradient(145deg,#293129,#19211b);display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:7px}.top button[aria-expanded="true"]{border-color:var(--gold)}.top-title{display:flex;flex-direction:column;min-width:0;flex:1;line-height:1.05;padding-left:2px}.brand{font-size:13px;letter-spacing:.17em;font-weight:900;color:#e6ddbf}.sub{font-size:10px;letter-spacing:.065em;color:#b7a67d;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.topstate{display:flex;align-items:center;gap:5px;font-size:9px;font-weight:800;color:#e2c27c;letter-spacing:.04em}.topstate .dot{width:6px;height:6px;border-radius:50%;background:#e6aa3f;box-shadow:0 0 7px #d9ac59}
+.main{position:relative;flex:1 1 auto;min-height:0;overflow:hidden;background:#080d0a}.main:before{content:"";position:absolute;inset:0;pointer-events:none;z-index:1;background:repeating-linear-gradient(0deg,transparent 0 3px,rgba(15,24,16,.13) 4px 5px);opacity:.45}
+#mapArea{position:absolute;inset:0;overflow:hidden;touch-action:none;background:radial-gradient(ellipse at 45% 42%,#222b1f 0,#161e18 36%,#0b120f 90%)}
+#mapSvg{height:100%;width:100%;display:block;touch-action:none;user-select:none}.grid-lines{stroke:#50654b;stroke-width:1;opacity:.12}.contour{fill:none;stroke:#79836b;stroke-width:1.05;opacity:.17}.contour.em{stroke:#b9a46e;opacity:.22}.trail{fill:none;stroke:#aa9765;stroke-width:2;stroke-dasharray:6 5;opacity:.75}.river{fill:none;stroke:#577d78;stroke-width:12;opacity:.25}.riveredge{fill:none;stroke:#8db6a9;stroke-width:1.2;opacity:.32}.area-shape{fill:rgba(190,164,89,.06);stroke:#a49d69;stroke-width:1.4;stroke-dasharray:5 5}.point-ring{fill:#17251b;stroke:var(--gold);stroke-width:1.6}.point-core{fill:#eac37a}.marker-hit{fill:transparent;stroke:none;pointer-events:all}.entity{cursor:pointer}.entity .mark{stroke-width:2;stroke:#bfcdba;fill:#253529}.entity.vehicle .mark{stroke:#a8c9bd;fill:#19322c}.entity.object .mark{stroke:#b1a47c;fill:#2a251a}.entity.selected .mark{stroke:var(--gold);fill:#5b4721;stroke-width:3}.entity .marker-text{fill:#ece9d7;paint-order:stroke;stroke:#0b100d;stroke-width:4px;stroke-linejoin:round;font-size:12px;font-weight:700;pointer-events:none}.entity .marker-type{fill:#aebcae;font-size:9px;paint-order:stroke;stroke:#0b100d;stroke-width:3px;pointer-events:none}.entity.selected .marker-text{fill:#f5c66e}.target-x{stroke:var(--gold);stroke-width:1.8;fill:none}.marklabel{font-size:10px;fill:#b6c0a1;letter-spacing:.12em;paint-order:stroke;stroke:#0c120e;stroke-width:4;pointer-events:none}.map-vignette{pointer-events:none;position:absolute;inset:0;box-shadow:inset 0 0 30px #000b,inset 0 -25px 40px #0007}.map-meta{position:absolute;top:12px;left:12px;z-index:3;pointer-events:none;text-shadow:0 2px 6px #000}.map-meta strong{display:block;color:#eac06b;font-size:12px;letter-spacing:.16em}.map-meta span{display:block;font-size:10px;color:#a5b2a1;line-height:1.5}.maptools{position:absolute;right:10px;top:12px;z-index:4;display:flex;flex-direction:column;gap:6px}.maptools button{min-width:44px;min-height:44px;padding:7px;box-shadow:0 2px 7px #0009}.maptools button.pressed{color:var(--gold);border-color:var(--gold);background:#3b3524}.map-help{position:absolute;top:83px;left:13px;z-index:3;font-size:10px;color:#9cab93;max-width:168px;line-height:1.4;pointer-events:none}.scale{position:absolute;left:13px;bottom:var(--alert-offset);z-index:2;font-size:10px;color:#a3ad96;border-bottom:1px solid #8f936b;min-width:108px;padding-bottom:2px;pointer-events:none;transition:bottom .12s}.scale span{display:flex;justify-content:space-between}
+#inspectBar{position:absolute;left:9px;right:175px;bottom:calc(var(--alert-offset) + 9px);z-index:5;min-height:38px;max-width:335px;display:none;align-items:center;gap:5px;border:1px solid #8b7650;border-radius:9px;background:#19241ae8;box-shadow:0 3px 12px #0009;padding:4px}.inspect-text{font-size:11px;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;flex:1}.inspect-text b{color:#e5bd70}.inspect-apply{border:1px solid #a98d53;background:#38301c;border-radius:6px;padding:6px 7px;min-height:32px;white-space:nowrap;font-size:10px;color:#f0d192}.inspect-clear{min-width:28px;min-height:30px;border:0;background:none;font-size:18px}
+#alertBox{position:absolute;z-index:9;right:10px;bottom:var(--alert-offset);width:min(188px,48vw);transition:bottom .12s}#alertBox .alert-toggle{width:100%;min-height:46px;border:1px solid #9f7544;background:linear-gradient(120deg,#302920ed,#1a211bed);border-radius:8px;display:flex;align-items:center;gap:6px;text-align:left;padding:7px;box-shadow:0 3px 15px #000a}.alert-mark{display:grid;place-items:center;color:var(--gold);border:1px solid #b77d4a;border-radius:6px;min-width:29px;height:29px}.alert-caption{font-size:10px;line-height:1.28;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.alert-count{margin-left:auto;background:#a34e36;border-radius:8px;padding:1px 5px;font-size:10px;font-weight:800}#alertBox.open{width:min(305px,calc(100vw - 18px))}#alertBox.open .alert-toggle{border-radius:0 0 8px 8px}#alertPeek{border:1px solid #9c784c;border-bottom:0;background:#20271ff9;border-radius:10px 10px 0 0;box-shadow:0 -5px 20px #000a;padding:8px;max-height:min(39dvh,330px);overflow-y:auto}#alertPeek[hidden]{display:none}.alert-head{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:900;letter-spacing:.08em;color:#e4bb72}.alert-tabs{display:flex;gap:4px;margin:7px 0}.alert-tabs button{border:1px solid #53614f;background:#283128;color:#ced7c6;font-size:11px;border-radius:5px;min-height:30px;padding:3px 9px}.alert-tabs button.selected{border-color:var(--gold);color:var(--gold)}.event-entry{width:100%;border:0;border-bottom:1px solid #435043;background:transparent;text-align:left;padding:8px 2px;display:block}.event-entry b{display:block;font-size:12px}.event-entry span{display:block;font-size:10px;color:#afbaaa;margin-top:3px}.event-entry.priority b{color:#f5b294}.event-entry:last-child{border-bottom:0}.alert-foot{display:flex;justify-content:space-between;gap:5px;margin-top:5px}.text-link{border:0;background:none;color:var(--gold);min-height:28px;font-size:11px;text-decoration:underline;text-underline-offset:3px}
+#dock{position:absolute;z-index:7;left:9px;right:9px;bottom:8px;padding:6px;border:1px solid #79694b;background:linear-gradient(155deg,#272b23f9,#121a15f9);box-shadow:0 4px 22px #000b;border-radius:10px;min-width:0}#dock.minimized{display:none}#dock .dock-top{height:27px;display:flex;align-items:center;gap:5px;min-width:0}.tabstrip{display:flex;overflow-x:auto;scrollbar-width:none;flex:1;gap:3px;min-width:0;scroll-snap-type:x proximity}.tabstrip::-webkit-scrollbar{display:none}.tab{white-space:nowrap;flex:none;min-height:26px;border:1px solid #54614e;background:#1b251d;border-radius:5px;color:#abb6a4;padding:2px 8px;font-size:11px}.tab.on{border-color:#c4974f;background:#42351e;color:#f1cd81}.tab .pin{font-size:9px;color:#d4ad65;margin-right:3px}.tab .unread{color:#e6bc64;margin-left:3px}.dock-icon{min-height:27px;min-width:28px;border-radius:5px;padding:3px 5px}.dock-icon .ico{width:15px;height:15px}.dock-chat{padding-top:3px;max-height:52px;overflow:auto;scrollbar-width:thin}.message-row{width:100%;min-height:23px;display:flex;gap:5px;align-items:center;text-align:left;background:transparent;border:0;border-bottom:1px solid #4c5a484d;padding:2px 3px;font-size:11px;color:#e9ebd9}.message-row .direction{width:13px;color:var(--gold);flex:none}.message-row.reply .direction{color:var(--cyan)}.message-row .line{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}.message-row .exp{color:#839680;font-size:10px}.message-detail{font-size:10px;line-height:1.38;color:#c2c9b5;background:#1c261e;padding:5px 8px;margin-bottom:2px;border-left:2px solid #9a8154}.message-detail[hidden]{display:none}#dock.expanded .dock-chat{max-height:min(34dvh,250px);min-height:70px}#dock.convo-hidden .dock-top,#dock.convo-hidden .dock-chat{display:none}.chiprow{display:flex;gap:4px;overflow-x:auto;padding:5px 1px 4px;scrollbar-width:none;min-width:0}.chiprow::-webkit-scrollbar{display:none}.cmdchip{white-space:nowrap;flex:none;min-height:28px;border:1px solid #63735f;border-radius:5px;background:#2b352b;font-size:11px;padding:4px 9px;color:#d5ddc8}.cmdchip.special{border-color:#9e8653;color:#f1c674}.inputrow{display:flex;gap:5px;align-items:end}.composer-wrap{border:1px solid #9a916c;border-radius:6px;background:#0d130e;display:flex;flex:1;min-width:0;min-height:44px}.composer-wrap:focus-within{border-color:#e3b559;box-shadow:0 0 0 1px #dcab4b}#composer{width:100%;min-width:0;resize:none;border:0;background:transparent;color:var(--text);padding:11px 10px;font-size:14px;line-height:20px;min-height:42px;max-height:88px;outline:0;overflow-y:auto}#composer::placeholder{color:#9b9d87}.inputrow .small-action{height:44px;min-width:44px;flex:none}.small-action.micactive,#miniMic.micactive,.micactive{border-color:#f37b6d!important;color:#ff9b8b!important;box-shadow:0 0 0 2px #ff807055!important}.small-action.send{border-color:#b68d4d;background:#3e321d;color:#f9cb70}.dock-foot{display:flex;justify-content:space-between;gap:5px;align-items:center;min-height:12px;padding:2px 1px 0}.dock-foot span{font-size:9px;color:#8e9f88;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#micStatus{font-size:9px;display:block;color:#ffb1a1}.pill{border:1px solid #7c6b4b;padding:2px 4px;border-radius:4px;font-size:9px;color:#d4ba82}
+#miniTray{position:absolute;left:10px;bottom:10px;z-index:7;display:none;gap:6px;align-items:center}#miniTray button{min-height:46px;min-width:46px}.mini-label{border:1px solid #786747;background:#1b251dcf;color:#efc984;border-radius:7px;padding:11px;font-size:11px}
+.nav{height:calc(var(--nav) + var(--safe-bottom));flex:0 0 calc(var(--nav) + var(--safe-bottom));display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:linear-gradient(145deg,#171e19,#0d120e);border-top:2px solid #7a6748;padding:4px 5px var(--safe-bottom);z-index:20;gap:3px}.nav button{display:flex;flex-direction:column;gap:2px;min-width:0;min-height:0;padding:3px 1px;border-radius:5px;background:transparent;border:1px solid #39483c;color:#a4afa2;font-size:10px;letter-spacing:.01em}.nav button .ico{width:23px;height:23px}.nav button.active{color:#f2ba59;border-color:#af8c4b;background:#332b1c}.nav button.active:after{content:"";width:25px;height:2px;background:var(--gold);border-radius:2px}
+.shade{position:absolute;inset:0;background:rgba(0,0,0,.52);z-index:11}.shade[hidden]{display:none}.drawer{position:absolute;top:0;bottom:0;width:min(305px,88vw);z-index:12;background:linear-gradient(#262f27,#141b16);border:1px solid #6c765e;overflow-y:auto;box-shadow:0 0 25px #000}.drawer[hidden]{display:none}.drawer.left{left:0;border-radius:0 12px 12px 0}.drawer.right{right:0;border-radius:12px 0 0 12px}.drawer-h{padding:12px 12px 8px;display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid #53614c}.drawer-h b{font-size:14px;color:#f1d19a;letter-spacing:.04em}.drawer-section{padding:10px 12px;border-bottom:1px solid #394a3c}.drawer-section h3{color:#b3bfaa;letter-spacing:.12em;font-size:10px;margin:0 0 9px}.drawer-section p{margin:6px 0;font-size:11px;color:#abb5a6;line-height:1.48}.toggle-row{display:flex;justify-content:space-between;gap:8px;align-items:center;min-height:43px;font-size:13px;border-bottom:1px solid #3c493e;padding:6px 0}.toggle-row:last-child{border-bottom:0}.toggle-row input{width:18px;height:18px;accent-color:var(--gold);flex:none}.drawer-list-btn{width:100%;min-height:43px;text-align:left;border:0;background:transparent;border-bottom:1px solid #475348;color:#e4e2cf;font-size:13px}.drawer-list-btn:active{background:#323d30}.drawer-close{min-width:35px;min-height:35px}.drawer .danger{color:#f2a69b}
+#workspaceSheet{position:absolute;z-index:10;left:0;right:0;bottom:0;height:min(52%,420px);border-radius:15px 15px 0 0;border-top:2px solid #ad8c51;background:linear-gradient(#242d24f9,#151d17fd);box-shadow:0 -9px 35px #000e;display:none;flex-direction:column;overflow:hidden}#workspaceSheet.full{height:100%;border-radius:0}#workspaceSheet.open{display:flex}#shell.sheet-open #dock,#shell.sheet-open #miniTray,#shell.sheet-open #alertBox,#shell.sheet-open #inspectBar{display:none!important}.sheet-h{display:flex;align-items:center;gap:6px;flex:none;min-height:51px;border-bottom:1px solid #566550;padding:7px 10px}.sheet-h b{font-size:14px;letter-spacing:.06em;flex:1;color:#e9d09a}.sheet-h button{border:1px solid #62705c;background:#2d372c;border-radius:7px;min-width:40px;min-height:37px;display:grid;place-items:center}.sheet-body{flex:1;overflow-y:auto;padding:10px 11px 15px}.sheet-hint{color:#9ea99b;font-size:11px;margin:0 0 8px}.sheet-item{display:flex;align-items:center;gap:9px;min-height:61px;border:1px solid #50644d;border-radius:8px;background:#222b22;margin-bottom:7px;padding:8px}.sheet-item .glyph{width:35px;min-width:35px;height:35px;display:grid;place-items:center;border:1px solid #6c825e;border-radius:7px;font-size:18px;color:#e6ba6b}.sheet-item .body{flex:1;min-width:0}.sheet-item strong{display:block;font-size:13px}.sheet-item p{font-size:11px;color:#adb7a8;margin:3px 0;line-height:1.25}.sheet-item button{min-width:42px;min-height:37px;border:1px solid #a28d56;border-radius:5px;background:#3a321f;color:#eac98e;padding:4px 7px;font-size:11px}.sheet-filters{display:flex;gap:5px;margin-bottom:9px;overflow-x:auto}.sheet-filters button{min-height:32px;white-space:nowrap;border:1px solid #687765;border-radius:5px;background:#273227;padding:3px 9px;font-size:11px}.sheet-filters button.on{border-color:var(--gold);color:var(--gold)}.badge{font-size:9px;color:#c9ae79;border:1px solid #7b6d4b;border-radius:4px;padding:2px 4px}.empty{font-size:13px;color:#a8b3a2;padding:18px 4px}
+.toast{position:absolute;z-index:21;top:7px;left:50%;transform:translateX(-50%);width:min(385px,calc(100% - 20px));border:1px solid #9f885a;border-radius:8px;background:#2a3328f6;box-shadow:0 7px 17px #000b;padding:9px 12px;color:#f1e4c3;font-size:12px;line-height:1.35;text-align:center;pointer-events:none;transition:opacity .2s}.toast[hidden]{display:none}
+@media(min-width:700px){:root{--top:60px;--nav:72px}.top{padding-inline:14px}.map-meta{top:16px;left:20px}.maptools{right:16px}.nav button{font-size:12px}.nav button .ico{width:25px;height:25px}#dock{width:min(590px,calc(100% - 24px));left:12px;right:auto}#alertBox{right:15px;max-width:220px}.map-help{max-width:240px}.scale{bottom:24px}#inspectBar{right:auto;width:290px;max-width:290px}#workspaceSheet{left:auto;width:min(480px,48%);border-left:1px solid #a38a5b;height:75%;border-radius:12px 0 0 0}#workspaceSheet.full{width:min(680px,75%);height:100%}}
+@media(max-width:359px){:root{--top:52px;--nav:61px}#dock{left:5px;right:5px;bottom:5px;padding:5px}.top{padding-inline:6px}.top-title .brand{font-size:12px}.sub{font-size:9px}.top button{min-width:44px}.dock-chat{max-height:48px}.chiprow{padding:4px 0}.cmdchip{font-size:10px;padding:3px 7px}.message-row{font-size:10px}.map-help{display:none}#alertBox{right:6px;width:145px}}
+
+/* v0.4: movement preview can stick to a known map destination; drafts never move actual units. */
+#dragLayer {pointer-events:none}
+.drag-guide {fill:none;stroke:#f0b74d;stroke-width:2.6;stroke-dasharray:7 5;vector-effect:non-scaling-stroke}
+.drag-point {fill:#322717;stroke:#ffd47e;stroke-width:2;vector-effect:non-scaling-stroke}
+.drag-point.snapped {fill:#6b5023;stroke:#ffe39a;stroke-width:2.5;filter:drop-shadow(0 0 5px #f3c86f)}
+.drag-snap-halo {fill:#edb44924;stroke:#ffde8e;stroke-width:1.5;stroke-dasharray:3 3;vector-effect:non-scaling-stroke}
+.drag-ring {fill:none;stroke:#f8cd72;stroke-width:2;stroke-dasharray:3 4;vector-effect:non-scaling-stroke}
+.drag-text {fill:#ffe0a2;paint-order:stroke;stroke:#15190f;stroke-width:3px;font-size:11px;font-weight:800;pointer-events:none}
+#dragStatus {position:absolute;top:128px;left:10px;z-index:6;max-width:min(290px,calc(100% - 105px));padding:7px 9px;border:1px solid #e1ac55;border-radius:7px;background:#20261bf0;box-shadow:0 3px 12px #000a;color:#f5d69c;font-size:11px;line-height:1.35;pointer-events:none}
+#dragStatus[hidden]{display:none}
+@media(max-width:359px){#dragStatus{top:72px;max-width:calc(100% - 108px);font-size:10px}}
+
+/* v0.4: hold the compact alert to reposition; map selection tools stay reclaimable. */
+#alertBox{right:auto;bottom:auto;left:10px;top:10px;width:min(185px,53vw);transition:none}
+#alertBox.open{width:min(185px,53vw)}
+.alert-compact{display:flex;align-items:stretch}
+#alertBox .alert-toggle{min-width:0;flex:1;min-height:47px;padding:5px;gap:4px;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer}
+#alertBox .alert-toggle.repositioning{border-color:#f3c36a;background:linear-gradient(120deg,#4a391c,#222b1e);box-shadow:0 0 0 2px #e1ad5580,0 3px 15px #000a;cursor:grabbing}
+#alertBox .alert-mark{min-width:24px;height:27px}
+#alertBox .alert-caption{font-size:10px}
+#alertBox .alert-count{font-size:9px}
+#alertPeek{position:absolute;bottom:calc(100% + 2px);right:0;left:auto;width:min(300px,calc(100vw - 20px));max-height:var(--peek-limit,260px);border:1px solid #9c784c;border-radius:10px;overflow-y:auto}
+#alertBox.peek-left #alertPeek{left:0;right:auto}
+#alertBox.peek-below #alertPeek{top:calc(100% + 2px);bottom:auto}
+#alertBox #alertPeek{left:var(--peek-left,0px);right:auto}
+#inspectBar{left:9px;right:auto;max-width:min(265px,calc(100% - 18px));width:max-content;bottom:calc(var(--alert-offset) + 9px);z-index:5}
+#inspectBar .inspect-clear{min-width:30px;min-height:36px;flex:none}
+#inspectBar,#selectionRestore{bottom:calc(var(--alert-offset) + 65px)}
+#selectionRestore{position:absolute;z-index:5;left:9px;bottom:calc(var(--alert-offset) + 9px);min-height:42px;min-width:44px;border:1px solid #8b7650;background:#1b291f;border-radius:7px;color:#f0c67b;font-size:11px;padding:6px 9px;box-shadow:0 2px 10px #0009}
+#selectionRestore[hidden],#entityMenu[hidden]{display:none!important}
+#entityMenu{position:absolute;z-index:10;width:min(221px,calc(100% - 16px));border:1px solid #a28a58;border-radius:9px;background:#1a251dea;box-shadow:0 5px 19px #000e;padding:5px}
+.entity-menu-title{display:flex;align-items:center;justify-content:space-between;gap:6px;margin:0 0 4px}
+.entity-menu-title strong{font-size:11px;letter-spacing:.09em;color:#efc781;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#entityMenuClose{border:0;background:transparent;min-height:32px;min-width:34px;font-size:21px;color:#bbbfa8}
+.entity-menu-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+.entity-menu-actions button{min-width:0;min-height:42px;font-size:11px;padding:5px 2px;border:1px solid #68755e;border-radius:5px;background:#293329;color:#f2e9cf;overflow:hidden;text-overflow:ellipsis}
+#entityMenuCommand{border-color:#b8934d!important;color:#f8cb79!important}
+#shell.sheet-open #selectionRestore,#shell.sheet-open #entityMenu{display:none!important}
+@media(max-width:359px){#alertBox,#alertBox.open{width:min(166px,52vw)}#entityMenu{width:205px}.entity-menu-actions button{font-size:10px}}
+/* v0.5: map selections live in the composer, never in an additional floating bar. */
+#targetLayer,#dragLayer{pointer-events:none}
+#targetLayer [data-waypoint-index],#targetLayer [data-delete-waypoint]{pointer-events:all;touch-action:none;outline:none}
+#targetLayer [data-waypoint-index]:focus-visible circle.target-x,#targetLayer [data-delete-waypoint]:focus-visible circle{stroke:#fff1a6;stroke-width:3}
+#inspectBar,#selectionRestore,#entityMenu{display:none!important}
+.composer-wrap{flex-direction:column;align-items:stretch;justify-content:center}
+#composerTokens{display:flex;align-items:center;flex-wrap:nowrap;gap:3px;padding:3px 4px 0;min-width:0;max-height:30px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;white-space:nowrap}#composerTokens::-webkit-scrollbar{display:none}
+#composerTokens:empty{display:none}
+.entity-token{display:inline-flex;align-items:center;gap:2px;flex:none;max-width:100%;border:1px solid #766645;background:#2e3428;border-radius:4px;color:#e9dbb8;font-size:11px;padding:1px 2px 1px 6px;line-height:20px}
+.entity-token.person{border-color:#ad8b50}.entity-token.action{border-color:#6e977a;color:#bde3c6}.entity-token.place{border-color:#9f8856}.entity-token.relay{border-color:#6d9f9a}
+.entity-token .token-remove{border:0;background:transparent;color:#efe8cf;min-width:23px;min-height:23px;display:inline-grid;place-items:center;padding:0;font-weight:600;border-radius:3px}
+.entity-token .token-remove:active{background:#504b38}
+#composer{padding:6px 9px 7px;min-height:35px}
+#routeBtn{min-height:25px;border:1px solid #607459;color:#deb979;background:#1a261d;font-size:10px;border-radius:4px;padding:3px 7px;white-space:nowrap}
+#routeMenu{position:absolute;right:42px;bottom:33px;width:min(286px,calc(100% - 24px));max-height:min(56dvh,310px);overflow-y:auto;background:#222b21;border:1px solid #aa8549;box-shadow:0 2px 18px #000e;border-radius:7px;padding:5px;z-index:11}
+#routeMenu[hidden]{display:none}.method-choice{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid #435144;background:transparent;min-height:43px;padding:5px 8px;font-size:12px}.method-choice b{display:block;color:#f0cf92}.method-choice span{display:block;font-size:10px;color:#afbaaa}.method-choice[aria-pressed="true"]{background:#343e2f}
+#commandPreview{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#c0cbaa;min-width:0;max-width:100%;padding:0 4px 1px}
+.sheet-item.focused{background:#3a3827;border-color:#b99a57}.sheet-item .body strong{color:#efe5c9}
+#cmdChips .cmdchip[disabled]{display:none}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true"><defs>
+<symbol id="ic-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+<symbol id="ic-sliders" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16M9 4v6M16 14v6"/></symbol>
+<symbol id="ic-map" viewBox="0 0 24 24"><path d="m3 5 6-2 6 3 6-3v16l-6 2-6-3-6 2zM9 3v15M15 6v15"/></symbol>
+<symbol id="ic-people" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M17 6a3 3 0 0 1 0 6m2 3a5 5 0 0 1 2 4v2"/></symbol>
+<symbol id="ic-items" viewBox="0 0 24 24"><path d="m3 7 9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10"/></symbol>
+<symbol id="ic-sites" viewBox="0 0 24 24"><path d="M4 21V8l8-5 8 5v13M3 21h18M9 21v-7h6v7M8 10h.01M16 10h.01"/></symbol>
+<symbol id="ic-mic" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></symbol>
+<symbol id="ic-send" viewBox="0 0 24 24"><path d="m21 3-8 18-3-8-8-3zM21 3 10 13"/></symbol>
+<symbol id="ic-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 8-3 8-3 10h18c0-2-3-2-3-10M10 21h4"/></symbol>
+<symbol id="ic-up" viewBox="0 0 24 24"><path d="m5 15 7-7 7 7"/></symbol>
+<symbol id="ic-down" viewBox="0 0 24 24"><path d="m5 9 7 7 7-7"/></symbol>
+<symbol id="ic-x" viewBox="0 0 24 24"><path d="M5 5l14 14M19 5 5 19"/></symbol>
+<symbol id="ic-pin" viewBox="0 0 24 24"><path d="M7 3h10l-2 6 3 3v2H6v-2l3-3zM12 14v8"/></symbol>
+<symbol id="ic-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><path d="M12 2v6M12 16v6M2 12h6M16 12h6"/></symbol>
+<symbol id="ic-list" viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></symbol>
+<symbol id="ic-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+<symbol id="ic-plus" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></symbol>
+<symbol id="ic-check" viewBox="0 0 24 24"><path d="m4 12 5 5L20 6"/></symbol>
+<symbol id="ic-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7h.01"/></symbol>
+</defs></svg>
+<div id="shell">
+<header class="top" role="banner">
+  <button id="menuBtn" type="button" aria-label="Open main menu" aria-expanded="false"><svg class="ico big"><use href="#ic-menu"/></svg></button>
+  <div class="top-title"><span class="brand">NOMATOKA <span style="color:#9e976f;font-weight:500">/</span> <span id="workspaceTitle">MAP</span></span><span class="sub">FIELD UI STUDY • LOCAL DEMO • NO LIVE DATA</span></div>
+  <span class="topstate" title="Illustrative last-reported intelligence"><span class="dot"></span>DEMO</span>
+  <button id="contextBtn" type="button" aria-label="Open contextual tools" aria-expanded="false"><svg class="ico big"><use href="#ic-sliders"/></svg></button>
+</header>
+<main class="main" id="main" aria-label="Nomatoka demo workspace">
+  <div id="mapArea" aria-label="Interactive schematic field map: tap, pan, zoom, or enable multiple selection">
+    <svg id="mapSvg" viewBox="0 0 420 730" preserveAspectRatio="xMidYMid slice" role="group" aria-label="Schematic field map with selectable markers. All positions are fictional interface test data.">
+      <defs><pattern id="cross" width="44" height="44" patternUnits="userSpaceOnUse"><path class="grid-lines" d="M44 0H0V44"/></pattern></defs>
+      <g id="mapWorld"><rect x="-700" y="-700" width="1850" height="2500" fill="url(#cross)" id="gridLayer"/>
+        <g id="terrainLayer"></g><g id="riverLayer"></g><g id="routeLayer"></g><g id="zoneLayer"></g><g id="entityLayer"></g><g id="targetLayer"></g><g id="dragLayer" aria-hidden="true"></g>
+      </g>
+    </svg>
+    <div class="map-vignette"></div>
+  </div>
+  <div class="map-meta"><strong>FIELD SECTOR • DEMO</strong><span>SCHEMATIC · PUBLICLY REPORTED ONLY</span><span id="mapZoomLabel">ZOOM 100% · DRAG TO PAN</span></div>
+  <div class="map-help" id="mapHint">Tap to select • Drag to pan • Hold to move. The destination circle snaps to nearby known places. MULTI selects several.</div>
+  <div id="dragStatus" role="status" aria-live="polite" hidden></div>
+  <div class="maptools" id="maptools">
+    <button id="zoomIn" type="button" aria-label="Zoom in"><svg class="ico"><use href="#ic-plus"/></svg></button>
+    <button id="zoomOut" type="button" aria-label="Zoom out"><svg class="ico"><use href="#ic-minus"/></svg></button>
+    <button id="multiBtn" type="button" aria-pressed="false" title="Multi-select: tap several markers or drag a box" aria-label="Toggle multiple selection"><svg class="ico"><use href="#ic-people"/></svg></button>
+    <button id="aimBtn" type="button" aria-pressed="false" title="Tap map to insert a destination into current command" aria-label="Choose command destination on map"><svg class="ico"><use href="#ic-target"/></svg></button>
+  </div>
+  <div class="scale"><span><span>0</span><span>~ 1 KM • DEMO</span></span></div>
+  <div id="inspectBar" role="group" aria-label="Map selection tools"><span class="inspect-text" id="inspectText"></span><button class="inspect-apply" id="useSelection" type="button">Use</button><button class="inspect-clear" id="hideSelectionBar" aria-label="Minimize selected objects strip" type="button">−</button><button class="inspect-clear" id="clearSelection" aria-label="Clear map selection" type="button">×</button></div>
+  <button id="selectionRestore" type="button" aria-label="Show selected objects tools" hidden>◈ <span id="selectionCount">2 selected</span></button>
+  <div id="entityMenu" role="group" aria-label="Selected map object actions" hidden>
+    <div class="entity-menu-title"><strong id="entityMenuTitle">OBJECT</strong><button id="entityMenuClose" type="button" aria-label="Close map object actions">×</button></div>
+    <div class="entity-menu-actions">
+      <button id="entityMenuCommand" type="button">Command</button>
+      <button id="entityMenuDetails" type="button">Details</button>
+      <button id="entityMenuMove" type="button">Move…</button>
+    </div>
+  </div>
+  <div id="alertBox" aria-label="Expandable operational notifications">
+    <div id="alertPeek" hidden>
+      <div class="alert-head"><span>FIELD UPDATES</span><span style="font-size:9px;color:#a2aa96">DEMO</span></div>
+      <div class="alert-tabs" id="alertFilters"><button type="button" class="selected" data-alert-filter="all">All</button><button type="button" data-alert-filter="reports">Reports</button><button type="button" data-alert-filter="events">Events</button></div>
+      <div id="alertList"></div>
+      <div class="alert-foot"><button type="button" id="viewAllAlerts" class="text-link">Open full log ↗</button><button id="muteAlert" class="text-link" type="button">Quiet</button></div>
+    </div>
+    <div class="alert-compact"><button id="alertToggle" type="button" class="alert-toggle" aria-expanded="false" aria-controls="alertPeek" aria-label="Field updates: tap to expand; hold briefly then drag to reposition" title="Tap for updates · Hold to move · Shift+arrow keys to reposition"><span class="alert-mark"><svg class="ico"><use href="#ic-bell"/></svg></span><span class="alert-caption" id="alertCaption">2 actionable field updates</span><span class="alert-count" id="alertCount">2</span></button></div>
+  </div>
+  <section id="dock" aria-label="Compact command and conversation dock">
+    <div class="dock-top" id="dockTop"><div id="threadTabs" class="tabstrip" role="tablist" aria-label="Conversation tabs"></div>
+      <button id="pinBtn" class="dock-icon" type="button" title="Pin or unpin current conversation" aria-label="Pin current conversation"><svg class="ico"><use href="#ic-pin"/></svg></button>
+      <button id="threadListBtn" class="dock-icon" type="button" title="All conversations" aria-label="Choose conversation"><svg class="ico"><use href="#ic-list"/></svg></button>
+      <button id="convoExpandBtn" class="dock-icon" type="button" title="Expand or collapse conversation" aria-label="Expand conversation"><svg class="ico"><use href="#ic-up"/></svg></button>
+      <button id="convoHideBtn" class="dock-icon" type="button" title="Hide conversation; keep commands" aria-label="Hide conversation"><svg class="ico"><use href="#ic-down"/></svg></button>
+      <button id="dockMinBtn" class="dock-icon" type="button" title="Minimize entire dock" aria-label="Minimize command dock"><svg class="ico"><use href="#ic-minus"/></svg></button>
+    </div>
+    <div class="dock-chat" id="dockChat" aria-label="Conversation history"></div>
+    <div class="chiprow" id="cmdChips" aria-label="Contextual command suggestions"></div>
+    <div class="inputrow"><div class="composer-wrap"><div id="composerTokens" aria-label="Selected command entities and action"></div><textarea id="composer" rows="1" autocomplete="off" spellcheck="true" aria-label="Command draft" placeholder="Issue an order or ask…"></textarea></div>
+      <button id="micBtn" class="small-action" type="button" aria-label="Start voice dictation" aria-pressed="false" title="Voice dictation if supported"><svg class="ico big"><use href="#ic-mic"/></svg></button>
+      <button id="sendBtn" class="small-action send" type="button" aria-label="Capture demo command locally" title="Demo only: does not transmit an order"><svg class="ico"><use href="#ic-send"/></svg></button>
+    </div>
+    <div id="commandPreview" role="status" aria-live="polite"></div><div class="dock-foot"><button id="routeBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="routeMenu">VIA: RADIO ▾</button><span id="draftContext">DEMO ONLY · NOT CONNECTED</span><span id="micStatus"></span><button id="dockRestoreConvo" type="button" class="text-link" hidden>Show chats ↑</button></div>
+  <div id="routeMenu" hidden aria-label="Communication method"></div>
+  </section>
+  <div id="miniTray" aria-label="Minimized command controls">
+    <button id="miniMic" class="minibtn" type="button" aria-label="Start voice dictation" aria-pressed="false"><svg class="ico big"><use href="#ic-mic"/></svg></button>
+    <button id="restoreDock" class="mini-label" type="button"><svg class="ico sm" style="display:inline;vertical-align:middle"><use href="#ic-up"/></svg> <span id="miniRecipient">OR TEGA · COMMAND</span></button>
+  </div>
+  <div id="shade" class="shade" hidden></div>
+  <aside id="leftDrawer" class="drawer left" aria-label="Main menu" hidden><div class="drawer-h"><b>NOMATOKA / MENU</b><button class="drawer-close" data-close-drawer aria-label="Close menu"><svg class="ico"><use href="#ic-x"/></svg></button></div>
+    <div class="drawer-section"><h3>QUICK OPTIONS</h3>
+      <label class="toggle-row">Bottom tabs open quick view first <input id="quickMode" type="checkbox" checked></label>
+      <label class="toggle-row">Auto-peek priority alerts <input id="autoPeek" type="checkbox"></label>
+      <label class="toggle-row">Quiet field updates <input id="quietAlerts" type="checkbox"></label>
+      <p>Quick mode: first tap opens a half-screen selection, second tap expands. Turn off for direct full-screen navigation.</p>
+    </div>
+    <div class="drawer-section"><h3>WORKSPACE</h3><button id="menuShowThreads" class="drawer-list-btn">Conversation directory</button><button id="menuShowAlerts" class="drawer-list-btn">Operational event log</button><button id="menuHelp" class="drawer-list-btn">Gestures &amp; controls</button><button id="menuReset" class="drawer-list-btn danger">Reset local demo data</button></div>
+    <div class="drawer-section"><h3>BOUNDARIES</h3><p>Self-contained interaction study. No account, real world map, network calls, authentication, simulation, durable server messages or command transmission. Demo text may be stored locally by this browser for reload testing.</p></div>
+  </aside>
+  <aside id="rightDrawer" class="drawer right" aria-label="Contextual tools" hidden><div class="drawer-h"><b id="rightTitle">MAP / LAYERS</b><button class="drawer-close" data-close-drawer aria-label="Close contextual tools"><svg class="ico"><use href="#ic-x"/></svg></button></div><div id="rightBody"></div></aside>
+  <section id="workspaceSheet" role="dialog" aria-modal="false" aria-label="Quick workspace panel"><div class="sheet-h"><b id="sheetTitle">PEOPLE</b><button id="sheetMic" type="button" aria-label="Start voice dictation"><svg class="ico"><use href="#ic-mic"/></svg></button><button id="sheetExpand" type="button" aria-label="Expand to full screen"><svg class="ico"><use href="#ic-up"/></svg></button><button id="sheetClose" type="button" aria-label="Close workspace"><svg class="ico"><use href="#ic-x"/></svg></button></div><div id="sheetBody" class="sheet-body"></div></section>
+  <div class="toast" id="statusToast" role="status" aria-live="polite" hidden></div>
+</main>
+<nav class="nav" aria-label="Primary workspaces" id="bottomNav">
+  <button type="button" data-nav="Map" class="active" aria-pressed="true"><svg class="ico"><use href="#ic-map"/></svg><span>Map</span></button>
+  <button type="button" data-nav="People" aria-pressed="false"><svg class="ico"><use href="#ic-people"/></svg><span>People</span></button>
+  <button type="button" data-nav="Items" aria-pressed="false"><svg class="ico"><use href="#ic-items"/></svg><span>Items</span></button>
+  <button type="button" data-nav="Facilities" aria-pressed="false"><svg class="ico"><use href="#ic-sites"/></svg><span>Places</span></button>
+</nav>
+</div>
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id);
+const ns='http://www.w3.org/2000/svg';
+const icon=id=>`<svg class="ico"><use href="#ic-${id}"/></svg>`;
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const DEFAULT={version:2,active:'Ortega',pins:['Ortega','Ridge Team'],recent:['Ortega','Ridge Team','Santos','Convoy 1'],drafts:{},minimized:false,hideConvo:false,expanded:false,quick:true,autoPeek:false,quiet:false,layers:{terrain:true,grid:false,routes:true,contacts:true,objects:true,labels:true,zones:true},alertFilter:'all',alertPos:null,selectionBarHidden:false,selected:[],target:null,focusPerson:null,focusObject:null,focusEntity:null,inventoryAll:false,contexts:{},viaByThread:{},threadTexts:{Ortega:[{id:'o1',type:'out',text:'Scout the ridge and report.',detail:'Example issued order · In person · Recorded 09:12 · Delivery confirmed in demo fixture',when:'09:12'},{id:'o2',type:'reply',text:'Ortega: Short path is blocked. Returning.',detail:'Example received report · Source: Ortega · Demo receipt 09:18 · Not a live position',when:'09:18'}],Santos:[{id:'s1',type:'reply',text:'Santos: Awaiting instructions.',detail:'Example dialogue · Assumed previously received in this demonstration',when:'09:20'}],'Ridge Team':[{id:'r1',type:'out',text:'Ridge Team: Hold position.',detail:'Example group order · Members may receive orders at different times',when:'09:03'}],'Convoy 1':[{id:'c1',type:'reply',text:'Convoy 1: Equipment check submitted.',detail:'Example received report · Demo provenance 09:05',when:'09:05'}]},selectedThreadMembers:{'Ridge Team':['Ortega','Santos'],'Convoy 1':['Vehicle 1']}};
+function load(){try{const saved=JSON.parse(localStorage.getItem('nomatoka-shell-demo-v2')||'null');if(saved?.version===2){return {...structuredClone(DEFAULT),...saved,layers:{...DEFAULT.layers,...saved.layers},contexts:saved.contexts||{},viaByThread:saved.viaByThread||{}}}}catch{}return structuredClone(DEFAULT)}
+let state=load(),aimRole='target',workspace='Map',panelView='',panelMode='',leftOpen=false,rightOpen=false,alertOpen=false,expandedRows=new Set(),multi=false,aim=false,zoom=1,pan={x:0,y:0},toastTimer=0,voice=null,recognizing=false,marquee=null;
+const entities=[{id:'Ortega',name:'ORTEGA',label:'Last report · 09:18',type:'person',x:156,y:296},{id:'Santos',name:'SANTOS',label:'Last report · 09:20',type:'person',x:258,y:430},{id:'Vehicle 1',name:'VEHICLE 1',label:'Known from prior report',type:'vehicle',x:235,y:548},{id:'Ridge',name:'RIDGE',label:'Known objective',type:'object',x:280,y:230},{id:'Old Bridge',name:'OLD BRIDGE',label:'Reported obstruction',type:'object',x:337,y:482},{id:'Staging Area',name:'STAGING',label:'Briefed reference',type:'object',x:99,y:569}];
+const people=[{name:'Ortega',detail:'Recon · last reported ridge approach',glyph:'◈'},{name:'Santos',detail:'Support · awaiting instructions (demo)',glyph:'◇'},{name:'Ridge Team',detail:'Saved group · 2 members (demo)',glyph:'♧'},{name:'Convoy 1',detail:'Saved group · 1 vehicle (demo)',glyph:'▤'}];
+const items=[{name:'Vehicle toolkit',detail:'Service tools · illustrative cargo',holder:'Vehicle 1',glyph:'⚒'},{name:'Spare battery',detail:'Unverified stored power unit · demo cargo',holder:'Vehicle 1',glyph:'▥'},{name:'Supply crate',detail:'Illustrative storage · Staging Area',holder:'Staging Area',glyph:'▧'},{name:'Field radio',detail:'Communications device · last known in pack',holder:'Ortega',glyph:'◫'},{name:'Repair kit',detail:'Engineering supplies · last known at workshop',holder:'Santos',glyph:'⚒'},{name:'Rations',detail:'3-day estimate · sample inventory',holder:'Santos',glyph:'▥'},{name:'Binoculars',detail:'Recon equipment · last known with scout',holder:'Ortega',glyph:'◎'}];
+const facilities=[{name:'Staging Area',detail:'Reference position, no verified facilities data',glyph:'⌂'},{name:'Ridge',detail:'Known objective · reported area, not precise live contact',glyph:'△'},{name:'Old Bridge',detail:'Known route feature · reported obstruction',glyph:'◇'},{name:'Field Depot',detail:'Concept entry, not present in game backend',glyph:'▦'},{name:'Relay Station',detail:'Concept entry, not present in game backend',glyph:'⌁'}];
+// Demonstration associations are deliberately player-known/last-reported records,
+// not physical truth or access to a shared magical inventory.
+const ASSOCIATIONS={
+ 'Ortega':{people:['Ortega'],places:['Ridge']},
+ 'Santos':{people:['Santos'],places:['Staging Area']},
+ 'Vehicle 1':{people:['Santos'],places:['Old Bridge']},
+ 'Ridge':{people:['Ortega'],places:['Ridge']},
+ 'Old Bridge':{people:[],places:['Old Bridge']},
+ 'Staging Area':{people:['Santos'],places:['Staging Area']}
+};
+function focusedEntity(){const id=state.focusEntity||state.selected?.at(-1)||state.focusPerson||state.focusObject;return id||null}
+function associatedRecords(id=focusedEntity()){
+ const ob=entityById(id), item=items.find(x=>x.name===id);
+ if(item)return {people:[item.holder].filter(x=>people.some(p=>p.name===x)),items:[item],places:ASSOCIATIONS[item.holder]?.places||[],kind:'item',id};
+ const relations=ASSOCIATIONS[id]||{};
+ const associatedItems=items.filter(x=>id&&(x.holder===id||(ob?.type==='object'&&(relations.people||[]).includes(x.holder))));
+ return {people:relations.people||[],items:associatedItems,places:relations.places||(ob?.type==='object'?[id]:[]),kind:ob?.type||'none',id};
+}
+const alerts=[{id:'alert-1',kind:'events',title:'Santos awaiting instructions',body:'Demo operational reminder · Commander attention requested',priority:true,when:'09:20',thread:'Santos'},{id:'alert-2',kind:'reports',title:'Short path obstructed',body:'Demo scout report received from Ortega',priority:false,when:'09:18',thread:'Ortega'},{id:'alert-3',kind:'reports',title:'Convoy equipment check',body:'Demo submitted equipment report',priority:false,when:'09:05',thread:'Convoy 1'}];
+const persist=()=>{try{localStorage.setItem('nomatoka-shell-demo-v2',JSON.stringify(state))}catch{}};
+function inform(text,ms=3100){const node=$('statusToast');node.textContent=text;node.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>node.hidden=true,ms)}
+function clock(){return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}
+function svgNode(tag,attrs={},parent){const el=document.createElementNS(ns,tag);for(const [k,v]of Object.entries(attrs))el.setAttribute(k,v);if(parent)parent.append(el);return el}
+function drawWorld(){const land=$('terrainLayer');land.replaceChildren();for(let i=0;i<25;i++){let d='',radX=70+i*14,radY=105+i*18;for(let k=0;k<=144;k++){const t=k*Math.PI*2/144;const wobble=1+.12*Math.sin(5*t+i*.49)+.075*Math.sin(11*t-i*.3)+.055*Math.cos(3*t+i*.7);const xx=214+radX*Math.cos(t)*wobble+15*Math.sin(i*.34),yy=358+radY*Math.sin(t)*wobble+15*Math.cos(i*.19);d+=`${k?'L':'M'}${xx.toFixed(1)} ${yy.toFixed(1)}`;}svgNode('path',{d:d+'Z',class:'contour'+(i%6===0?' em':'')},land)}
+ for(let k=0;k<13;k++){let d='';for(let j=0;j<=52;j++){let x=32+j*9,y=130+k*48+Math.sin(j*.45+k)*12+Math.cos(j*.19+k)*13;d+=`${j?'L':'M'}${x.toFixed(1)} ${y.toFixed(1)}`}svgNode('path',{d,class:'contour'},land)}
+ $('riverLayer').replaceChildren();svgNode('path',{d:'M 415 -30 C 345 120, 475 245, 345 365 S 390 610, 300 780',class:'river'},$('riverLayer'));svgNode('path',{d:'M 415 -30 C 345 120, 475 245, 345 365 S 390 610, 300 780',class:'riveredge'},$('riverLayer'));
+ $('routeLayer').replaceChildren();svgNode('path',{d:'M 96 570 Q 135 490 165 295 Q 218 230 280 230',class:'trail'},$('routeLayer'));svgNode('path',{d:'M 96 570 Q 168 620 244 548 Q 271 492 341 486',class:'trail'},$('routeLayer'));
+ $('zoneLayer').replaceChildren();svgNode('path',{d:'M 105 255 L 290 209 L 348 455 L 180 528 Z',class:'area-shape'},$('zoneLayer'));
+ svgNode('text',{x:192,y:190,class:'marklabel'},$('zoneLayer')).textContent='REFERENCE ZONE · DEMO';drawEntities();drawTarget();applyLayers();}
+function drawEntities(){const layer=$('entityLayer');layer.replaceChildren();for(const e of entities){const group=svgNode('g',{class:'entity '+e.type+(state.selected.includes(e.id)?' selected':''),'data-entity':e.id,tabindex:0,role:'button','aria-label':`Select ${e.name} on map`,transform:`translate(${e.x} ${e.y})`},layer);
+ if(e.type==='person'){svgNode('circle',{class:'mark',r:13},group);svgNode('path',{d:'M -5 0 L 0 -6 L 5 0 L 0 6 Z',fill:'#d0b473',stroke:'none'},group)}else if(e.type==='vehicle'){svgNode('rect',{class:'mark',x:-15,y:-10,width:30,height:20,rx:3},group);svgNode('path',{d:'M -8 0 H 8 M -7 -7 V 7 M 7 -7 V 7',stroke:'#b1ccba','stroke-width':1.4},group)}else{svgNode('path',{class:'mark',d:'M 0 -15 L 14 0 L 0 15 L -14 0 Z'},group);svgNode('circle',{r:3,fill:'#d4ae61'},group)}
+ svgNode('circle',{class:'marker-hit',r:30},group);
+ if(state.layers.labels){svgNode('text',{class:'marker-text',x:0,y:33,'text-anchor':'middle'},group).textContent=e.name;svgNode('text',{class:'marker-type',x:0,y:46,'text-anchor':'middle'},group).textContent=e.type==='person'?'LAST REPORTED':e.type==='vehicle'?'VEHICLE · REPORTED':'KNOWN FEATURE'};
+ }}
+let hideTargetDuringMove=false,selectedWaypointIndex=null;
+function drawTarget(){
+ const layer=$('targetLayer');layer.replaceChildren();
+ if(hideTargetDuringMove)return;
+ const c=state.contexts?.[state.active];
+ const pts=c?.waypoints||[];
+ if(pts.length){
+   if(selectedWaypointIndex!==null && selectedWaypointIndex>=pts.length)selectedWaypointIndex=null;
+   const actor=entityById(c.recipient);
+   const coords=actor?[{x:actor.x,y:actor.y},...pts]:pts;
+   if(coords.length>1)svgNode('path',{d:coords.map((p,i)=>`${i?'L':'M'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' '),class:'drag-guide',style:'stroke:#f1c46d;stroke-width:2.6;stroke-dasharray:6 4;opacity:.95'},layer);
+   for(let i=0;i<pts.length;i++){
+    const {x,y,name}=pts[i],active=selectedWaypointIndex===i;
+    const hit=svgNode('g',{'data-waypoint-index':i,tabindex:0,role:'button',
+      'aria-label':`Waypoint ${i+1} ${name}. Tap for options${i===pts.length-1?', drag to extend route':''}`,
+      style:'pointer-events:all;cursor:pointer'},layer);
+    svgNode('circle',{cx:x,cy:y,r:23,fill:'transparent',style:'pointer-events:all'},hit);
+    svgNode('circle',{cx:x,cy:y,r:active?19:i===pts.length-1?16:12,class:'target-x',style:'pointer-events:none'},hit);
+    const num=svgNode('text',{x,y:y+4,'text-anchor':'middle',style:'font-size:12px;font-weight:800;fill:#f7de9c;pointer-events:none'},hit);num.textContent=i+1;
+    svgNode('text',{x:x+20,y:y-14,class:'marklabel',style:'pointer-events:none'},layer).textContent=name;
+    if(active){
+      const erase=svgNode('g',{'data-delete-waypoint':i,tabindex:0,role:'button',
+        'aria-label':`Delete waypoint ${i+1} ${name}`,style:'pointer-events:all;cursor:pointer'},layer);
+      const px=x+24,py=y-24;
+      svgNode('circle',{cx:px,cy:py,r:19,fill:'transparent',style:'pointer-events:all'},erase);
+      svgNode('circle',{cx:px,cy:py,r:12,fill:'#803026',stroke:'#ff947e','stroke-width':1.5,style:'pointer-events:none'},erase);
+      const xmark=svgNode('path',{d:`M ${px-4} ${py-4}L ${px+4} ${py+4}M ${px+4} ${py-4}L ${px-4} ${py+4}`,stroke:'#fff1ea','stroke-width':2.5,'stroke-linecap':'round',style:'pointer-events:none'},erase);
+    }
+   }
+   return;
+ }
+ if(!state.target)return;
+ const {x,y}=state.target;svgNode('circle',{cx:x,cy:y,r:17,class:'target-x'},layer);
+ svgNode('path',{d:`M ${x-28} ${y}h16 M ${x+12} ${y}h16 M${x} ${y-28}v16 M${x} ${y+12}v16`,class:'target-x'},layer);
+ svgNode('text',{x:x+22,y:y-12,class:'marklabel'},layer).textContent=state.target.name;
+}
+function applyLayers(){for(const [key,id]of [['terrain','terrainLayer'],['grid','gridLayer'],['routes','routeLayer'],['zones','zoneLayer']])$(id).style.display=state.layers[key]?'':'none';$('riverLayer').style.display=state.layers.terrain?'':'none';$('entityLayer').style.display=(!state.layers.contacts&&!state.layers.objects)?'none':'';for(const node of $('entityLayer').children){const isFeature=node.classList.contains('object');node.style.display=(isFeature?state.layers.objects:state.layers.contacts)?'':'none'}drawEntities();for(const node of $('entityLayer').children){const isFeature=node.classList.contains('object');node.style.display=(isFeature?state.layers.objects:state.layers.contacts)?'':'none'}}
+function updateMapViewBox(){const rect=$('mapArea').getBoundingClientRect();if(rect.height<1)return;const logicalWidth=Math.max(420,730*rect.width/rect.height);$('mapSvg').setAttribute('viewBox',`${(210-logicalWidth/2).toFixed(2)} 0 ${logicalWidth.toFixed(2)} 730`)}
+function transformMap(){ $('mapWorld').setAttribute('transform',`translate(${pan.x.toFixed(2)} ${pan.y.toFixed(2)}) scale(${zoom.toFixed(3)})`);$('mapZoomLabel').textContent=`ZOOM ${Math.round(zoom*100)}% · ${multi?'MULTI-SELECT':aim?'CHOOSE TARGET':'DRAG TO PAN'}`;}
+function toSvg(clientX,clientY){const svg=$('mapSvg');const p=svg.createSVGPoint();p.x=clientX;p.y=clientY;return p.matrixTransform(svg.getScreenCTM().inverse())}
+function toWorld(clientX,clientY){const p=toSvg(clientX,clientY);return {x:(p.x-pan.x)/zoom,y:(p.y-pan.y)/zoom}}
+function zoomMap(mult,center){const p=center||{x:210,y:365};let nx=Math.max(.72,Math.min(3.6,zoom*mult));pan.x=p.x-(p.x-pan.x)*nx/zoom;pan.y=p.y-(p.y-pan.y)*nx/zoom;zoom=nx;transformMap()}
+// v0.5: one composer for typed, spoken, and map-built meaning.
+// The visible labels are never the authoritative identity of an entity.
+const PERSON_ROUTES={Ortega:['radio'],Santos:['in-person','whisper','shout','radio'],'Ridge Team':['radio'],'Convoy 1':['radio'],'Vehicle 1':['radio']};
+const ROUTES=[['in-person','In person','Needs physical proximity, not a magic connection'],['whisper','Whisper','Only someone close enough may hear'],['shout','Shout','Audible locally; distance and terrain matter'],['radio','Radio','Requires compatible equipment and an actual signal path'],['phone','Phone','Requires an actual reachable number and network']];
+const ACTIONS={move:'Move to',tell:'Tell',inspect:'Inspect',observe:'Observe',scout:'Scout',hold:'Hold',repair:'Repair',transfer:'Transfer',talk:'Talk to',secure:'Secure'};
+function commandContext(id=state.active){
+  if(!state.contexts||typeof state.contexts!=='object')state.contexts={};
+  let c=state.contexts[id];if(!c||typeof c!=='object')c=state.contexts[id]={recipient:id,action:null,relayTo:null,refs:[],waypoints:[],via:state.viaByThread?.[id]||'radio'};
+  if(!Array.isArray(c.refs))c.refs=[];if(!Array.isArray(c.waypoints))c.waypoints=[];
+  if(!c.via)c.via=state.viaByThread?.[id]||'radio';
+  if(!('recipient'in c))c.recipient=id;
+  return c;
+}
+const entityById=id=>entities.find(e=>e.id===id);
+function routeGuidance(method=commandContext().via){
+ const id=commandContext().recipient,known=PERSON_ROUTES[id]||[];
+ if(method==='shout'||method==='whisper')return `Local ${method}: a remote person may not hear you`;
+ return known.includes(method)?'Last-known route only; delivery unconfirmed':`Unverified route to ${id||'recipient'}; attempt may fail`;
+}
+function showMethod(){const c=commandContext(),method=ROUTES.find(x=>x[0]===c.via)?.[1]||c.via;
+ $('routeBtn').textContent=`VIA: ${method} ▾`; $('routeBtn').title=routeGuidance();
+ $('routeMenu').innerHTML=ROUTES.map(([id,name,detail])=>`<button type="button" class="method-choice" data-method="${id}" aria-pressed="${c.via===id}"><b>${esc(name)}</b><span>${esc(detail)}${(PERSON_ROUTES[c.recipient]||[]).includes(id)?' · Reported route':' · Not verified for this person'}</span></button>`).join('');
+}
+function closeMethod(){$('routeMenu').hidden=true;$('routeBtn').setAttribute('aria-expanded','false')}
+function toggleMethod(){const node=$('routeMenu');node.hidden=!node.hidden;$('routeBtn').setAttribute('aria-expanded',String(!node.hidden));if(!node.hidden)showMethod()}
+function chooseMethod(id){const c=commandContext();c.via=id;state.viaByThread[c.recipient||state.active]=id;closeMethod();renderComposerTokens();persist();inform(`VIA: ${ROUTES.find(m=>m[0]===id)?.[1]} · ${routeGuidance()}. No transmission.`,4400)}
+function changeRecipient(id,moveIntent=false){
+ const prior=commandContext(),oldThread=state.active;
+ const transfer=moveIntent||((prior.refs.length||prior.waypoints.length||prior.action)&&!$('composer').value.trim());
+ const moving=transfer?{action:prior.action,relayTo:prior.relayTo,refs:prior.refs.map(r=>({...r})),waypoints:prior.waypoints.map(r=>({...r}))}:null;
+ setThread(id);
+ const next=commandContext();next.recipient=id;
+ if(moving && !next.refs.length && !next.waypoints.length && !next.action && !($('composer').value.trim())){
+   next.action=moving.action;next.relayTo=moving.relayTo;next.refs=moving.refs;next.waypoints=moving.waypoints;
+   if(oldThread!==id){prior.refs=[];prior.waypoints=[];prior.action=null;prior.relayTo=null;}
+ }
+ state.focusPerson=id;renderComposerTokens();renderChips();drawTarget();persist();
+}
+function setAction(action){const c=commandContext();c.action=action;
+ if(action==='move'){
+   const place=c.refs.find(r=>r.role==='place');if(place){const ob=entityById(place.id);if(ob){c.waypoints.push({x:ob.x,y:ob.y,name:ob.id,snapped:true});state.target={x:ob.x,y:ob.y,name:ob.id};}c.refs=c.refs.filter(x=>x!==place)}
+ }
+ renderComposerTokens();renderChips();drawTarget();persist();
+}
+function removeToken(kind,index){const c=commandContext();if(kind==='recipient')c.recipient='';
+ else if(kind==='action')c.action=null;
+ else if(kind==='relay')c.relayTo=null;
+ else if(kind==='ref')c.refs.splice(index,1);
+ else if(kind==='waypoint'){
+   selectedWaypointIndex=null;c.waypoints.splice(index,1);state.target=c.waypoints.length?{...c.waypoints.at(-1)}:null;drawTarget();
+ }
+ renderComposerTokens();renderChips();persist();
+}
+function prettyDraft(){const c=commandContext(),raw=$('composer').value.trim(),recipient=c.recipient,action=c.action;
+ const names=c.refs.map(r=>r.id);
+ if(!recipient)return `Choose a recipient · ${raw||[action,names.join(', ')].filter(Boolean).join(' ')}`;
+ if(action==='tell')return `${recipient}, tell ${c.relayTo||'…'}${raw?' '+raw:''}`;
+ if(action==='move'){
+   const places=c.waypoints.map(p=>p.name);
+   const dest=places.length?` ${places.length===1?'to':'via'} ${places.join(' → ')}`:'';
+   return `${recipient}, move${dest}${raw?' '+raw:''}`;
+ }
+ if(action){let pre=`${recipient}, ${ACTIONS[action]?.toLowerCase()||action}`;if(names.length)pre+=` ${names.join(', ')}`;return pre+(raw?' '+raw:'');}
+ if(raw){const prefix=new RegExp('^'+recipient.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'[,:]?\\s','i');let text=prefix.test(raw)?raw:`${recipient}, ${raw}`;if(names.length&&!names.some(n=>text.toLowerCase().includes(n.toLowerCase())))text+=` ${names.join(', ')}`;return text;}
+ if(names.length)return `${recipient} · ${names.join(' + ')} · choose action`;
+ return `${recipient} · choose action or type`;
+}
+function renderComposerTokens(){
+ const c=commandContext(),out=[];
+ const chip=(name,kind,index,cls='')=>`<span class="entity-token ${cls}"><span>${esc(name)}</span><button class="token-remove" type="button" data-remove="${kind}" ${index===null?'':`data-index="${index}"`} aria-label="Remove ${esc(name)} from command">×</button></span>`;
+ if(c.recipient)out.push(chip('TO: '+c.recipient,'recipient',null,'person'));
+ if(c.action)out.push(chip(ACTIONS[c.action]||c.action,'action',null,'action'));
+ if(c.relayTo)out.push(chip(c.relayTo,'relay',null,'relay'));
+ c.refs.forEach((r,i)=>out.push(chip(r.id,'ref',i,r.role==='place'?'place':'')));
+ c.waypoints.forEach((p,i)=>out.push(chip(`${i+1} ${p.name}`,'waypoint',i,'place')));
+ $('composerTokens').innerHTML=out.join('');
+ $('composer').placeholder=c.action==='tell'?(c.relayTo?'What should they be told?':'Choose who receives the message…'):c.action==='move'?'Optional route / behavior details…':'Issue an order or ask…';
+ $('commandPreview').textContent=prettyDraft();
+ $('miniRecipient').textContent=(c.recipient||'NO RECIPIENT').toUpperCase()+' · '+(ROUTES.find(m=>m[0]===c.via)?.[1]||'VIA ?').toUpperCase();
+ showMethod();updateDraftContext();setDockMetrics();
+}
+function selectEntity(id){
+ const ob=entityById(id);if(!ob)return;
+ closeEntityMenu();state.focusEntity=id;state.inventoryAll=false;
+ if(multi){state.selected=state.selected.includes(id)?state.selected.filter(x=>x!==id):[...state.selected,id];
+   const members=state.selected.filter(x=>['person','vehicle'].includes(entityById(x)?.type));
+   if(members.length>1){const key=`Selected (${members.length})`;if(!state.threadTexts[key])state.threadTexts[key]=[];state.selectedThreadMembers[key]=members;changeRecipient(key);}
+   else if(members.length===1&&state.active.startsWith('Selected ('))changeRecipient(members[0]);
+ }else{
+   state.selected=[id];
+   if(ob.type==='person'||ob.type==='vehicle'){
+     state.focusPerson=id;
+     const c=commandContext();
+     if(c.action==='tell'&&c.recipient&&c.recipient!==id){c.relayTo=id;inform(`${c.recipient} will be asked to tell ${id}. Draft only; no delivery.`,3900);}
+     else if(c.action==='talk'&&c.recipient!==id){c.refs=[...c.refs.filter(r=>r.role!=='person-target'),{id,role:'person-target'}];}
+     else if(state.active!==id)changeRecipient(id);else commandContext().recipient=id;
+   }else{
+     state.focusObject=id;
+     const c=commandContext();
+     if(c.action==='move')addWaypoint({x:ob.x,y:ob.y,name:ob.id,snapped:true});
+     else if(!c.refs.some(r=>r.id===id))c.refs.push({id,role:'place'});
+   }
+ }
+ persist();drawEntities();drawTarget();updateInspect();renderComposerTokens();renderChips();
+}
+function closeEntityMenu(){$('entityMenu').hidden=true;$('entityMenu').dataset.entity=''}
+function openEntityMenu(){closeEntityMenu()} // Replaced by the universal composer.
+function updateInspect(){$('inspectBar').style.display='none';$('selectionRestore').hidden=true}
+function applyRecipients(){
+ const ids=state.selected.filter(id=>['person','vehicle'].includes(entityById(id)?.type));if(!ids.length)return;
+ const id=ids.length===1?ids[0]:`Selected (${ids.length})`;if(!state.threadTexts[id])state.threadTexts[id]=[];
+ state.selectedThreadMembers[id]=ids;changeRecipient(id);inform(`TO ${id}; no order has been sent.`);
+}
+function addWaypoint(p){const c=commandContext();selectedWaypointIndex=null;
+ if(c.waypoints.length>=12){inform('This prototype supports up to 12 waypoints.');return}
+ c.waypoints.push({x:p.x,y:p.y,name:p.name,snapped:!!p.snapped});
+ c.action='move';state.target={x:p.x,y:p.y,name:p.name};aim=false;aimRole='target';
+ $('aimBtn').classList.remove('pressed');$('aimBtn').setAttribute('aria-pressed','false');
+ drawTarget();renderComposerTokens();renderChips();persist();
+ inform(`Waypoint ${c.waypoints.length}: ${p.name} · Draft route only; nothing transmitted.`);
+}
+function appendTargetIntoDraft(){if(!state.target)return;const c=commandContext(),p={...state.target,snapped:!!entityById(state.target.name)};
+ if(c.action==='move')addWaypoint(p);else if(!c.refs.some(r=>r.id===p.name)){
+   c.refs.push({id:p.name,role:'place'});renderComposerTokens();renderChips();persist();
+ }
+}
+function mapTargetAt(clientX,clientY){
+ closeEntityMenu();const p=toWorld(clientX,clientY);
+ p.x=Math.max(-150,Math.min(600,p.x));p.y=Math.max(-150,Math.min(920,p.y));
+ // Snap taps as well as drags, using CSS-pixel proximity.
+ const matrix=$('mapWorld').getScreenCTM();let near=null,dist=Infinity;
+ for(const ob of entities.filter(x=>x.type==='object')){
+   if(!matrix)break;const v=$('mapSvg').createSVGPoint();v.x=ob.x;v.y=ob.y;
+   const screen=v.matrixTransform(matrix),d=Math.hypot(screen.x-clientX,screen.y-clientY);
+   if(d<dist){dist=d;near=ob}
+ }
+ const point=near&&dist<=28?{x:near.x,y:near.y,name:near.id,snapped:true}:{...p,name:`Grid ${Math.round(p.x/10)}:${Math.round(p.y/10)}`,snapped:false};
+ if(point.snapped){state.focusEntity=point.name;state.focusObject=point.name;state.inventoryAll=false;}
+ if(aimRole==='waypoint'||commandContext().action==='move')addWaypoint(point);
+ else{state.target={x:point.x,y:point.y,name:point.name};appendTargetIntoDraft();drawTarget();}
+ aim=false;aimRole='target';$('aimBtn').classList.remove('pressed');$('aimBtn').setAttribute('aria-pressed','false');transformMap();persist();
+}
+ const pointers=new Map();
+ let mapGesture=null, holdTimer=null;
+ const HOLD_MS=410, HOLD_SLOP=9, DROP_DISTANCE=20;
+ const SNAP_ENTER_PX=27, SNAP_EXIT_PX=43;
+ const isMovable=id=>entities.some(e=>e.id===id&&(e.type==='person'||e.type==='vehicle'));
+ function clearHold(){if(holdTimer!==null){clearTimeout(holdTimer);holdTimer=null}}
+ function clearDragPreview(){ $('dragLayer').replaceChildren();$('dragStatus').hidden=true; }
+ function cancelDragVisuals(){
+   clearHold();clearDragPreview();marquee?.remove();marquee=null;
+   // Hide only during an active new move, never erase the previous draft on cancel.
+   if(hideTargetDuringMove){hideTargetDuringMove=false;drawTarget();}
+ }
+ function dragDestination(g,clientX,clientY){
+   const cursor=toWorld(clientX,clientY);
+   // Compare in screen pixels, not map units: zooming must not change touch accuracy.
+   const matrix=$('mapWorld').getScreenCTM();
+   let nearest=null,nearestDistance=Infinity;
+   if(state.layers.objects&&matrix){
+     for(const ob of entities.filter(e=>e.type==='object')){
+       const sp=$('mapSvg').createSVGPoint();sp.x=ob.x;sp.y=ob.y;
+       const screen=sp.matrixTransform(matrix);
+       const distance=Math.hypot(screen.x-clientX,screen.y-clientY);
+       if(distance<nearestDistance){nearest=ob;nearestDistance=distance;}
+       // Hysteresis: a snapped target stays selected until the finger really leaves.
+       if(g.snapTarget===ob.id&&distance<=SNAP_EXIT_PX){
+         return {x:ob.x,y:ob.y,name:ob.id,snapped:true};
+       }
+     }
+   }
+   if(nearest&&nearestDistance<=SNAP_ENTER_PX){g.snapTarget=nearest.id;return {x:nearest.x,y:nearest.y,name:nearest.id,snapped:true};}
+   g.snapTarget=null;
+   return {x:cursor.x,y:cursor.y,name:`Grid ${Math.round(cursor.x/10)}:${Math.round(cursor.y/10)}`,snapped:false};
+ }
+ function renderDragPreview(g,clientX,clientY){
+   const ob=entities.find(o=>o.id===g.entity);if(!ob)return;
+   const p=dragDestination(g,clientX,clientY),layer=$('dragLayer');layer.replaceChildren();
+   g.destination=p;
+   svgNode('path',{class:'drag-guide',d:`M ${ob.x} ${ob.y} L ${p.x.toFixed(1)} ${p.y.toFixed(1)}`},layer);
+   svgNode('circle',{class:'drag-ring',cx:ob.x,cy:ob.y,r:23},layer);
+   if(p.snapped)svgNode('circle',{class:'drag-snap-halo',cx:p.x,cy:p.y,r:20},layer);
+   svgNode('circle',{class:`drag-point${p.snapped?' snapped':''}`,cx:p.x,cy:p.y,r:p.snapped?12:10},layer);
+   svgNode('text',{class:'drag-text',x:p.x+13,y:p.y-13},layer).textContent=p.snapped?'SNAPPED':'MOVE DRAFT';
+   $('dragStatus').textContent=`${ob.name} → ${p.name}${p.snapped?' · destination locked':''} · Release to prepare, not send`;
+   $('dragStatus').hidden=false;
+ }
+ function renderWaypointExtension(g,clientX,clientY){
+   const start=commandContext().waypoints[g.waypointIndex];if(!start)return;
+   const dest=dragDestination(g,clientX,clientY),layer=$('dragLayer');layer.replaceChildren();g.destination=dest;
+   svgNode('path',{class:'drag-guide',d:`M ${start.x} ${start.y} L ${dest.x.toFixed(1)} ${dest.y.toFixed(1)}`},layer);
+   if(dest.snapped)svgNode('circle',{class:'drag-snap-halo',cx:dest.x,cy:dest.y,r:20},layer);
+   svgNode('circle',{class:`drag-point${dest.snapped?' snapped':''}`,cx:dest.x,cy:dest.y,r:dest.snapped?12:10},layer);
+   $('dragStatus').textContent=`Add waypoint ${g.waypointIndex+2}: ${dest.name}. Release to append; no order sent.`;
+   $('dragStatus').hidden=false;
+ }
+ function validDrop(x,y){
+   const r=$('mapArea').getBoundingClientRect();
+   if(x<r.left||x>r.right||y<r.top||y>r.bottom)return false;
+   const hit=document.elementFromPoint(x,y);
+   return !hit?.closest?.('#maptools,#dock,#miniTray,#alertBox,#inspectBar,#selectionRestore,#entityMenu,#workspaceSheet,#leftDrawer,#rightDrawer,#dragStatus');
+ }
+ function prepareHeldMove(g,e){
+   const ob=entityById(g.entity);if(!ob)return;
+   const p=dragDestination(g,e.clientX,e.clientY);
+   p.x=Math.max(-150,Math.min(600,p.x));p.y=Math.max(-150,Math.min(920,p.y));
+   // Gesture means MOVE and replaces the prior route. + Waypoint is how to extend it.
+   if(state.active!==ob.id)changeRecipient(ob.id);
+   selectedWaypointIndex=null;const c=commandContext();c.recipient=ob.id;c.action='move';c.relayTo=null;c.waypoints=[{...p}];
+   c.refs=c.refs.filter(r=>r.role!=='place');
+   state.selected=[ob.id];state.focusPerson=ob.id;state.focusEntity=ob.id;state.inventoryAll=false;state.target={...p};
+   persist();drawEntities();drawTarget();renderComposerTokens();renderChips();
+   inform(`${ob.name}: movement draft to ${p.name}. Add a waypoint or type details; nothing sent.`,4600);
+ }
+ function initPointer(){
+   const node=$('mapSvg'),overlay=$('mapArea');
+   node.addEventListener('contextmenu',e=>{if(e.target.closest?.('[data-entity]'))e.preventDefault()});
+   node.addEventListener('keydown',e=>{
+     const erase=e.target.closest?.('[data-delete-waypoint]')?.dataset.deleteWaypoint;
+     const wp=e.target.closest?.('[data-waypoint-index]')?.dataset.waypointIndex;
+     if((e.key==='Enter'||e.key===' ')&&erase!==undefined){e.preventDefault();removeToken('waypoint',Number(erase));inform('Waypoint removed from draft route. Nothing sent.');return}
+     if((e.key==='Enter'||e.key===' ')&&wp!==undefined){e.preventDefault();selectedWaypointIndex=Number(wp);drawTarget();return}
+     const id=e.target.closest?.('[data-entity]')?.dataset.entity;
+     if(id&&(e.key==='Enter'||e.key===' ')){
+       e.preventDefault();selectEntity(id);
+       $('composer').focus({preventScroll:true});
+     }
+   });
+
+   node.addEventListener('pointerdown',e=>{
+     if(e.button!==0)return;
+     closeEntityMenu();node.setPointerCapture(e.pointerId);
+     pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+     const p=toSvg(e.clientX,e.clientY);
+     if(pointers.size>=2){
+       cancelDragVisuals();const ps=[...pointers.values()];
+       mapGesture={kind:'pinch',startDistance:Math.hypot(ps[0].x-ps[1].x,ps[0].y-ps[1].y),zoom,pan:{...pan}};
+       return;
+     }
+     const deleteIndex=e.target.closest?.('[data-delete-waypoint]')?.dataset.deleteWaypoint;
+     const waypointIndex=e.target.closest?.('[data-waypoint-index]')?.dataset.waypointIndex;
+     if(deleteIndex!==undefined){mapGesture={kind:'delete-waypoint',pointerId:e.pointerId,waypointIndex:Number(deleteIndex),startX:e.clientX,startY:e.clientY};return}
+     if(waypointIndex!==undefined){mapGesture={kind:'waypoint-press',pointerId:e.pointerId,waypointIndex:Number(waypointIndex),startX:e.clientX,startY:e.clientY,p0:p,pan0:{...pan},moved:false,snapTarget:null};return}
+     const entity=e.target.closest?.('[data-entity]')?.dataset.entity;
+     const g=mapGesture={kind:'single',pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,p0:p,pan0:{...pan},moved:false,entity};
+     if(entity&&isMovable(entity)&&!aim){
+       holdTimer=setTimeout(()=>{
+         holdTimer=null;
+         if(mapGesture!==g||g.kind!=='single'||g.moved||!pointers.has(g.pointerId)||pointers.size!==1)return;
+         g.kind='drag-unit';
+         // The last destination stops competing visually with the new choice.
+         hideTargetDuringMove=true;drawTarget();
+         marquee?.remove();marquee=null;
+         try{if(typeof navigator.vibrate==='function')navigator.vibrate(18)}catch{}
+         renderDragPreview(g,g.startX,g.startY);
+         $('mapZoomLabel').textContent='HOLD ACTIVE · DRAG TO PREPARE MOVE';
+       },HOLD_MS);
+     }
+     if(multi&&!aim){
+       marquee=document.createElement('div');
+       marquee.style.cssText='position:absolute;z-index:3;border:1px dashed #e3b457;background:rgba(234,179,74,.13);pointer-events:none;display:none;';
+       overlay.append(marquee);
+     }
+   });
+   node.addEventListener('pointermove',e=>{
+     if(!pointers.has(e.pointerId))return;
+     pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+     if(pointers.size>=2){
+       const a=[...pointers.values()],d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);
+       if(d>10){
+         const center=toSvg((a[0].x+a[1].x)/2,(a[0].y+a[1].y)/2);
+         const factor=Math.max(.72,Math.min(3.6,(mapGesture?.zoom||zoom)*d/(mapGesture?.startDistance||d)));
+         const prev=zoom;zoom=factor;
+         pan.x=center.x-(center.x-pan.x)*factor/prev;
+         pan.y=center.y-(center.y-pan.y)*factor/prev;
+         transformMap();
+       }
+       return;
+     }
+     if(!mapGesture||mapGesture.pointerId!==e.pointerId)return;
+     if(mapGesture.kind==='drag-unit'){
+       renderDragPreview(mapGesture,e.clientX,e.clientY);
+       return;
+     }
+     if(mapGesture.kind==='drag-waypoint'){renderWaypointExtension(mapGesture,e.clientX,e.clientY);return}
+     if(mapGesture.kind==='waypoint-press'){
+       const d=Math.hypot(e.clientX-mapGesture.startX,e.clientY-mapGesture.startY);
+       if(d<=HOLD_SLOP)return;
+       if(mapGesture.waypointIndex===commandContext().waypoints.length-1){
+         mapGesture.kind='drag-waypoint';renderWaypointExtension(mapGesture,e.clientX,e.clientY);return;
+       }
+       mapGesture.kind='single';mapGesture.moved=true;
+     }
+     if(mapGesture.kind==='delete-waypoint')return;
+     if(mapGesture.kind!=='single')return;
+     const dx=e.clientX-mapGesture.startX,dy=e.clientY-mapGesture.startY;
+     if(Math.hypot(dx,dy)>HOLD_SLOP){mapGesture.moved=true;clearHold()}
+     if(mapGesture.moved&&multi&&!aim){
+       const rect=overlay.getBoundingClientRect();
+       const a=mapGesture.startX-rect.left,b=mapGesture.startY-rect.top;
+       const x=e.clientX-rect.left,y=e.clientY-rect.top;
+       if(marquee){marquee.style.display='block';Object.assign(marquee.style,{left:`${Math.min(a,x)}px`,top:`${Math.min(b,y)}px`,width:`${Math.abs(x-a)}px`,height:`${Math.abs(y-b)}px`})}
+     }else if(mapGesture.moved){
+       const p=toSvg(e.clientX,e.clientY);
+       pan={x:mapGesture.pan0.x+p.x-mapGesture.p0.x,y:mapGesture.pan0.y+p.y-mapGesture.p0.y};
+       transformMap();
+     }
+   });
+   function end(e){
+     if(!pointers.has(e.pointerId))return;
+     const wasPinch=pointers.size>=2;
+     pointers.delete(e.pointerId);
+     if(wasPinch||mapGesture?.kind==='pinch'){
+       cancelDragVisuals();mapGesture=null;transformMap();return;
+     }
+     const g=mapGesture;
+     if(!g||g.pointerId!==e.pointerId)return;
+     mapGesture=null;clearHold();
+     // Cancelled touch/capture never issues an order or selects another target.
+     if(e.type!=='pointerup'){cancelDragVisuals();transformMap();return}
+     if(g.kind==='delete-waypoint'){
+       if(Math.hypot(e.clientX-g.startX,e.clientY-g.startY)<=HOLD_SLOP){removeToken('waypoint',g.waypointIndex);inform('Waypoint removed from route draft. No order sent.')}
+       clearDragPreview();transformMap();return;
+     }
+     if(g.kind==='waypoint-press'){selectedWaypointIndex=g.waypointIndex;drawTarget();inform('Waypoint selected. Tap the red × to remove it, or drag the LAST waypoint to extend your route.');transformMap();return}
+     if(g.kind==='drag-waypoint'){
+       if(Math.hypot(e.clientX-g.startX,e.clientY-g.startY)>=DROP_DISTANCE&&validDrop(e.clientX,e.clientY))addWaypoint(dragDestination(g,e.clientX,e.clientY));
+       else inform('Route extension cancelled.');
+       clearDragPreview();transformMap();return;
+     }
+     if(g.kind==='drag-unit'){
+       const distance=Math.hypot(e.clientX-g.startX,e.clientY-g.startY);
+       if(distance>=DROP_DISTANCE&&validDrop(e.clientX,e.clientY))prepareHeldMove(g,e);
+       else if(distance>=DROP_DISTANCE)inform('Move cancelled: release over the map, away from controls.');
+       else {selectEntity(g.entity);inform('Hold recognized. Drag to a destination to prepare a move.');}
+       cancelDragVisuals();transformMap();return;
+     }
+     if(g.kind==='single'&&g.moved&&multi&&!aim&&marquee){
+       const r=marquee.getBoundingClientRect(),picks=[];
+       for(const ob of entities){
+         const elem=$('entityLayer').querySelector(`[data-entity="${CSS.escape(ob.id)}"]`);
+         if(!elem||elem.style.display==='none')continue;
+         const center=(elem.querySelector('.mark')||elem).getBoundingClientRect();
+         const cx=center.left+center.width/2,cy=center.top+center.height/2;
+         if(cx>=r.left&&cx<=r.right&&cy>=r.top&&cy<=r.bottom)picks.push(ob.id);
+       }
+       state.selected=[...new Set([...state.selected,...picks])];
+       drawEntities();updateInspect();renderChips();persist();
+       inform(picks.length?`${picks.length} map markers selected`:'No markers inside selection box');
+     }else if(g.kind==='single'&&!g.moved){
+       if(aim)mapTargetAt(e.clientX,e.clientY);
+       else if(g.entity){selectEntity(g.entity);}
+       else if(!multi){state.selected=[];drawEntities();updateInspect();renderChips()}
+     }
+     cancelDragVisuals();
+   }
+   node.addEventListener('pointerup',end);
+   node.addEventListener('pointercancel',end);
+   node.addEventListener('lostpointercapture',e=>{
+     if(!pointers.has(e.pointerId))return;
+     pointers.delete(e.pointerId);mapGesture=null;cancelDragVisuals();transformMap();
+   });
+   node.addEventListener('wheel',e=>{
+     e.preventDefault();zoomMap(e.deltaY<0?1.12:1/1.12,toSvg(e.clientX,e.clientY));
+   },{passive:false});
+ }
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1)}
+function renderThreads(){const ids=[...state.pins,...state.recent.filter(x=>!state.pins.includes(x))];if(!ids.includes(state.active))ids.unshift(state.active);$('threadTabs').innerHTML=ids.map(id=>`<button type="button" role="tab" class="tab ${state.active===id?'on':''}" data-thread="${esc(id)}" aria-selected="${state.active===id}">${state.pins.includes(id)?'<span class="pin">◆</span>':''}${esc(id)}</button>`).join('');$('pinBtn').style.color=state.pins.includes(state.active)?'var(--gold)':'';$('pinBtn').title=state.pins.includes(state.active)?'Unpin conversation':'Pin conversation (2 max)';$('pinBtn').setAttribute('aria-label',state.pins.includes(state.active)?'Unpin conversation':'Pin current conversation')}
+function setThread(id){
+ if(!state.threadTexts[id])state.threadTexts[id]=[];
+ state.drafts[state.active]=$('composer').value;
+ state.active=id;state.recent=[id,...state.recent.filter(x=>x!==id)];
+ $('composer').value=state.drafts[id]||'';resizeComposer();expandedRows.clear();closeMethod();
+ const c=commandContext();const last=c.waypoints.at(-1)||c.refs.map(r=>entityById(r.id)).filter(Boolean).at(-1);
+ state.target=last?{x:last.x,y:last.y,name:last.name||last.id}:null;drawTarget();
+ persist();renderThreads();renderMessages();renderComposerTokens();renderChips();
+}
+function msgHTML(item){const isReply=item.type==='reply',key=item.id;return `<div class="message"><button class="message-row ${isReply?'reply':''}" type="button" aria-expanded="${expandedRows.has(key)}" data-expand="${esc(key)}"><span class="direction">${isReply?'↙':'↗'}</span><span class="line">${esc(item.text)}</span><span class="exp">${expandedRows.has(key)?'▾':'›'}</span></button><div class="message-detail" ${expandedRows.has(key)?'':'hidden'}>${esc(item.detail||'Demo record')}</div></div>`}
+function renderMessages(){const arr=state.threadTexts[state.active]||[];const rows=state.expanded?arr.slice(-18):arr.slice(-2);$('dockChat').innerHTML=rows.length?rows.map(msgHTML).join(''):'<span style="font-size:11px;color:#a8b7a4;display:block;padding:4px">No conversation in this demo thread.</span>';requestAnimationFrame(()=>{if(state.expanded)$('dockChat').scrollTop=$('dockChat').scrollHeight})}
+function suggestionChips(){
+ const c=commandContext(),v=$('composer').value.trim().toLowerCase();
+ if(c.action==='tell'&&!c.relayTo){
+   const recommended=Object.keys(PERSON_ROUTES).filter(id=>id!==c.recipient&&(PERSON_ROUTES[id]||[]).some(m=>(PERSON_ROUTES[c.recipient]||[]).includes(m)));
+   return [...recommended.slice(0,4),'Find person…'];
+ }
+ if(c.action==='move')return [...(c.waypoints.length?['+ Waypoint','Replace route']:['Map target','Ridge','Staging Area','Old Bridge']), 'Carefully','Then report','Hold there'];
+ if(c.action)return ['Map target',c.action==='repair'?'Repair kit':'Report','Carefully','Then report'];
+ const types=c.refs.map(r=>r.role),hasPlace=types.includes('place'),hasItem=types.includes('item');
+ if(hasItem)return ['Inspect','Repair','Transfer','Locate','Tell'];
+ if(hasPlace)return ['Move to','Scout','Observe','Secure','Inspect'];
+ if(/^tell\s*$/i.test(v))return Object.keys(PERSON_ROUTES).filter(n=>n!==c.recipient).slice(0,4);
+ if(/^(move|go|scout|inspect|observe)\s*(to|at|toward)?\s*$/i.test(v))return ['Map target','Ridge','Staging Area','Old Bridge'];
+ if(v)return ['Move to','Tell','Map target','Carefully','Then report'];
+ return ['Move to','Tell','Observe','Inspect','Hold','Scout','Repair'];
+}
+function renderChips(){const chips=suggestionChips();$('cmdChips').innerHTML=chips.map(c=>`<button type="button" class="cmdchip ${c==='Map target'||c==='+ Waypoint'?'special':''}" data-chip="${esc(c)}">${c==='Map target'?'◎ ':''}${esc(c)}</button>`).join('');renderComposerTokens();}
+function chooseChip(value){
+ const verbs={'Move to':'move','Tell':'tell','Inspect':'inspect','Observe':'observe','Hold':'hold','Scout':'scout','Repair':'repair','Transfer':'transfer','Secure':'secure','Talk to':'talk'};
+ if(verbs[value]){setAction(verbs[value]);return}
+ if(value==='Use selection'){applyRecipients();return}
+ if(value==='Find person…'){navigate('People');return}
+ if(value==='Replace route'){commandContext().waypoints=[];state.target=null;setAction('move');aim=true;aimRole='waypoint';$('aimBtn').classList.add('pressed');inform('Tap a new first waypoint. The old route stays saved until you choose.');return}
+ if(value==='Map target'||value==='+ Waypoint'){
+   aim=true;aimRole=value==='+ Waypoint'?'waypoint':'target';
+   $('aimBtn').setAttribute('aria-pressed','true');$('aimBtn').classList.add('pressed');transformMap();
+   inform(aimRole==='waypoint'?'Tap map to ADD the next route point.':'Tap map to add a command reference; no order will be sent.');return;
+ }
+ const person=entityById(value);
+ if(person){selectEntity(value);return}
+ if(['Ridge','Old Bridge','Staging Area'].includes(value)){
+   const ob=entityById(value);if(commandContext().action==='move')addWaypoint({x:ob.x,y:ob.y,name:ob.id,snapped:true});
+   else{const c=commandContext();if(!c.refs.some(r=>r.id===value))c.refs.push({id:value,role:'place'});renderChips();persist();}
+   return;
+ }
+ if(['Carefully','Then report','Hold there'].includes(value)){
+   $('composer').value=[$('composer').value.trim(),value.toLowerCase()].filter(Boolean).join(' ');setDraft();return;
+ }
+ $('composer').value=[$('composer').value.trim(),value].filter(Boolean).join(' ');setDraft();
+}
+function resizeComposer(){const el=$('composer');el.style.height='42px';el.style.height=Math.min(88,Math.max(42,el.scrollHeight))+'px';setDockMetrics()}
+function setDraft(){state.drafts[state.active]=$('composer').value;persist();resizeComposer();renderChips()}
+function updateDraftContext(){const c=commandContext();$('draftContext').textContent=`${c.recipient?'TO '+c.recipient.toUpperCase():'NO RECIPIENT'} · DEMO ONLY`;}
+function send(){const c=commandContext(),raw=$('composer').value.trim();
+ if(!c.recipient){inform('Choose who you are addressing before issuing this command.');return}
+ if(c.action==='tell'&&!c.relayTo){inform('Choose who '+c.recipient+' should tell before issuing this order.');return}
+ if(!raw&&!c.action){inform('Choose an action or type an instruction first.');return}
+ if(c.action==='move'&&!c.waypoints.length&&!raw){inform('Choose a movement destination or describe it.');return}
+ if(entityById(c.recipient)?.type==='vehicle')inform('Demo: real vehicle orders will require an authorized operator/crew or automation channel.',4200);
+ const txt=prettyDraft(),when=clock(),arr=state.threadTexts[state.active]||(state.threadTexts[state.active]=[]);
+ arr.push({id:'own-'+Date.now(),type:'out',text:txt,when,detail:`Captured ${when} in this browser only · TO ${c.recipient} · VIA ${c.via} (${routeGuidance()}) · NO NETWORK REQUEST · NOT TRANSMITTED`});
+ arr.push({id:'local-'+Date.now(),type:'platform',text:'LOCAL DEMO • Not transmitted.',when,detail:'UI interaction only. Recipient, action, route and map selections were saved for demonstration; actual simulated delivery is not implemented.'});
+ state.drafts[state.active]='';$('composer').value='';c.action=null;c.relayTo=null;c.refs=[];c.waypoints=[];state.target=null;
+ drawTarget();resizeComposer();persist();renderMessages();renderChips();inform('Recorded in this local demo only. Nothing was sent to the game.');
+}
+function pinThread(){if(state.pins.includes(state.active)){state.pins=state.pins.filter(x=>x!==state.active)}else if(state.pins.length<2){state.pins.push(state.active)}else{inform('Two conversation pins on a phone. Unpin one first.');return}persist();renderThreads()}
+function renderDock(){const dock=$('dock');dock.classList.toggle('minimized',state.minimized);dock.classList.toggle('expanded',state.expanded);dock.classList.toggle('convo-hidden',state.hideConvo);$('miniTray').style.display=state.minimized?'flex':'none';renderComposerTokens();$('dockRestoreConvo').hidden=!state.hideConvo;$('convoExpandBtn').setAttribute('aria-label',state.expanded?'Shrink conversation':'Expand conversation');$('convoHideBtn').setAttribute('aria-label',state.hideConvo?'Show conversation':'Hide conversation');setDockMetrics();}
+function setDockMetrics(){const dock=$('dock'),main=$('main');const actual=state.minimized?48:(dock.getBoundingClientRect().height||154);main.style.setProperty('--dock-h',actual+'px');main.style.setProperty('--alert-offset',(actual+18)+'px');placeAlert();}
+function alertBounds(){
+ const main=$('main'),node=$('alertBox'),clearance=state.minimized?57:($('dock').offsetHeight+18);
+ return {x:Math.max(0,main.clientWidth-node.offsetWidth-7),y:Math.max(0,main.clientHeight-clearance-node.offsetHeight-7)};
+}
+function placeAlert(){
+ const box=$('alertBox'),main=$('main');if(!main.clientHeight)return;
+ const bounds=alertBounds(),p=state.alertPos||{x:1,y:1};
+ const left=7+Math.max(0,Math.min(1,Number(p.x)||0))*bounds.x;
+ const top=7+Math.max(0,Math.min(1,Number(p.y)||0))*bounds.y;
+ box.style.left=Math.round(left)+'px';box.style.top=Math.round(top)+'px';
+ // The expanded inbox opens without moving the compact notification trigger.
+ const peekWidth=Math.min(300,Math.max(140,main.clientWidth-16));
+ const preferredLeft=left+box.offsetWidth-peekWidth;
+ const actualPeekLeft=Math.min(Math.max(8,preferredLeft),Math.max(8,main.clientWidth-peekWidth-8));
+ box.style.setProperty('--peek-left',Math.round(actualPeekLeft-left)+'px');
+ const above=top-9;
+ const clearance=state.minimized?57:($('dock').offsetHeight+18);
+ const below=Math.max(0,main.clientHeight-clearance-top-box.offsetHeight-10);
+ const peekBelow=above<135&&below>above;
+ box.classList.toggle('peek-below',peekBelow);
+ box.style.setProperty('--peek-limit',Math.max(18,Math.min(330,peekBelow?below:above))+'px');
+}
+function moveAlertBy(dx,dy,original){
+ const b=alertBounds(),ox=original.x*b.x,oy=original.y*b.y;
+ state.alertPos={x:b.x?Math.min(1,Math.max(0,(ox+dx)/b.x)):0,y:b.y?Math.min(1,Math.max(0,(oy+dy)/b.y)):0};
+ placeAlert();
+}
+function initAlertDragging(){
+ const button=$('alertToggle'),HOLD_ALERT_MS=410,HOLD_ALERT_SLOP=9;
+ let gesture=null,holdTimer=null,suppressPointerClickUntil=0;
+ const cancelTimer=()=>{if(holdTimer!==null){clearTimeout(holdTimer);holdTimer=null;}};
+ button.addEventListener('pointerdown',e=>{
+   if(e.button!==0||e.isPrimary===false)return;
+   cancelTimer();
+   const p=state.alertPos||{x:1,y:1};
+   const g=gesture={pointerId:e.pointerId,x:e.clientX,y:e.clientY,origin:{...p},activated:false,cancelled:false,moved:false};
+   button.setPointerCapture(e.pointerId);
+   holdTimer=setTimeout(()=>{
+     holdTimer=null;
+     if(gesture!==g||g.cancelled)return;
+     g.activated=true;
+     button.classList.add('repositioning');
+     try{if(typeof navigator.vibrate==='function')navigator.vibrate(18)}catch{}
+   },HOLD_ALERT_MS);
+ });
+ button.addEventListener('pointermove',e=>{
+   const g=gesture;if(!g||g.pointerId!==e.pointerId)return;
+   const dx=e.clientX-g.x,dy=e.clientY-g.y,travel=Math.hypot(dx,dy);
+   if(!g.activated){if(travel>HOLD_ALERT_SLOP){g.cancelled=true;cancelTimer();}return;}
+   e.preventDefault();
+   if(travel>2){g.moved=true;moveAlertBy(dx,dy,g.origin);}
+ });
+ const finish=e=>{
+   const g=gesture;if(!g||g.pointerId!==e.pointerId)return;
+   cancelTimer();button.classList.remove('repositioning');
+   if(e.type==='pointercancel'&&g.activated){state.alertPos=g.origin;placeAlert();}
+   else if(g.activated&&g.moved)persist();
+   if(g.activated||g.cancelled)suppressPointerClickUntil=performance.now()+750;
+   gesture=null;
+ };
+ button.addEventListener('pointerup',finish);
+ button.addEventListener('pointercancel',finish);
+ button.addEventListener('lostpointercapture',e=>{
+   if(gesture?.pointerId!==e.pointerId)return;
+   const g=gesture;cancelTimer();button.classList.remove('repositioning');
+   if(g.activated){state.alertPos=g.origin;placeAlert();}
+   gesture=null;
+ });
+ button.addEventListener('click',e=>{
+   // Keyboard/assistive clicks always work; a completed hold must never open the inbox.
+   if(e.detail!==0&&performance.now()<suppressPointerClickUntil){e.preventDefault();return;}
+   showAlert();
+ });
+ button.addEventListener('contextmenu',e=>e.preventDefault());
+ button.addEventListener('keydown',e=>{
+   if(!e.shiftKey)return;
+   const delta=({ArrowLeft:[-12,0],ArrowRight:[12,0],ArrowUp:[0,-12],ArrowDown:[0,12]})[e.key];
+   if(!delta)return;e.preventDefault();
+   moveAlertBy(delta[0],delta[1],state.alertPos||{x:1,y:1});persist();
+ });
+}
+function toggleDockMin(value=!state.minimized){state.minimized=value;persist();renderDock();if(!state.minimized)renderMessages()}
+function showAlert(open=!alertOpen){alertOpen=open;$('alertBox').classList.toggle('open',open);$('alertPeek').hidden=!open;$('alertToggle').setAttribute('aria-expanded',String(open));renderAlerts();setDockMetrics();}
+function renderAlerts(){const filtered=alerts.filter(a=>state.alertFilter==='all'||a.kind===state.alertFilter);$('alertList').innerHTML=filtered.map(a=>`<button class="event-entry ${a.priority?'priority':''}" type="button" data-alert-id="${esc(a.id)}"><b>${a.priority?'! ':''}${esc(a.title)}</b><span>${esc(a.when)} · ${esc(a.body)}</span></button>`).join('');document.querySelectorAll('[data-alert-filter]').forEach(el=>el.classList.toggle('selected',el.dataset.alertFilter===state.alertFilter));$('alertCaption').textContent=state.quiet?'Updates muted · 3 demo records':'Santos awaiting instructions';$('alertCount').textContent=alerts.length}
+function dismissDrawers(){leftOpen=false;rightOpen=false;$('leftDrawer').hidden=true;$('rightDrawer').hidden=true;$('shade').hidden=true;$('menuBtn').setAttribute('aria-expanded','false');$('contextBtn').setAttribute('aria-expanded','false')}
+function openDrawer(side){if((side==='left'&&leftOpen)||(side==='right'&&rightOpen)){dismissDrawers();return}dismissDrawers();if(side==='left'){leftOpen=true;$('leftDrawer').hidden=false;$('menuBtn').setAttribute('aria-expanded','true')}else{rightOpen=true;$('rightDrawer').hidden=false;$('contextBtn').setAttribute('aria-expanded','true');renderContext()}$('shade').hidden=false}
+function rowToggle(name,label,checked){return `<label class="toggle-row">${esc(label)}<input type="checkbox" data-layer="${esc(name)}" ${checked?'checked':''}></label>`}
+function renderContext(){const $b=$('rightBody');$('rightTitle').textContent=(panelView==='Facilities'?'PLACES':panelView||'Map').toUpperCase()+' / TOOLS';if(!panelView||panelView==='Map'){$b.innerHTML=`<div class="drawer-section"><h3>MAP LAYERS</h3>${[['terrain','Contours & water'],['grid','Reference grid'],['routes','Known routes'],['contacts','Reported contacts'],['objects','Known objectives'],['labels','Marker labels'],['zones','Briefing areas']].map(([k,l])=>rowToggle(k,l,state.layers[k])).join('')}<p>Show/hide changes presentation only. Hidden intelligence never becomes visible merely by enabling a layer.</p></div><div class="drawer-section"><h3>INTERACTION</h3><button class="drawer-list-btn" data-tool="multi">${multi?'✓ ':''}Multi-select markers</button><button class="drawer-list-btn" data-tool="target">Pick order target from map</button><button class="drawer-list-btn" data-tool="resetZoom">Reset map view</button><button class="drawer-list-btn" data-tool="resetAlerts">Reset field updates position</button></div>`}else if(panelView==='People'){$b.innerHTML=`<div class="drawer-section"><h3>PEOPLE FILTER</h3><p>The demo has a small static roster. Sort and relationship filters will eventually depend on player-known reports.</p><button class="drawer-list-btn" data-tool="allThreads">All conversations</button></div>`}else if(panelView==='Items'){$b.innerHTML='<div class="drawer-section"><h3>EQUIPMENT CONTEXT</h3><p>Sample categories: tools, supplies, communication and reconnaissance. No inventory backend is connected.</p></div>'}else if(panelView==='Facilities'){$b.innerHTML='<div class="drawer-section"><h3>PLACE CONTEXT</h3><p>Known and illustrative locations only. This prototype has no live location or facility backend.</p></div>'}else{$b.innerHTML=`<div class="drawer-section"><h3>EVENT FILTER</h3>${['all','reports','events'].map(k=>`<button class="drawer-list-btn" data-filter="${k}">${state.alertFilter===k?'✓ ':''}${cap(k)}</button>`).join('')}</div>`}}
+function setNavButtons(){document.querySelectorAll('[data-nav]').forEach(b=>{const active=(b.dataset.nav===(panelView||'Map'));b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active))});$('workspaceTitle').textContent=(panelView||'Map').toUpperCase()}
+function navigate(place,forceFull=false){closeEntityMenu();dismissDrawers();showAlert(false);if(place==='Map'){panelView='';panelMode='';$('workspaceSheet').className='';$('shell').classList.remove('sheet-open');setNavButtons();setDockMetrics();return}if(panelView===place&&!forceFull){panelMode='full'}else{panelView=place;panelMode=(!forceFull&&state.quick)?'quick':'full'}$('workspaceSheet').className=`open ${panelMode==='full'?'full':''}`;$('shell').classList.add('sheet-open');$('sheetTitle').textContent=place.toUpperCase();$('sheetExpand').style.display=panelMode==='full'?'none':'';renderSheet();setNavButtons()}
+function renderSheet(){
+ const body=$('sheetBody'),focus=focusedEntity(),rel=associatedRecords(focus),isContextual=!!focus;
+ const selectedPeople=people.filter(p=>rel.people.includes(p.name));
+ if(panelView==='People'){
+   $('sheetTitle').textContent=focus?`PEOPLE · ${focus.toUpperCase()}`:'PEOPLE';
+   const ordered=[...selectedPeople,...people.filter(p=>!rel.people.includes(p.name))];
+   body.innerHTML=`<p class="sheet-hint">${focus?`Context: ${esc(focus)} · ${esc(rel.kind)}. ${selectedPeople.length} associated people from demo records. Other known people remain listed below.`:'Known people and groups · choose a person to inspect or address.'} Records are last-known, not real-time presence.</p>`+
+     ordered.map(p=>`<div class="sheet-item ${rel.people.includes(p.name)?'focused':''}"><span class="glyph">${p.glyph}</span><div class="body"><strong>${esc(p.name)}</strong><p>${esc(p.detail)}</p>${rel.people.includes(p.name)?'<p>RELATED TO SELECTION · demo report</p>':''}</div><button type="button" data-person-dossier="${esc(p.name)}">File</button><button type="button" data-select-person="${esc(p.name)}">${commandContext().action==='tell'?'Reference':'Command'}</button></div>`).join('')+
+     (selectedPeople.length===1?`<div class="drawer-section"><h3>${esc(selectedPeople[0].name)} · PERSONNEL FILE</h3><p>Illustrative last-known reports: assignment, condition, equipment, and relevant contacts. Detailed dossier is not connected to a game backend.</p><button type="button" class="drawer-list-btn" data-person-items="${esc(selectedPeople[0].name)}">View associated inventory →</button></div>`:'');
+ }
+ else if(panelView==='Items'){
+   const shown=state.inventoryAll||!isContextual?items:rel.items;
+   $('sheetTitle').textContent=isContextual&&!state.inventoryAll?`ITEMS · ${focus.toUpperCase()}`:'ITEMS · ALL';
+   body.innerHTML=`<div class="sheet-filters"><button type="button" data-inventory-all ${state.inventoryAll?'class="on"':''}>All known items</button>${isContextual?`<button type="button" data-inventory-person ${!state.inventoryAll?'class="on"':''}>Related to ${esc(focus)}</button>`:''}</div><p class="sheet-hint">${isContextual&&!state.inventoryAll?'Showing sample records associated with the current selection. ':'Showing all sample equipment. '}Associated items may be carried by last-reported people; presence and physical access are not verified.</p>`+
+     shown.map(p=>`<div class="sheet-item ${p.name===focus?'focused':''}"><span class="glyph">${p.glyph}</span><div class="body"><strong>${esc(p.name)}</strong><p>${esc(p.holder)} · ${esc(p.detail)}</p></div><button type="button" data-focus-item="${esc(p.name)}">Inspect</button><button type="button" data-add-item="${esc(p.name)}">Use</button></div>`).join('')+
+     (shown.length?'':'<p class="sheet-hint">No accessible item records for this selection. Switch to All known items.</p>');
+ }
+ else if(panelView==='Facilities'){
+   const related=rel.places,ordered=[...facilities.filter(p=>related.includes(p.name)),...facilities.filter(p=>!related.includes(p.name))];
+   $('sheetTitle').textContent=focus?`PLACES · ${focus.toUpperCase()}`:'PLACES';
+   body.innerHTML=`<p class="sheet-hint">${focus?`Selected: ${esc(focus)}. Associated locations appear first. `:''}Only legitimately known or illustrative places; no omniscient positioning.</p>`+
+     ordered.map(p=>`<div class="sheet-item ${related.includes(p.name)?'focused':''}"><span class="glyph">${p.glyph}</span><div class="body"><strong>${esc(p.name)}</strong><p>${esc(p.detail)}</p>${related.includes(p.name)?'<p>ASSOCIATED · sample record</p>':''}</div><button type="button" data-focus-place="${esc(p.name)}">Details</button><button type="button" data-add-place="${esc(p.name)}">Use</button></div>`).join('');
+ }
+ else if(panelView==='Alerts'){let types=['all','reports','events'];body.innerHTML=`<div class="sheet-filters">${types.map(t=>`<button type="button" class="${state.alertFilter===t?'on':''}" data-sheet-filter="${t}">${cap(t)}</button>`).join('')}</div>${alerts.filter(a=>state.alertFilter==='all'||a.kind===state.alertFilter).map(a=>`<div class="sheet-item"><span class="glyph">${a.priority?'!':'◎'}</span><div class="body"><strong>${esc(a.title)}</strong><p>${esc(a.when)} · ${esc(a.body)}</p></div><button type="button" data-alert-id="${esc(a.id)}">Open</button></div>`).join('')}`}
+ else if(panelView==='Threads'){let all=[...new Set([...state.pins,...state.recent,...Object.keys(state.threadTexts)])];body.innerHTML=`<p class="sheet-hint">Two pins on phone · all thread histories in local demo storage.</p>${all.map(id=>`<div class="sheet-item"><span class="glyph">${state.pins.includes(id)?'◆':'◌'}</span><div class="body"><strong>${esc(id)}</strong><p>${(state.threadTexts[id]||[]).length} demo entries</p></div><button data-choose-thread="${esc(id)}">Open</button></div>`).join('')}`}
+ else if(panelView==='Help')body.innerHTML='<div class="drawer-section"><h3>MAP + COMMAND</h3><p>Tap a person to switch their conversation and add TO: Person to the command. Tap a place or item to add a removable reference chip. To relay, choose Tell first and then select the person to tell. Press × on any chip to remove it. Selecting a map object also focuses related records when you open People, Items, or Places. Hold a person to drag a move; drag from the LAST waypoint to extend a route, or tap any waypoint to reveal its small red delete control.</p><h3>COMMUNICATION</h3><p>Use VIA to choose Radio, In person, Whisper, Shout or Phone. A selectable method does not establish delivery or signal availability. Voice uses the same visible recipient and draft, with no automatic sending.</p><h3>SCREEN</h3><p>Pan with a normal drag, pinch or ± to zoom. Multiple selection is opt-in via MULTI. Hold the update box and drag to move it. Bottom tabs can open half-screen first, then expand. No network, server orders or actual character movement.</p></div>';
+}
+function selectAlert(id){const a=alerts.find(a=>a.id===id);if(!a)return;showAlert(false);navigate('Map');setThread(a.thread);state.expanded=true;state.hideConvo=false;state.minimized=false;renderDock();renderMessages();inform(`${a.title} · showing associated demo conversation`)}
+function applySettings(){$('quickMode').checked=state.quick;$('autoPeek').checked=state.autoPeek;$('quietAlerts').checked=state.quiet}
+let recognition=null;function micToggle(){if(recognizing){try{recognition?.stop()}catch{}return}const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){inform('Voice recognition is unavailable in this browser. The mic remains visible; type instead.',4500);return}try{recognition=new SR();recognition.lang=navigator.language||'en-US';recognition.continuous=false;recognition.interimResults=false;recognition.onresult=e=>{const heard=Array.from(e.results).map(r=>r[0]?.transcript||'').join(' ').trim();if(heard){$('composer').value=[$('composer').value.trim(),heard].filter(Boolean).join(' ');setDraft();inform('Speech placed in draft. Review before sending.') }};recognition.onerror=e=>inform(`Voice recognition: ${e.error}. No order was transmitted.`,4500);recognition.onend=()=>{recognizing=false;updateMic()};recognition.start();recognizing=true;updateMic()}catch(e){inform(`Microphone could not start: ${e.message}`,4500)}}
+function updateMic(){for(const id of ['micBtn','miniMic','sheetMic']){const el=$(id);el.classList.toggle('micactive',recognizing);el.setAttribute('aria-pressed',String(recognizing));el.setAttribute('aria-label',recognizing?'Stop voice dictation':'Start voice dictation')}$('micStatus').textContent=recognizing?'● LISTENING':' '}
+function mapTool(name){if(name==='multi'){$('multiBtn').click();dismissDrawers()}else if(name==='target'){$('aimBtn').click();dismissDrawers()}else if(name==='resetZoom'){pan={x:0,y:0};zoom=1;transformMap();dismissDrawers()}else if(name==='resetAlerts'){state.alertPos=null;persist();placeAlert();dismissDrawers();inform('Field updates restored to default position.')}else if(name==='allThreads'){dismissDrawers();navigate('Threads',true)}}
+function resetDemo(){if(!confirm('Reset the local demo conversations, settings, map selection and sample drafts? Nothing on a server is involved.'))return;try{localStorage.removeItem('nomatoka-shell-demo-v2')}catch{}state=structuredClone(DEFAULT);selectedWaypointIndex=null;closeEntityMenu();expandedRows.clear();$('composer').value='';zoom=1;pan={x:0,y:0};multi=false;aim=false;transformMap();drawWorld();renderThreads();renderMessages();renderChips();renderDock();renderAlerts();updateInspect();navigate('Map');applySettings();dismissDrawers();inform('Local demonstration reset.')}
+// Event delegation keeps rendered demo rows functional after updates.
+document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;
+ if(t.dataset.remove){removeToken(t.dataset.remove,Number(t.dataset.index||0));return}
+ if(t.dataset.method){chooseMethod(t.dataset.method);return}
+ if(t.dataset.personDossier){state.focusEntity=t.dataset.personDossier;state.focusPerson=t.dataset.personDossier;state.inventoryAll=false;persist();renderSheet();return}
+ if(t.dataset.selectPerson){selectEntity(t.dataset.selectPerson);navigate('Map');return}
+ if(t.dataset.personItems){state.focusPerson=t.dataset.personItems;state.focusEntity=t.dataset.personItems;state.inventoryAll=false;navigate('Items');return}
+ if(t.hasAttribute('data-inventory-all')){state.inventoryAll=true;renderSheet();return}
+ if(t.hasAttribute('data-inventory-person')){state.inventoryAll=false;renderSheet();return}
+ if(t.dataset.focusItem){state.focusEntity=t.dataset.focusItem;state.inventoryAll=false;persist();renderSheet();return}
+ if(t.dataset.focusPlace){state.focusEntity=t.dataset.focusPlace;state.focusObject=t.dataset.focusPlace;state.inventoryAll=false;persist();renderSheet();return}
+ if(t.dataset.addItem){state.focusEntity=t.dataset.addItem;const c=commandContext();if(!c.refs.some(r=>r.id===t.dataset.addItem))c.refs.push({id:t.dataset.addItem,role:'item'});persist();navigate('Map');renderChips();inform(t.dataset.addItem+' added to draft as an item reference.');return}
+ if(t.dataset.addPlace){const c=commandContext();if(c.action==='move'){const ob=entityById(t.dataset.addPlace);if(ob)addWaypoint({x:ob.x,y:ob.y,name:ob.id,snapped:true});else c.refs.push({id:t.dataset.addPlace,role:'place'})}else if(!c.refs.some(r=>r.id===t.dataset.addPlace))c.refs.push({id:t.dataset.addPlace,role:'place'});state.focusObject=t.dataset.addPlace;state.focusEntity=t.dataset.addPlace;state.inventoryAll=false;persist();navigate('Map');renderChips();return}
+ if(t.dataset.thread){setThread(t.dataset.thread);return}
+ if(t.dataset.expand){const id=t.dataset.expand;expandedRows.has(id)?expandedRows.delete(id):expandedRows.add(id);renderMessages();return}
+ if(t.dataset.chip){chooseChip(t.dataset.chip);return}
+ if(t.dataset.alertFilter){state.alertFilter=t.dataset.alertFilter;persist();renderAlerts();return}
+ if(t.dataset.sheetFilter){state.alertFilter=t.dataset.sheetFilter;persist();renderSheet();return}
+ if(t.dataset.alertId){selectAlert(t.dataset.alertId);return}
+ if(t.dataset.chooseThread){navigate('Map');setThread(t.dataset.chooseThread);state.hideConvo=false;state.minimized=false;renderDock();return}
+ if(t.dataset.inspectItem){inform(t.dataset.inspectItem+': demonstration detail only; no live item data.');return}
+ if(t.dataset.nav){navigate(t.dataset.nav);return}
+ if(t.hasAttribute('data-close-drawer')){dismissDrawers();return}
+ if(t.dataset.tool){mapTool(t.dataset.tool);return}
+ if(t.dataset.filter){state.alertFilter=t.dataset.filter;persist();renderContext();if(panelView==='Alerts')renderSheet();return}
+});
+$('routeBtn').addEventListener('click',toggleMethod);
+$('menuBtn').addEventListener('click',()=>{closeMethod();openDrawer('left')});
+$('contextBtn').addEventListener('click',()=>{closeMethod();openDrawer('right')});
+$('shade').addEventListener('click',dismissDrawers);
+$('zoomIn').addEventListener('click',()=>zoomMap(1.25));$('zoomOut').addEventListener('click',()=>zoomMap(1/1.25));
+$('multiBtn').addEventListener('click',()=>{multi=!multi;aim=false;$('multiBtn').classList.toggle('pressed',multi);$('multiBtn').setAttribute('aria-pressed',String(multi));$('aimBtn').classList.remove('pressed');$('aimBtn').setAttribute('aria-pressed','false');transformMap();inform(multi?'MULTI ON: Tap markers or drag a selection box.':'MULTI OFF: Drag to pan; tap to select.')});
+$('aimBtn').addEventListener('click',()=>{aim=!aim;aimRole='target';multi=false;$('aimBtn').classList.toggle('pressed',aim);$('aimBtn').setAttribute('aria-pressed',String(aim));$('multiBtn').classList.remove('pressed');$('multiBtn').setAttribute('aria-pressed','false');transformMap();if(aim)inform('Tap map to place a location reference into your draft. Nothing auto-sends.')});
+$('clearSelection').addEventListener('click',()=>{state.selected=[];state.focusEntity=null;state.target=null;drawEntities();drawTarget();updateInspect();renderChips();persist()});
+$('useSelection').addEventListener('click',applyRecipients);
+$('hideSelectionBar').addEventListener('click',()=>{state.selectionBarHidden=true;persist();updateInspect()});
+$('selectionRestore').addEventListener('click',()=>{state.selectionBarHidden=false;persist();updateInspect()});
+$('entityMenuClose').addEventListener('click',closeEntityMenu);
+$('entityMenuCommand').addEventListener('click',()=>{
+ const id=$('entityMenu').dataset.entity,ob=entities.find(e=>e.id===id);if(!ob)return;
+ closeEntityMenu();
+ if(ob.type==='object'){
+   state.target={x:ob.x,y:ob.y,name:ob.id};persist();drawTarget();updateInspect();renderChips();inform(`${ob.name} selected as a draft target. Use the Map target chip to insert it.`);return;
+ }
+ setThread(id);if(state.minimized)toggleDockMin(false);
+ inform(`TO ${ob.name}: command recipient changed, but no order sent.`);
+});
+$('entityMenuDetails').addEventListener('click',()=>{
+ const id=$('entityMenu').dataset.entity,ob=entities.find(e=>e.id===id);if(!ob)return;
+ closeEntityMenu();navigate(ob.type==='person'?'People':ob.type==='vehicle'?'Items':'Facilities');
+ inform(`${ob.name}: illustrative record only; no live character or equipment data.`);
+});
+$('entityMenuMove').addEventListener('click',()=>{
+ const id=$('entityMenu').dataset.entity,ob=entities.find(e=>e.id===id);if(!ob||ob.type==='object')return;
+ closeEntityMenu();setThread(id);if(state.minimized)toggleDockMin(false);
+ aim=true;multi=false;$('aimBtn').classList.add('pressed');$('aimBtn').setAttribute('aria-pressed','true');
+ $('multiBtn').classList.remove('pressed');$('multiBtn').setAttribute('aria-pressed','false');transformMap();
+ if(!$('composer').value.trim()){$('composer').value='Move to';setDraft();}
+ inform(`TO ${ob.name}: tap a map destination to finish this move draft. Nothing sent.`,4800);
+});
+
+$('pinBtn').addEventListener('click',pinThread);
+$('threadListBtn').addEventListener('click',()=>navigate('Threads',true));
+$('convoExpandBtn').addEventListener('click',()=>{state.expanded=!state.expanded;state.hideConvo=false;persist();renderDock();renderMessages()});
+$('convoHideBtn').addEventListener('click',()=>{state.hideConvo=!state.hideConvo;persist();renderDock()});
+$('dockRestoreConvo').addEventListener('click',()=>{state.hideConvo=false;persist();renderDock();renderMessages()});
+$('dockMinBtn').addEventListener('click',()=>toggleDockMin(true));$('restoreDock').addEventListener('click',()=>toggleDockMin(false));
+$('composer').addEventListener('input',setDraft);
+$('composer').addEventListener('keydown',e=>{
+ if(e.key==='Backspace'&&!$('composer').value&&commandContext().refs.length){e.preventDefault();removeToken('ref',commandContext().refs.length-1);return}
+ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}
+});
+$('sendBtn').addEventListener('click',send);
+for(const id of ['micBtn','miniMic','sheetMic'])$(id).addEventListener('click',micToggle);
+initAlertDragging();
+$('viewAllAlerts').addEventListener('click',()=>{showAlert(false);navigate('Alerts',true)});
+$('muteAlert').addEventListener('click',()=>{state.quiet=!state.quiet;persist();renderAlerts();$('quietAlerts').checked=state.quiet;inform(state.quiet?'Operational update previews muted.':'Operational update previews enabled.')});
+$('quickMode').addEventListener('change',e=>{state.quick=e.target.checked;persist()});$('autoPeek').addEventListener('change',e=>{state.autoPeek=e.target.checked;persist()});$('quietAlerts').addEventListener('change',e=>{state.quiet=e.target.checked;persist();renderAlerts()});
+$('menuShowThreads').addEventListener('click',()=>{dismissDrawers();navigate('Threads',true)});
+$('menuShowAlerts').addEventListener('click',()=>{dismissDrawers();navigate('Alerts',true)});
+$('menuHelp').addEventListener('click',()=>{dismissDrawers();navigate('Help',true)});
+$('menuReset').addEventListener('click',resetDemo);
+$('sheetExpand').addEventListener('click',()=>{panelMode='full';$('workspaceSheet').classList.add('full');$('sheetExpand').style.display='none'});
+$('sheetClose').addEventListener('click',()=>navigate('Map'));
+$('rightBody').addEventListener('change',e=>{const el=e.target;if(el.dataset.layer){state.layers[el.dataset.layer]=el.checked;persist();applyLayers()}});
+window.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('routeMenu').hidden)closeMethod();else if(!$('entityMenu').hidden)closeEntityMenu();else if(recognizing)micToggle();else if(leftOpen||rightOpen)dismissDrawers();else if(alertOpen)showAlert(false);else if(panelView)navigate('Map');else if(state.expanded){state.expanded=false;renderDock()}}});
+if('ResizeObserver'in window)new ResizeObserver(setDockMetrics).observe($('dock'));
+function updateViewport(){const vv=window.visualViewport;const h=vv&&document.activeElement===$('composer')?vv.height:window.innerHeight;document.documentElement.style.setProperty('--viewport-height',`${Math.max(320,Math.round(h))}px`);setDockMetrics();requestAnimationFrame(updateMapViewBox)}
+window.visualViewport?.addEventListener('resize',updateViewport);window.addEventListener('resize',updateViewport);$('composer').addEventListener('focus',updateViewport);$('composer').addEventListener('blur',()=>setTimeout(updateViewport,100));
+drawWorld();transformMap();updateMapViewBox();initPointer();renderThreads();$('composer').value=state.drafts[state.active]||'';renderMessages();renderChips();resizeComposer();renderDock();updateInspect();renderAlerts();applySettings();updateDraftContext();updateViewport();placeAlert();setNavButtons();updateMic();
+})();
+</script>
+</body>
+</html>
