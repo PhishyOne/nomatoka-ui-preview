@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
 <meta name="theme-color" content="#0c100e">
-<title>Nomatoka · Field Terminal UI Prototype v0.6</title>
+<title>Nomatoka · Field Terminal UI Prototype v0.7</title>
 <style>
 :root{color-scheme:dark;--ink:#0b110e;--paper:#151b17;--panel:#1c241e;--panel2:#242d25;--gold:#edb449;--dim-gold:#937747;--text:#e3e3d5;--muted:#abb4a2;--quiet:#7c8b7b;--stroke:#526154;--red:#ff796b;--cyan:#8dc7b9;--line:rgba(220,222,190,.15);--top:55px;--nav:66px;--safe-bottom:env(safe-area-inset-bottom,0px);--dock-h:157px;--alert-offset:174px;font-family:system-ui,-apple-system,Roboto,"Segoe UI",sans-serif}
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#080b09;color:var(--text);overscroll-behavior:none}button,textarea,input{font:inherit}button{cursor:pointer;color:inherit}button:disabled{opacity:.42;cursor:default}button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--gold);outline-offset:2px}button{-webkit-tap-highlight-color:transparent}svg{display:block}.ico{width:20px;height:20px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;flex:none}.ico.sm{width:16px;height:16px}.ico.big{width:24px;height:24px}
@@ -124,7 +124,7 @@
     <div class="map-vignette"></div>
   </div>
   <div class="map-meta"><strong>FIELD SECTOR • DEMO</strong><span>SCHEMATIC · PUBLICLY REPORTED ONLY</span><span id="mapZoomLabel">ZOOM 100% · DRAG TO PAN</span></div>
-  <div class="map-help" id="mapHint">Tap to select • Drag to pan • Hold to move. The destination circle snaps to nearby known places. MULTI selects several.</div>
+  <div class="map-help" id="mapHint">Tap to select • MULTI selects a team • Hold one selected member and drag to move them together. Snap to known places or people (last report).</div>
   <div id="dragStatus" role="status" aria-live="polite" hidden></div>
   <div class="maptools" id="maptools">
     <button id="zoomIn" type="button" aria-label="Zoom in"><svg class="ico"><use href="#ic-plus"/></svg></button>
@@ -250,9 +250,14 @@ function drawTarget(){
  const pts=c?.waypoints||[];
  if(pts.length){
    if(selectedWaypointIndex!==null && selectedWaypointIndex>=pts.length)selectedWaypointIndex=null;
-   const actor=entityById(c.recipient);
-   const coords=actor?[{x:actor.x,y:actor.y},...pts]:pts;
-   if(coords.length>1)svgNode('path',{d:coords.map((p,i)=>`${i?'L':'M'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' '),class:'drag-guide',style:'stroke:#f1c46d;stroke-width:2.6;stroke-dasharray:6 4;opacity:.95'},layer);
+   // A group draft needs a visible route from every selected mover, not just
+   // a single target circle with no indication who the command affects.
+   const movers=recipientMembers(c.recipient).map(entityById).filter(Boolean);
+   const routeOrigins=movers.length?movers:[null];
+   for(const mover of routeOrigins){
+     const coords=mover?[{x:mover.x,y:mover.y},...pts]:pts;
+     if(coords.length>1)svgNode('path',{d:coords.map((p,i)=>`${i?'L':'M'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' '),class:'drag-guide',style:'stroke:#f1c46d;stroke-width:2.6;stroke-dasharray:6 4;opacity:.95'},layer);
+   }
    for(let i=0;i<pts.length;i++){
     const {x,y,name}=pts[i],active=selectedWaypointIndex===i;
     const hit=svgNode('g',{'data-waypoint-index':i,tabindex:0,role:'button',
@@ -298,6 +303,16 @@ function commandContext(id=state.active){
   return c;
 }
 const entityById=id=>entities.find(e=>e.id===id);
+// A drag initiated on one of several selected movers applies to the set.
+// An unselected mover still starts a normal single-person movement.
+const isMovable=id=>['person','vehicle'].includes(entityById(id)?.type);
+const selectedMovers=()=>[...new Set(state.selected.filter(isMovable))];
+const dragMovers=id=>{const selected=selectedMovers();return selected.length>1&&selected.includes(id)?selected:[id];};
+const recipientMembers=id=>state.selectedThreadMembers?.[id]||[id];
+const recipientLabel=id=>{const members=recipientMembers(id);return members.length>1?members.join(' + '):id;};
+const destinationPoint=ob=>({x:ob.x,y:ob.y,name:ob.id,kind:ob.type,snapped:true});
+const isKnownDestination=ob=>ob&&((ob.type==='object'&&state.layers.objects)||(ob.type!=='object'&&state.layers.contacts));
+const availableDestinations=movers=>entities.filter(ob=>isKnownDestination(ob)&&!movers.includes(ob.id));
 function routeGuidance(method=commandContext().via){
  const id=commandContext().recipient,known=PERSON_ROUTES[id]||[];
  if(method==='shout'||method==='whisper')return `Local ${method}: a remote person may not hear you`;
@@ -339,30 +354,31 @@ function removeToken(kind,index){const c=commandContext();if(kind==='recipient')
 }
 function prettyDraft(){const c=commandContext(),raw=$('composer').value.trim(),recipient=c.recipient,action=c.action;
  const names=c.refs.map(r=>r.id);
+ const addressed=recipientLabel(recipient);
  if(!recipient)return `Choose a recipient · ${raw||[action,names.join(', ')].filter(Boolean).join(' ')}`;
- if(action==='tell')return `${recipient}, tell ${c.relayTo||'…'}${raw?' '+raw:''}`;
+ if(action==='tell')return `${addressed}, tell ${c.relayTo||'…'}${raw?' '+raw:''}`;
  if(action==='move'){
    const places=c.waypoints.map(p=>p.name);
    const dest=places.length?` ${places.length===1?'to':'via'} ${places.join(' → ')}`:'';
-   return `${recipient}, move${dest}${raw?' '+raw:''}`;
+   return `${addressed}, move${dest}${raw?' '+raw:''}`;
  }
- if(action){let pre=`${recipient}, ${ACTIONS[action]?.toLowerCase()||action}`;if(names.length)pre+=` ${names.join(', ')}`;return pre+(raw?' '+raw:'');}
+ if(action){let pre=`${addressed}, ${ACTIONS[action]?.toLowerCase()||action}`;if(names.length)pre+=` ${names.join(', ')}`;return pre+(raw?' '+raw:'');}
  if(raw){const prefix=new RegExp('^'+recipient.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'[,:]?\\s','i');let text=prefix.test(raw)?raw:`${recipient}, ${raw}`;if(names.length&&!names.some(n=>text.toLowerCase().includes(n.toLowerCase())))text+=` ${names.join(', ')}`;return text;}
- if(names.length)return `${recipient} · ${names.join(' + ')} · choose action`;
- return `${recipient} · choose action or type`;
+ if(names.length)return `${addressed} · ${names.join(' + ')} · choose action`;
+ return `${addressed} · choose action or type`;
 }
 function renderComposerTokens(){
  const c=commandContext(),out=[];
  const chip=(name,kind,index,cls='')=>`<span class="entity-token ${cls}"><span>${esc(name)}</span><button class="token-remove" type="button" data-remove="${kind}" ${index===null?'':`data-index="${index}"`} aria-label="Remove ${esc(name)} from command">×</button></span>`;
- if(c.recipient)out.push(chip('TO: '+c.recipient,'recipient',null,'person'));
+ if(c.recipient)out.push(chip('TO: '+recipientLabel(c.recipient),'recipient',null,'person'));
  if(c.action)out.push(chip(ACTIONS[c.action]||c.action,'action',null,'action'));
  if(c.relayTo)out.push(chip(c.relayTo,'relay',null,'relay'));
  c.refs.forEach((r,i)=>out.push(chip(r.id,'ref',i,r.role==='place'?'place':'')));
  c.waypoints.forEach((p,i)=>out.push(chip(`${i+1} ${p.name}`,'waypoint',i,'place')));
  $('composerTokens').innerHTML=out.join('');
  $('composer').placeholder=c.action==='tell'?(c.relayTo?'What should they be told?':'Choose who receives the message…'):c.action==='move'?'Optional route / behavior details…':'Issue an order or ask…';
- $('commandPreview').textContent=prettyDraft();
- $('miniRecipient').textContent=(c.recipient||'NO RECIPIENT').toUpperCase()+' · '+(ROUTES.find(m=>m[0]===c.via)?.[1]||'VIA ?').toUpperCase();
+ $('commandPreview').textContent=prettyDraft() + (c.action==='move'&&c.waypoints.some(p=>p.kind==='person'||p.kind==='vehicle')?' · moving toward last-reported position, not live tracking':'');
+ $('miniRecipient').textContent=(recipientLabel(c.recipient)||'NO RECIPIENT').toUpperCase()+' · '+(ROUTES.find(m=>m[0]===c.via)?.[1]||'VIA ?').toUpperCase();
  showMethod();updateDraftContext();setDockMetrics();
 }
 function selectEntity(id){
@@ -399,7 +415,7 @@ function applyRecipients(){
 }
 function addWaypoint(p){const c=commandContext();selectedWaypointIndex=null;
  if(c.waypoints.length>=12){inform('This prototype supports up to 12 waypoints.');return}
- c.waypoints.push({x:p.x,y:p.y,name:p.name,snapped:!!p.snapped});
+ c.waypoints.push({x:p.x,y:p.y,name:p.name,kind:p.kind||'coordinate',snapped:!!p.snapped});
  c.action='move';state.target={x:p.x,y:p.y,name:p.name};aim=false;aimRole='target';
  $('aimBtn').classList.remove('pressed');$('aimBtn').setAttribute('aria-pressed','false');
  drawTarget();renderComposerTokens();renderChips();persist();
@@ -413,14 +429,18 @@ function appendTargetIntoDraft(){if(!state.target)return;const c=commandContext(
 function mapTargetAt(clientX,clientY){
  closeEntityMenu();const p=toWorld(clientX,clientY);
  p.x=Math.max(-150,Math.min(600,p.x));p.y=Math.max(-150,Math.min(920,p.y));
- // Snap taps as well as drags, using CSS-pixel proximity.
+ // Snap taps as well as drags, using CSS-pixel proximity. In movement
+ // mode, other people are valid last-reported destinations as well.
  const matrix=$('mapWorld').getScreenCTM();let near=null,dist=Infinity;
- for(const ob of entities.filter(x=>x.type==='object')){
+ const c=commandContext();const candidates=c.action==='move'
+   ? availableDestinations(recipientMembers(c.recipient))
+   : entities.filter(x=>x.type==='object'&&state.layers.objects);
+ for(const ob of candidates){
    if(!matrix)break;const v=$('mapSvg').createSVGPoint();v.x=ob.x;v.y=ob.y;
    const screen=v.matrixTransform(matrix),d=Math.hypot(screen.x-clientX,screen.y-clientY);
    if(d<dist){dist=d;near=ob}
  }
- const point=near&&dist<=28?{x:near.x,y:near.y,name:near.id,snapped:true}:{...p,name:`Grid ${Math.round(p.x/10)}:${Math.round(p.y/10)}`,snapped:false};
+ const point=near&&dist<=28?destinationPoint(near):{...p,name:`Grid ${Math.round(p.x/10)}:${Math.round(p.y/10)}`,kind:'coordinate',snapped:false};
  if(point.snapped){state.focusEntity=point.name;state.focusObject=point.name;state.inventoryAll=false;}
  if(aimRole==='waypoint'||commandContext().action==='move')addWaypoint(point);
  else{state.target={x:point.x,y:point.y,name:point.name};appendTargetIntoDraft();drawTarget();}
@@ -430,8 +450,7 @@ function mapTargetAt(clientX,clientY){
  let mapGesture=null, holdTimer=null;
  const HOLD_MS=410, HOLD_SLOP=9, DROP_DISTANCE=20;
  const SNAP_ENTER_PX=27, SNAP_EXIT_PX=43;
- const isMovable=id=>entities.some(e=>e.id===id&&(e.type==='person'||e.type==='vehicle'));
- function clearHold(){if(holdTimer!==null){clearTimeout(holdTimer);holdTimer=null}}
+  function clearHold(){if(holdTimer!==null){clearTimeout(holdTimer);holdTimer=null}}
  function clearDragPreview(){ $('dragLayer').replaceChildren();$('dragStatus').hidden=true; }
  function cancelDragVisuals(){
    clearHold();clearDragPreview();marquee?.remove();marquee=null;
@@ -443,32 +462,35 @@ function mapTargetAt(clientX,clientY){
    // Compare in screen pixels, not map units: zooming must not change touch accuracy.
    const matrix=$('mapWorld').getScreenCTM();
    let nearest=null,nearestDistance=Infinity;
-   if(state.layers.objects&&matrix){
-     for(const ob of entities.filter(e=>e.type==='object')){
+   if(matrix){
+     const movers=g.movers||recipientMembers(commandContext().recipient);
+     for(const ob of availableDestinations(movers)){
        const sp=$('mapSvg').createSVGPoint();sp.x=ob.x;sp.y=ob.y;
        const screen=sp.matrixTransform(matrix);
        const distance=Math.hypot(screen.x-clientX,screen.y-clientY);
        if(distance<nearestDistance){nearest=ob;nearestDistance=distance;}
        // Hysteresis: a snapped target stays selected until the finger really leaves.
        if(g.snapTarget===ob.id&&distance<=SNAP_EXIT_PX){
-         return {x:ob.x,y:ob.y,name:ob.id,snapped:true};
+         return destinationPoint(ob);
        }
      }
    }
-   if(nearest&&nearestDistance<=SNAP_ENTER_PX){g.snapTarget=nearest.id;return {x:nearest.x,y:nearest.y,name:nearest.id,snapped:true};}
+   if(nearest&&nearestDistance<=SNAP_ENTER_PX){g.snapTarget=nearest.id;return destinationPoint(nearest);}
    g.snapTarget=null;
-   return {x:cursor.x,y:cursor.y,name:`Grid ${Math.round(cursor.x/10)}:${Math.round(cursor.y/10)}`,snapped:false};
+   return {x:cursor.x,y:cursor.y,name:`Grid ${Math.round(cursor.x/10)}:${Math.round(cursor.y/10)}`,kind:'coordinate',snapped:false};
  }
  function renderDragPreview(g,clientX,clientY){
-   const ob=entities.find(o=>o.id===g.entity);if(!ob)return;
+   const movers=(g.movers||[g.entity]).map(entityById).filter(Boolean);if(!movers.length)return;
    const p=dragDestination(g,clientX,clientY),layer=$('dragLayer');layer.replaceChildren();
    g.destination=p;
-   svgNode('path',{class:'drag-guide',d:`M ${ob.x} ${ob.y} L ${p.x.toFixed(1)} ${p.y.toFixed(1)}`},layer);
-   svgNode('circle',{class:'drag-ring',cx:ob.x,cy:ob.y,r:23},layer);
+   for(const ob of movers){
+     svgNode('path',{class:'drag-guide',d:`M ${ob.x} ${ob.y} L ${p.x.toFixed(1)} ${p.y.toFixed(1)}`},layer);
+     svgNode('circle',{class:'drag-ring',cx:ob.x,cy:ob.y,r:23},layer);
+   }
    if(p.snapped)svgNode('circle',{class:'drag-snap-halo',cx:p.x,cy:p.y,r:20},layer);
    svgNode('circle',{class:`drag-point${p.snapped?' snapped':''}`,cx:p.x,cy:p.y,r:p.snapped?12:10},layer);
    svgNode('text',{class:'drag-text',x:p.x+13,y:p.y-13},layer).textContent=p.snapped?'SNAPPED':'MOVE DRAFT';
-   $('dragStatus').textContent=`${ob.name} → ${p.name}${p.snapped?' · destination locked':''} · Release to prepare, not send`;
+   $('dragStatus').textContent=`${movers.map(x=>x.id).join(' + ')} → ${p.name}${p.kind==='person'?' (last reported)':''}${p.snapped?' · snapped':''} · Release to prepare, not send`;
    $('dragStatus').hidden=false;
  }
  function renderWaypointExtension(g,clientX,clientY){
@@ -487,16 +509,20 @@ function mapTargetAt(clientX,clientY){
    return !hit?.closest?.('#maptools,#dock,#miniTray,#alertBox,#inspectBar,#selectionRestore,#entityMenu,#workspaceSheet,#leftDrawer,#rightDrawer,#dragStatus');
  }
  function prepareHeldMove(g,e){
-   const ob=entityById(g.entity);if(!ob)return;
+   const movers=g.movers||dragMovers(g.entity);
+   const ob=entityById(g.entity);if(!ob||!movers.length)return;
    const p=dragDestination(g,e.clientX,e.clientY);
    p.x=Math.max(-150,Math.min(600,p.x));p.y=Math.max(-150,Math.min(920,p.y));
-   // Gesture means MOVE and replaces the prior route. + Waypoint is how to extend it.
-   if(state.active!==ob.id)changeRecipient(ob.id);
-   selectedWaypointIndex=null;const c=commandContext();c.recipient=ob.id;c.action='move';c.relayTo=null;c.waypoints=[{...p}];
+   // Gesture means MOVE for all selected movers when the held marker is in
+   // the selection. An unselected marker still starts a single-unit order.
+   const key=movers.length>1?`Selected (${movers.length})`:movers[0];
+   if(movers.length>1){state.selectedThreadMembers[key]=[...movers];}
+   if(state.active!==key)changeRecipient(key);
+   selectedWaypointIndex=null;const c=commandContext();c.recipient=key;c.action='move';c.relayTo=null;c.waypoints=[{...p}];
    c.refs=c.refs.filter(r=>r.role!=='place');
-   state.selected=[ob.id];state.focusPerson=ob.id;state.focusEntity=ob.id;state.inventoryAll=false;state.target={...p};
+   state.selected=[...movers];state.focusPerson=ob.id;state.focusEntity=ob.id;state.inventoryAll=false;state.target={...p};
    persist();drawEntities();drawTarget();renderComposerTokens();renderChips();
-   inform(`${ob.name}: movement draft to ${p.name}. Add a waypoint or type details; nothing sent.`,4600);
+   inform(`${movers.join(' + ')}: movement draft to ${p.name}${p.kind==='person'?' (last-reported location)':''}. Nothing sent.`,4600);
  }
  function initPointer(){
    const node=$('mapSvg'),overlay=$('mapArea');
@@ -534,6 +560,7 @@ function mapTargetAt(clientX,clientY){
          holdTimer=null;
          if(mapGesture!==g||g.kind!=='single'||g.moved||!pointers.has(g.pointerId)||pointers.size!==1)return;
          g.kind='drag-unit';
+         g.movers=dragMovers(g.entity); // Freeze the mover set for this gesture.
          // The last destination stops competing visually with the new choice.
          hideTargetDuringMove=true;drawTarget();
          marquee?.remove();marquee=null;
@@ -618,7 +645,12 @@ function mapTargetAt(clientX,clientY){
        const distance=Math.hypot(e.clientX-g.startX,e.clientY-g.startY);
        if(distance>=DROP_DISTANCE&&validDrop(e.clientX,e.clientY))prepareHeldMove(g,e);
        else if(distance>=DROP_DISTANCE)inform('Move cancelled: release over the map, away from controls.');
-       else {selectEntity(g.entity);inform('Hold recognized. Drag to a destination to prepare a move.');}
+       else {
+         // A hold without a real move must not toggle one member out of an
+         // existing group selection (multi-select uses tap-to-toggle).
+         if(!g.movers || g.movers.length===1 || !state.selected.includes(g.entity))selectEntity(g.entity);
+         inform('Hold recognized. Drag to a destination to prepare a move.');
+       }
        cancelDragVisuals();transformMap();return;
      }
      if(g.kind==='single'&&g.moved&&multi&&!aim&&marquee){
@@ -669,7 +701,10 @@ function suggestionChips(){
    const recommended=Object.keys(PERSON_ROUTES).filter(id=>id!==c.recipient&&(PERSON_ROUTES[id]||[]).some(m=>(PERSON_ROUTES[c.recipient]||[]).includes(m)));
    return [...recommended.slice(0,4),'Find person…'];
  }
- if(c.action==='move')return [...(c.waypoints.length?['+ Waypoint','Replace route']:['Map target','Ridge','Staging Area','Old Bridge']), 'Carefully','Then report','Hold there'];
+ if(c.action==='move'){
+   const people=availableDestinations(recipientMembers(c.recipient)).filter(e=>e.type==='person').map(e=>e.id);
+   return [...(c.waypoints.length?['+ Waypoint','Replace route']:['Map target',...people,'Ridge','Staging Area','Old Bridge']), 'Carefully','Then report','Hold there'];
+ }
  if(c.action)return ['Map target',c.action==='repair'?'Repair kit':'Report','Carefully','Then report'];
  const types=c.refs.map(r=>r.role),hasPlace=types.includes('place'),hasItem=types.includes('item');
  if(hasItem)return ['Inspect','Repair','Transfer','Locate','Tell'];
@@ -692,7 +727,13 @@ function chooseChip(value){
    inform(aimRole==='waypoint'?'Tap map to ADD the next route point.':'Tap map to add a command reference; no order will be sent.');return;
  }
  const person=entityById(value);
- if(person){selectEntity(value);return}
+ if(person){
+   if(commandContext().action==='move' && isKnownDestination(person)
+       && !recipientMembers(commandContext().recipient).includes(person.id)){
+     addWaypoint(destinationPoint(person));return;
+   }
+   selectEntity(value);return;
+ }
  if(['Ridge','Old Bridge','Staging Area'].includes(value)){
    const ob=entityById(value);if(commandContext().action==='move')addWaypoint({x:ob.x,y:ob.y,name:ob.id,snapped:true});
    else{const c=commandContext();if(!c.refs.some(r=>r.id===value))c.refs.push({id:value,role:'place'});renderChips();persist();}
