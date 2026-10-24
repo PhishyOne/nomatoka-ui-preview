@@ -1,0 +1,1 @@
+Nomatoka v0.7 screenshot comparison for visual review. These are synthetic test screenshots, not a production deployment. The original approved v0.7 source remains unchanged on main. The real game is still Draft PR 697 in PhishyOne/Nomatoka; no visual approval has been granted.
