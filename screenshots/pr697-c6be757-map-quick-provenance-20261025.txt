@@ -1,0 +1,15 @@
+Nomatoka Field Terminal PR #697 minimalist map and real pinch zoom.
+Game Draft exact source head: c6be757d6a5b002ad870a5704d3979d52d26d6ff
+390x844 portrait and 844x390 landscape, real Chromium with frontend DOM/
+CSS/JS from this exact tree, controlled synthetic authenticated HTTP fixtures,
+no private account, no order submission, no production state.
+No fake terrain: game retains the authored synthetic test range's SVG
+title, accessible description and immutable geometry. The explanatory overlay,
+figcaption and zoom buttons are visually removed. A real 2-finger pinch
+changes SVG viewBox; keyboard +/-/Home remain supported. The compact quick
+panel has source-backed Inspect and Prepare, close X, screen-edge/clutter
+positioning. The scroll progress/fade only appears with actual overflow.
+206/206 affected standalone source/DOM/Chromium tests passed; failed first
+attempts preserved in earlier local log files.
+PostgreSQL-backed browser qualification, independent final review, Android
+phone/touch acceptance, Ready, merge and deployment remain pending.
