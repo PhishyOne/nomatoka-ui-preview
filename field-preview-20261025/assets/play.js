@@ -876,8 +876,12 @@
     // Presentation only: keep the mounted draft, selection and report feed intact.
     // A landscape phone can be wider than the portrait breakpoint while still
     // having insufficient height for the desktop/scrolling workspace.
-    const mobileWorkspace = platform.matchMedia?.(
-      "(max-width: 42rem), (max-width: 1024px) and (max-height: 550px)");
+    // One shared compact-mode contract with the CSS shell: every tablet up
+    // to 1024px and every short landscape through 704px gets the real map +
+    // reachable single command dock. Breakpoint changes never choose a
+    // workspace section on behalf of the player.
+    const FIELD_COMPACT_QUERY = "(max-width: 64rem), (max-height: 44rem)";
+    const mobileWorkspace = platform.matchMedia?.(FIELD_COMPACT_QUERY);
     const ordersPanel = field("#orders-panel"), orderReadback = field("#order-readback");
     const dockToggle = field("#toggle-orders"), operationalWorkspace = field("#operational-workspace");
     const workspaceSections = ["map", "orders", "history"];
@@ -903,7 +907,15 @@
     function hideMapQuickActions() {
       mapQuickAnchor = undefined;
       const panel=quickPanel();
-      if (panel) {panel.hidden=true;panel.removeAttribute("data-selected");}
+      if (!panel)return;
+      const ownedFocus=panel.contains(platform.document.activeElement);
+      panel.hidden=true;panel.removeAttribute("data-selected");
+      if (ownedFocus) {
+        const marker=operationsMap.querySelector('[data-map-id="'+selectedMapId+'"]');
+        const target=marker?.getAttribute("aria-disabled")==="false"
+          && marker.getClientRects?.().length ? marker : operationsMap;
+        target.focus?.({preventScroll:true});
+      }
     }
     function positionMapQuickActions() {
       const panel=quickPanel();
@@ -980,12 +992,12 @@
     });
     platform.addEventListener("keydown", event => {
       if (event.key === "Escape" && quickPanel() && !quickPanel().hidden && operationalWorkspace.dataset.evidenceOpen !== "true") {
-        hideMapQuickActions();
+        event.preventDefault(); hideMapQuickActions();
         return;
       }
       if (event.key === "Escape" && operationalWorkspace.dataset.evidenceOpen === "true"
         && !field("#people")?.open && !field("#notifications")?.open) {
-        closeMapEvidence();
+        event.preventDefault(); closeMapEvidence();
         focusVisibleMapAction();
       }
     });
@@ -1117,7 +1129,9 @@
       const reports = field("#received-reports");
       if (reports) {
         reports.open = true;
-        reports.querySelector("summary")?.focus({ preventScroll: true });
+        const destination=reports.querySelector("summary");
+        destination?.focus({ preventScroll: true });
+        revealWorkspaceTarget(destination);
       }
     });
     const fieldCommandPreview = field("#field-command-preview"), issuedReadback = field("#ortega-response");
@@ -1143,6 +1157,22 @@
           subtree: true, characterData: true, childList: true
         });
       updatePreview();
+    }
+    function revealWorkspaceTarget(target) {
+      if (!target || mobileWorkspace?.matches === true || !operationalVisible
+        || typeof target.getBoundingClientRect !== "function"
+        || typeof target.scrollIntoView !== "function") return;
+      const rect=target.getBoundingClientRect();
+      const nav=field(".workspace-nav")?.getBoundingClientRect();
+      const safeTop=(nav?.bottom && nav.top <= platform.innerHeight && nav.bottom>0
+        ? nav.bottom : 0)+8;
+      if (rect.bottom<=safeTop || rect.top>=platform.innerHeight-12
+        || rect.left>=platform.innerWidth || rect.right<=0)
+        target.scrollIntoView({block:"start",inline:"nearest",behavior:"instant"});
+    }
+    function visibleSectionFocusTarget() {
+      return field(workspaceSection==="orders"?"#order-form":
+        workspaceSection==="history"?"#history-title":"#operations-title");
     }
     function renderWorkspaceSection() {
       const mobile = mobileWorkspace?.matches === true;
@@ -1185,6 +1215,8 @@
       mainMenu?.removeAttribute("open");
       if (navigate && mobileWorkspace?.matches && platform.location.hash !== workspaceFragments[section])
         platform.location.hash = workspaceFragments[section];
+      if (navigate && mobileWorkspace?.matches !== true)
+        revealWorkspaceTarget(visibleSectionFocusTarget());
     }
     function resetWorkspaceSection() {
       selectWorkspaceSection("map", false);
@@ -1216,14 +1248,27 @@
         field(fragmentForSection(workspaceSection)).focus();
     });
     mobileWorkspace?.addEventListener("change", () => {
-      // A breakpoint must not strand keyboard focus in a newly hidden panel.
-      const focused = workspaceSections.find(section => field(`#${section}-panel`).contains(platform.document.activeElement));
-      if (focused) {
-        workspaceSection = focused;
-        if (mobileWorkspace.matches && sectionFromFragment() !== focused)
-          platform.history.replaceState(platform.history.state, "", workspaceFragments[focused]);
-      }
+      // The chosen section is user intent, NOT an inference from the focused
+      // element. Map includes a live composer; focusing it must never switch
+      // Map to Orders when a screen rotates or a breakpoint is crossed.
+      const previousFocus=platform.document.activeElement;
+      const focusedInTray=field("#field-mini-tray")?.contains(previousFocus);
       renderWorkspaceSection();
+      sizeMobileWorkspace();
+      // A desktop/expanded layout can leave the same valid focused control
+      // far down a scrolling document. Reveal it without changing sections
+      // or draft/authority identity. The next frame owns the final geometry.
+      platform.requestAnimationFrame?.(()=>{
+        if (!operationalVisible) return;
+        const focused=focusedInTray ? visibleSectionFocusTarget() : previousFocus;
+        if (focusedInTray || (focused && !focused.getClientRects?.().length)) {
+          const fallback=visibleSectionFocusTarget();
+          fallback?.focus?.({preventScroll:true});
+          revealWorkspaceTarget(fallback);
+        } else revealWorkspaceTarget(focused);
+        positionMapQuickActions();
+        renderMapScale();
+      });
     });
     function sizeMobileWorkspace() {
       const viewport = platform.visualViewport;
@@ -1546,13 +1591,22 @@
       selectMapObject(target.dataset.placeFocus);
       if (item.getAttribute("tabindex") === "0" && item.getAttribute("aria-disabled")!=="true") {
         item.focus({preventScroll:true});
+        revealWorkspaceTarget(item);
       } else if (mobileWorkspace?.matches === true) {
         // Source-based Places selection remains inspectable even when the
         // projected SVG marker has been clipped or disabled on a short map.
         hideMapQuickActions();
         operationalWorkspace.dataset.evidenceOpen="true";
         field("#map-selection-title").focus({preventScroll:true});
-      } else focusVisibleMapAction();
+      } else {
+        // A disabled/clipped SVG marker is not a viable desktop navigation
+        // destination. Reveal its truthful source-backed inspector instead.
+        hideMapQuickActions();
+        operationalWorkspace.dataset.evidenceOpen="true";
+        const inspector=field("#map-selection-title");
+        inspector?.focus({preventScroll:true});
+        revealWorkspaceTarget(inspector);
+      }
     });
     navPeople.addEventListener("click", () => {
       if (!peopleButton.disabled && operationalVisible) {
@@ -1618,7 +1672,9 @@
       if (!peopleActive() || !picture?.reports.length || peopleViewReports.disabled) return;
       returnPeopleFocus = false; peopleDialog.close(); selectWorkspaceSection("history");
       const reports = field("#received-reports"); reports.open = true;
-      reports.querySelector("summary").focus();
+      const destination=reports.querySelector("summary");
+      destination?.focus({preventScroll:true});
+      revealWorkspaceTarget(destination);
     });
     peopleDialog.addEventListener("close", () => {
       peopleButton.setAttribute("aria-expanded", "false");
@@ -1640,12 +1696,16 @@
       if (!peopleActive() || peopleInspect.disabled) return;
       returnPeopleFocus = false; peopleDialog.close(); selectWorkspaceSection("map");
       selectMapObject("ortega");
+      hideMapQuickActions();
       operationalWorkspace.dataset.evidenceOpen = "true";
-      field("#map-selection-title").focus({preventScroll:true});
+      const inspector=field("#map-selection-title");
+      inspector?.focus({preventScroll:true});
+      revealWorkspaceTarget(inspector);
     });
     peopleWrite.addEventListener("click", () => {
       if (!peopleActive() || peopleWrite.disabled || !canPlanMapOrder()) return;
-      returnPeopleFocus = false; peopleDialog.close(); selectWorkspaceSection("orders"); composer.focus();
+      returnPeopleFocus = false; peopleDialog.close(); selectWorkspaceSection("orders");
+      composer.focus({preventScroll:true}); revealWorkspaceTarget(composer);
     });
     function openNotifications(entry) {
       if (!notificationsActive()) return;
