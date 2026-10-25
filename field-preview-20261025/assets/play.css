@@ -2196,3 +2196,12 @@ body[data-play-state="authenticated"] .operations-map {
 #orders-panel #field-minimize-dock[hidden] {
   display:none!important;
 }
+
+/* A minimized dock is no longer occupying screen space. This explicit final
+   override outranks outcome/readback reservations at every phone height,
+   including a newly visible rejected/no-write receipt from the preview. */
+@media (max-width:1024px) {
+  :root:has(#orders-panel[data-dock="compact"][data-minimized="true"]) {
+    --field-dock:56px !important;
+  }
+}

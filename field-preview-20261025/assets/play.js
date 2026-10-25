@@ -1460,11 +1460,13 @@
       if(!operationalVisible || !notificationsActive() || workspaceSection!=="map"
         || ordersPanel.dataset.dock!=="compact")return;
       dockMinimized=true;ordersPanel.dataset.minimized="true";miniTray.hidden=false;
-      sizeMobileWorkspace();positionAlert();field("#field-restore-dock").focus({preventScroll:true});
+      sizeMobileWorkspace();renderMapScale();positionAlert();
+      field("#field-restore-dock").focus({preventScroll:true});
     });
     field("#field-restore-dock").addEventListener("click",()=>{
       dockMinimized=false;ordersPanel.dataset.minimized="false";miniTray.hidden=true;
-      sizeMobileWorkspace();positionAlert();composer.focus({preventScroll:true});
+      sizeMobileWorkspace();renderMapScale();positionAlert();
+      composer.focus({preventScroll:true});
     });
     platform.addEventListener("resize",positionAlert);
     platform.visualViewport?.addEventListener("resize",positionAlert);
