@@ -1126,7 +1126,10 @@
       const updatePreview = () => {
         // Both rows are projections of EXISTING authenticated records, not
         // invented conversation messages. Keep the order/report distinction.
-        const issued = issuedReadback.textContent?.trim();
+        // Only an authenticated issued-order identity permits an Issued
+        // preview. Generic "Refresh history" fallback text is NOT evidence.
+        const issued = field("#ortega-response-label")?.dataset.orderId
+          ? issuedReadback.textContent?.trim() : "";
         const received = receivedReadback.textContent?.trim();
         fieldCommandPreview.textContent = issued
           ? "Issued · " + issued.slice(0, 180)

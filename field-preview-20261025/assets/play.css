@@ -1799,7 +1799,11 @@ body[data-play-state="authenticated"] .operations-map {
   border-top:1px solid #435043;overflow-wrap:anywhere}
 #field-alert-list li strong,#field-alert-list li span {display:block}
 #field-alert-list li span{font-size:10px;color:#bbc8b4}
-.field-mini-tray {position:fixed;z-index:24;bottom:calc(var(--field-nav,66px) + 9px);
+.field-mini-tray {position:fixed;z-index:24;
+  /* Measured navigation height includes iOS/Android safe-area padding.
+     The same visual-viewport bottom offset used by the real command dock
+     keeps the Restore button clear of the navigation's hit targets. */
+  bottom:calc(var(--workspace-bottom,0px) + var(--workspace-nav-height,66px) + 9px);
   left:9px;display:flex;gap:5px}
 .field-mini-tray[hidden]{display:none}
 .field-mini-tray button { width:auto;min-height:44px;padding:5px 12px;
