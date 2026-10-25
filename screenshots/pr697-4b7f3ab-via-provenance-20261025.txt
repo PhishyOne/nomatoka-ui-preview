@@ -1,0 +1,11 @@
+Nomatoka field terminal PR #697 visual checkpoint, 2026-10-25.
+Game Draft source exact SHA: 4b7f3abc13938770a1b8b511bad1fe2c2f406647.
+Portrait 390x844 and landscape 844x390 images captured from the working tree
+that became this exact source SHA. Real Chromium, real field-terminal DOM/CSS
+and JS, with controlled synthetic HTTP test data and a verified blocking-route
+fixture. Neither screenshot shows a production world, real server account,
+physical Android acceptance, or a dispatched order.
+VIA is displayed beneath Send; mic placeholder remains disabled.
+205/205 independent standalone affected source/Chromium tests pass.
+PostgreSQL-backed qualification, fresh independent source review, full hosted
+candidate CI, actual Android acceptance, merge and deployment are pending.
