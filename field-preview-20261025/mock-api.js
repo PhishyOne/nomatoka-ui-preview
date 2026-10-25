@@ -31,7 +31,14 @@
       status:"ready",location:"Staging Area",currentOrder:null,lastResponse:null}]},
     "/api/orders/history":{accountId,entries:[],nextBeforeVersion:null},
     "/api/operations-picture":{accountId,picture},
-    "/api/knowledge":{accountId,knowledge:null}
+    // Knowledge and the received operations-picture card are projections of
+    // the SAME fictional contact report, not contradictory demo stories.
+    "/api/knowledge":{accountId,knowledge:{
+      revision:picture.revision,contact:"present",location:"Staging Area",
+      report:report.summary,source:"local report",orderId:id,
+      facts:[{kind:"obstruction",route:"short",routeName:"Short path",
+        name:"fallen trunk",blocked:true,source:"physical-contact"}]
+    }}
   };
   const response=(data,status=200)=>new Response(JSON.stringify(data),{
     status,headers:{"Content-Type":"application/json","Cache-Control":"no-store"}
