@@ -2205,3 +2205,15 @@ body[data-play-state="authenticated"] .operations-map {
     --field-dock:56px !important;
   }
 }
+
+/* Header controls render at *every* width, including tablet/desktop. Their
+   SVG paths are stroke-only, and must never rely on the mobile v0.7 media
+   breakpoint for dimensions or a stroke. */
+body[data-play-state="authenticated"] .workspace-header .field-top-icon.ico {
+  display:block;width:20px;height:20px;min-width:20px;min-height:20px;
+  flex:none;fill:none;stroke:currentColor;stroke-width:1.8;
+  stroke-linecap:round;stroke-linejoin:round;
+}
+body[data-play-state="authenticated"] .workspace-header .field-top-icon.ico.big {
+  width:24px;height:24px;min-width:24px;min-height:24px;
+}

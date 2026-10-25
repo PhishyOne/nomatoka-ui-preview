@@ -2023,14 +2023,25 @@
       if (focusedIndex !== undefined) focusDraftToken(focusedIndex, removeFocus);
       scheduleChipAffordance();
     }
+    let renderedChipSignature;
     function renderContextualActions(options, selectedTitle = "selected map object") {
       const list = field("#contextual-actions"), status = field("#contextual-action-status");
+      const locked = !canEditDraft();
+      const suggestions = progressiveSuggestions(composer.value, options);
+      // Identity is based on the actual current view, lock and complete
+      // source-backed option catalogue, not an assumed immutable revision.
+      // An unchanged poll MUST NOT destroy active touch capture, native
+      // scrolling, DOM chip identity or the unsent draft. Meaningful updates
+      // and authority/lock changes still trigger the ordinary safe rerender.
+      const signature = JSON.stringify([selectedMapId,selectedTitle,composer.value,locked,
+        options.map(option=>[option.id,option.text,option.evidence,option.guidance,
+          option.notice,option.disabledReason,option.disabled]),suggestions.map(x=>[x.phrase,x.text])]);
+      if (signature === renderedChipSignature) return;
+      renderedChipSignature = signature;
       const focusedId = list.contains(platform.document.activeElement) ? platform.document.activeElement.dataset.actionId : undefined;
       const scroll = list.scrollLeft;
       cancelDraftDrag(); renderDraftTokens();
       list.replaceChildren();
-      const locked = !canEditDraft();
-      const suggestions = progressiveSuggestions(composer.value, options);
       const message = locked ? "Action proposals locked while an order attempt is pending. Preserve the exact retry."
         : suggestions.length ? `Next words for ${selectedTitle}. ${suggestions[0].option.notice} ${suggestions[0].option.evidence} Review VIA; Send is explicit.`
         : "No action proposals for this prefix and received picture. Draft words are editable text, not validated commands.";
@@ -2252,7 +2263,7 @@
       historyLoading = false; knowledgeRevision++; pictureRevision++;
     }
     function scrubOperations() {
-      cancelDraftDrag(); draftList.replaceChildren();
+      cancelDraftDrag(); renderedChipSignature=undefined;draftList.replaceChildren();
       scrubNotifications();
       scrubPeople();
       field("#contextual-actions").replaceChildren();
