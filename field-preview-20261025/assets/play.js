@@ -959,6 +959,7 @@
       if (!link || !operationsMap.contains(link)
         || mobileWorkspace?.matches !== true || workspaceSection !== "map") return;
       event.preventDefault();
+      hideMapQuickActions();
       operationalWorkspace.dataset.evidenceOpen = "true";
       field("#map-selection-title").focus({ preventScroll: true });
     });
@@ -2589,13 +2590,24 @@
       event.preventDefault();
       if (!event.repeat) selectMapObject(target.dataset.mapId);
     });
+    function revealMapPreparationBlocker() {
+      // A quick Prepare can be used while the evidence panel is hidden.
+      // Never focus a hidden status: reveal the same source-backed inspector
+      // and dismiss its map popup so neither steals taps or masks the warning.
+      if (mobileWorkspace?.matches === true && workspaceSection === "map") {
+        hideMapQuickActions();
+        operationalWorkspace.dataset.evidenceOpen = "true";
+      }
+      mapActionStatus.focus({preventScroll:true});
+    }
     function prepareOrderText(text) {
       if (!text || !picture || terminal || projection?.control.status !== "active") return;
       if (composer.disabled) {
         mapActionStatus.textContent = "The composer is locked while an order attempt is pending.";
+        revealMapPreparationBlocker();
       } else if (composer.value.length > 0 && composer.value !== text) {
         mapActionStatus.textContent = "Existing draft kept. Clear it before preparing this map action.";
-        mapActionStatus.focus();
+        revealMapPreparationBlocker();
       } else {
         if (!mutateDraft(text)) return;
         selectWorkspaceSection("orders"); composer.focus();
