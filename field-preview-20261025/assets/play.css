@@ -1,0 +1,2192 @@
+:root {
+  color-scheme: dark;
+  --background: #101714;
+  --surface: #18221e;
+  --text: #f3f0e7;
+  --muted: #b8c2bc;
+  --accent: #9bcfba;
+  --button: #d5eadf;
+  --button-text: #102019;
+  --line: #52635b;
+  --focus: #f2bd73;
+  --success: #a7df9b;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html {
+  min-width: 20rem;
+  min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background: var(--background);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.play-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.access-card {
+  width: min(100%, 28rem);
+  padding: clamp(1.25rem, 6vw, 2.25rem);
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  background: var(--surface);
+}
+
+.workspace {
+  width: min(100%, 80rem);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.workspace-header h1 { font-size: clamp(1.5rem, 4vw, 2rem); }
+.workspace-header .quiet-button { flex-shrink: 0; }
+.panel.context-panel { padding: .75rem 1rem; }
+.profile-summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 1rem; }
+.profile-summary h2 { font-size: 1rem; }
+#commander-name { margin: .15rem 0 0; font-weight: 700; overflow-wrap: anywhere; }
+.context-panel .control-row, #claim-control { margin-top: .75rem; }
+
+.workspace-header,
+.history-heading,
+.control-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.panel {
+  padding: clamp(1rem, 5vw, 1.75rem);
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  background: var(--surface);
+}
+
+.panel-label {
+  margin: 0 0 0.35rem;
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.panel-copy {
+  margin: 0.75rem 0 1rem;
+  color: var(--muted);
+}
+
+.context-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin: 1rem 0;
+}
+
+.context-grid div {
+  min-width: 0;
+  padding: 0.75rem;
+  border: 1px solid #394940;
+  border-radius: 0.45rem;
+  background: #121a17;
+}
+
+dt {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+dd {
+  overflow-wrap: anywhere;
+  margin: 0.15rem 0 0;
+  font-weight: 700;
+}
+
+.control-state {
+  margin: 0;
+}
+
+.control-row {
+  padding: 0.75rem;
+  border: 1px solid var(--focus);
+  border-radius: 0.45rem;
+  background: #261f16;
+}
+
+.eyebrow {
+  margin: 0 0 0.5rem;
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2rem, 10vw, 3rem);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+
+.intro {
+  margin: 1rem 0 1.5rem;
+  color: var(--muted);
+}
+
+form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+label {
+  font-weight: 700;
+}
+
+input,
+button {
+  width: 100%;
+  min-height: 3rem;
+  border-radius: 0.4rem;
+  font: inherit;
+}
+
+.quiet-button,
+.secondary-button {
+  width: auto;
+  min-height: 2.75rem;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+}
+
+.history-heading { flex-wrap: wrap; }
+
+.history-list {
+  max-height: min(28rem, 55dvh);
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+  display: grid;
+  gap: 0.65rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.history-list li {
+  padding: 0.8rem;
+  border-left: 0.2rem solid var(--success);
+  border-radius: 0.25rem;
+  background: #121a17;
+}
+
+.history-list strong,
+.history-list time {
+  display: block;
+}
+
+.history-list time,
+.history-list span,
+.empty-history {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+input {
+  min-width: 0;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--line);
+  background: #0d1311;
+  color: var(--text);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+
+button {
+  padding: 0.65rem 1rem;
+  border: 0;
+  background: var(--button);
+  color: var(--button-text);
+  font-weight: 750;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+input:focus-visible,
+button:focus-visible {
+  outline: 0.2rem solid var(--focus);
+  outline-offset: 0.2rem;
+}
+
+.status {
+  min-height: 1.5em;
+  margin: 1rem 0 0;
+  color: var(--muted);
+}
+
+@media (min-width: 42rem) {
+  .play-shell {
+    padding: 2rem;
+  }
+}
+
+@media (max-width: 30rem) {
+  #order-form button {
+    width: 100%;
+    min-height: 3.5rem;
+  }
+
+  .workspace-header,
+  .history-heading,
+  .control-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .workspace-header .quiet-button,
+  .history-heading .quiet-button,
+  .control-row .secondary-button {
+    width: 100%;
+  }
+
+  .context-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+}
+
+/* The order composer remains usable at phone width. */
+textarea { display: block; width: 100%; min-height: 6rem; padding: .8rem; resize: vertical;
+  color: inherit; background: #101b23; border: 1px solid #607078; border-radius: .4rem; font: inherit; }
+#order-form { display: grid; gap: .75rem; }
+#order-form button { justify-self: start; }
+.context-grid dd, .history-list li { overflow-wrap: anywhere; }
+#ortega-response-label { overflow-wrap: anywhere; }
+#delivered-status-contact { overflow-wrap: anywhere; }
+textarea:focus-visible { outline: 2px solid #eac481; outline-offset: 3px; }
+.history-list li > span { display: block; }
+
+details { margin: .75rem 0; }
+summary { cursor: pointer; min-height: 2.75rem; padding: .5rem 0; color: var(--accent); overflow-wrap: anywhere; }
+summary:focus-visible, .history-list:focus-visible {
+  outline: .2rem solid var(--focus); outline-offset: .2rem;
+}
+.order-outcome {
+  padding: 1rem; margin: 1rem 0; border: 2px solid var(--focus);
+  border-radius: .4rem; background: #302719; color: var(--text);
+  font-weight: 700; overflow-wrap: anywhere;
+}
+.order-outcome:empty { display: none; }
+:is(.order-outcome, .history-list li)[data-outcome="accepted"] { border-color: var(--success); }
+.order-outcome[data-outcome="accepted"] { background: #1b3021; }
+:is(.order-outcome, .history-list li)[data-outcome="transmitted"] { border-color: #a4cbea; }
+.order-outcome[data-outcome="transmitted"] { background: #172936; }
+:is(.order-outcome, .history-list li)[data-outcome="not-delivered"],
+:is(.order-outcome, .history-list li)[data-outcome="rejected"] { border-color: #e4a99f; }
+.order-outcome[data-outcome="not-delivered"], .order-outcome[data-outcome="rejected"] { background: #34221f; }
+:is(.order-outcome, .history-list li)[data-outcome="clarification"],
+:is(.order-outcome, .history-list li)[data-outcome="unresolved"],
+:is(.order-outcome, .history-list li)[data-outcome="unconfirmed"] { border-color: var(--focus); }
+.history-list .order-identity { color: var(--accent); font-weight: 750; }
+.history-list li[data-latest="true"] { background: #24342c; outline: 1px solid var(--line); outline-offset: -1px; }
+
+@media (max-width: 30rem) {
+  .workspace-header { flex-direction: row; align-items: center; }
+  .workspace-header h1 { font-size: 1.5rem; }
+  .workspace-header .quiet-button { width: auto; }
+  .command-panel .context-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .context-grid div { padding: .5rem; }
+  .panel { padding: .75rem; }
+}
+
+.operations-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.map-qualification {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.operations-layout {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.operations-map {
+  position: relative;
+  padding: .75rem;
+  overflow: hidden;
+  border: 1px solid #52635b;
+  border-radius: 0.45rem;
+  background-color: #111b17;
+  background-image:
+    linear-gradient(rgba(126, 145, 132, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(126, 145, 132, 0.08) 1px, transparent 1px);
+  background-size: 2rem 2rem;
+}
+
+.route-line {
+  position: absolute;
+  z-index: 0;
+  left: 25%;
+  right: 25%;
+  height: 0;
+  border-top: 2px dashed #788a7f;
+  transform-origin: left center;
+}
+
+.route-line-short {
+  top: 41%;
+  transform: rotate(-17deg);
+}
+
+.route-line-lower {
+  top: 65%;
+  border-color: #657b70;
+  transform: rotate(12deg);
+}
+
+.map-item {
+  position: relative;
+  z-index: 1;
+  width: auto;
+  min-height: 2.75rem;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid #71847a;
+  background: #1d2a24;
+  color: var(--text);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 0.875rem;
+  line-height: 1.3;
+}
+
+.map-item span {
+  display: block;
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.map-item[aria-pressed="true"] {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 2px rgba(242, 189, 115, 0.22);
+  background: #302719;
+}
+
+.route-line { pointer-events: none; }
+.map-selection-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .25rem .75rem;
+  margin-top: .75rem;
+  padding-top: .5rem;
+  border-top: 1px solid #52635b;
+  overflow-wrap: anywhere;
+}
+.map-selection-bar p { margin: 0; min-width: 0; font-size: .875rem; }
+.map-selection-bar a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--accent);
+  font-size: .875rem;
+}
+.map-report-layer { margin-top: .5rem; border-top: 1px solid #52635b; }
+.map-report-layer summary { min-height: 44px; padding: .75rem 0; font-size: .875rem; }
+.reported-map-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: .75rem;
+  padding: .25rem;
+}
+.map-report {
+  border-color: #d1aa69;
+  background: #33291c;
+}
+
+.map-evidence {
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid #394940;
+  border-radius: 0.45rem;
+  background: #121a17;
+}
+
+.map-known,
+.map-unknown {
+  color: var(--muted);
+}
+
+.evidence-list {
+  display: grid;
+  gap: 0.55rem;
+  margin: 1rem 0;
+}
+
+.evidence-list div {
+  display: grid;
+  grid-template-columns: minmax(5rem, 0.35fr) minmax(0, 1fr);
+  gap: 0.6rem;
+}
+
+.evidence-list dd {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+#prepare-map-order, #prepare-clear-trunk {
+  width: 100%;
+}
+
+#map-action-status {
+  margin-bottom: 0;
+}
+
+@media (min-width: 64rem) {
+  #operational-workspace { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+  .workspace-nav, .operations-panel { grid-column: 1 / -1; }
+  .operations-layout {
+    grid-template-columns: minmax(0, 2fr) minmax(15rem, 1fr);
+    align-items: start;
+  }
+}
+
+@media (max-width: 30rem) {
+  .operations-heading {
+    display: block;
+  }
+
+  .map-qualification {
+    margin-top: 0.35rem;
+  }
+}
+
+#order-via { display: block; width: 100%; min-height: 44px; margin-bottom: 1rem; font: inherit; color: inherit; background: var(--surface); border: 1px solid var(--line); border-radius: .4rem; padding: .5rem; }
+
+#order-via:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+
+#operational-workspace { display: grid; gap: 1rem; min-width: 0; }
+
+/* Native anchors keep the map, draft and records in one scrolling document. */
+.workspace-nav {
+  display: flex;
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 3;
+  gap: .5rem;
+  padding: .25rem;
+  border: 1px solid var(--line);
+  border-radius: .5rem;
+  background: var(--surface);
+}
+.workspace-nav a {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: .5rem;
+  color: var(--accent);
+  font-weight: 700;
+  border-radius: .25rem;
+}
+.workspace-nav a:focus-visible,
+.map-selection-bar a:focus-visible,
+:is(#operations-title, #map-selection-title, #map-action-status, #order-form, #history-title):focus-visible {
+  outline: .2rem solid var(--focus);
+  outline-offset: .2rem;
+}
+:is(#operations-title, #map-selection-title, #map-action-status, #order-form, #history-title, #order-text, #submit-command) {
+  scroll-margin-top: calc(4.5rem + env(safe-area-inset-top, 0px));
+  scroll-margin-bottom: 1rem;
+}
+.workspace > *, #operational-workspace > *, .operations-layout > * { min-width: 0; }
+.map-evidence { overflow-wrap: anywhere; }
+body[data-play-state="authenticated"] .play-shell {
+  align-items: start;
+  padding-top: max(1rem, env(safe-area-inset-top, 0px));
+  padding-right: max(1rem, env(safe-area-inset-right, 0px));
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  padding-left: max(1rem, env(safe-area-inset-left, 0px));
+}
+/* Leave short landscapes and keyboard-reduced viewports to native page scrolling. */
+@media (max-height: 32rem) {
+  .workspace-nav { position: static; }
+  :is(#operations-title, #map-selection-title, #map-action-status, #order-form, #history-title, #order-text, #submit-command) {
+    scroll-margin-top: 1rem;
+  }
+}
+
+#notifications, #people { color: var(--text); background: var(--surface); border: 1px solid var(--line);
+  border-radius: .75rem; width: min(38rem, calc(100% - 1rem)); max-height: 85dvh;
+  padding: 1rem; overflow-wrap: anywhere; }
+#notifications::backdrop, #people::backdrop { background: rgb(0 0 0 / .65); }
+#people { overflow-y: auto; max-height: calc(var(--workspace-height, 100dvh) - 1rem); }
+.people-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1rem; }
+.people-actions button { flex: 1 1 10rem; min-height: 44px; }
+#people-reports { max-height: 28dvh; overflow-y: auto; }
+#people-reports li { font-size: .875rem; }
+.notification-heading { display: flex; gap: .75rem; align-items: start; justify-content: space-between; }
+.notification-heading h2 { min-width: 0; }
+.notification-heading button { flex-shrink: 0; }
+#notification-list { max-height: 55dvh; overflow-anchor: none; }
+#notification-list li { border-color: var(--line); }
+#notification-list li[data-outcome="received"] { border-color: var(--accent); }
+#notification-list li:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+#notification-toast { position: fixed; z-index: 4; right: max(.75rem, env(safe-area-inset-right));
+  bottom: calc(var(--notification-bottom, 0px) + .75rem + env(safe-area-inset-bottom));
+  width: min(22rem, calc(100% - 1.5rem)); padding: .65rem; border: 1px solid var(--focus);
+  border-radius: .5rem; background: var(--surface); overflow-wrap: anywhere; }
+#open-notification-toast { text-align: left; }
+#dismiss-notification-toast { margin-top: .4rem; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+@media (max-width: 42rem), (max-width: 1024px) and (max-height: 550px) {
+  #notifications { margin: auto auto 0; border-radius: .75rem .75rem 0 0;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+}
+
+/* v0.7 uses 23px navigation glyphs at every width. At desktop widths,
+   leaving inline SVGs intrinsically sized makes the sticky navigation grow
+   with the available grid column and obscure the map inspector. */
+body[data-play-state="authenticated"] .workspace-nav .field-nav-icon {
+  width: 23px;
+  height: 23px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* Four equal, tactile destinations fit the narrow field terminal. */
+.workspace-nav { gap: .125rem; }
+.workspace-nav :is(a, button) {
+  display: flex; flex: 1 1 0; align-items: center; justify-content: center;
+  min-width: 2.75rem; min-height: 2.75rem; width: auto; padding: .4rem .125rem;
+  font-size: .875rem; line-height: 1.25;
+}
+#notifications { overflow-y: auto; }
+
+/* Phone workspace: mounted panels retain their state; the document still scrolls
+   for evidence, large text and a keyboard-reduced visual viewport. */
+@media (max-width: 42rem), (max-width: 1024px) and (max-height: 550px) {
+  body[data-play-state="authenticated"] .play-shell {
+    padding: max(.5rem, env(safe-area-inset-top)) max(.5rem, env(safe-area-inset-right))
+      calc(5rem + var(--workspace-bottom, 0px) + env(safe-area-inset-bottom)) max(.5rem, env(safe-area-inset-left));
+  }
+  .workspace { gap: .5rem; }
+  .workspace-header h1 { font-size: 1.25rem; }
+  .workspace-header .eyebrow { margin-bottom: .15rem; }
+  .panel.context-panel { padding: .5rem .75rem; }
+  .workspace-nav {
+    position: fixed; top: auto;
+    bottom: var(--workspace-bottom, 0px);
+    left: 0; right: 0;
+    padding: .35rem max(.5rem, env(safe-area-inset-right))
+      max(.35rem, env(safe-area-inset-bottom)) max(.5rem, env(safe-area-inset-left));
+    border-radius: .5rem .5rem 0 0;
+  }
+  .workspace-nav [aria-current="location"] { color: var(--text); background: #302719; outline: 1px solid var(--focus); }
+  .operations-panel { padding: .75rem; }
+  .operations-layout { margin-top: .5rem; }
+  .map-item { min-height: 44px; }
+  :is(#operations-title, #map-selection-title, #map-action-status, #order-form, #history-title, #order-text, #submit-command) {
+    scroll-margin-top: 1rem;
+    scroll-margin-bottom: calc(5rem + env(safe-area-inset-bottom));
+  }
+  #notifications { bottom: var(--workspace-bottom, 0px); max-height: calc(var(--workspace-height, 100dvh) - 1rem); }
+}
+
+/* Field terminal v0.7 visual source: nomatoka-ui-preview @ 9f202b9.
+   Authenticated surfaces only; no prototype state, terrain or handlers. */
+body[data-play-state="authenticated"] {
+  --background: #0b110e;
+  --surface: #151b17;
+  --panel: #1c241e;
+  --panel-raised: #242d25;
+  --text: #e3e3d5;
+  --muted: #abb4a2;
+  --accent: #edb449;
+  --focus: #edb449;
+  --button: #edb449;
+  --button-text: #0b110e;
+  --line: #526154;
+}
+body[data-play-state="authenticated"] .panel {
+  border-radius: .5rem;
+  background: linear-gradient(155deg, var(--panel-raised), var(--surface));
+}
+.workspace-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: .5rem .75rem;
+  padding: .65rem .75rem;
+  border: 1px solid var(--line);
+  border-bottom: 2px solid #73613e;
+  border-radius: .5rem;
+  background: linear-gradient(#232924, #141a16 58%, #111713);
+  box-shadow: 0 2px 8px #0007;
+}
+.workspace-header h1 { font-size: 1.25rem; letter-spacing: .04em; }
+.workspace-header .eyebrow { margin-bottom: .15rem; font-size: .7rem; }
+.workspace-header .context-panel { grid-column: 1 / -1; padding: 0; border: 0; background: none; }
+.workspace-header .profile-summary { grid-template-columns: minmax(0, 1fr) auto auto; gap: .5rem; }
+.workspace-header .profile-summary > button { padding-inline: .65rem; }
+.workspace-header .profile-summary > div { display: flex; flex-wrap: wrap; gap: .2rem .6rem; align-items: baseline; }
+.workspace-header #commander-name { margin: 0; }
+.workspace-header #commander-title { font-size: .8rem; color: var(--muted); }
+body[data-play-state="authenticated"] :is(.quiet-button, .secondary-button, .map-item) {
+  border-color: var(--line);
+  background: linear-gradient(145deg, #293129, #19211b);
+  box-shadow: inset 0 1px #ffffff0a, 0 2px 4px #0004;
+}
+body[data-play-state="authenticated"] button:active { box-shadow: inset 0 2px 5px #0008; }
+body[data-play-state="authenticated"] :is(button, a, select, summary):focus-visible,
+:is(#order-readback, #access-status):focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+body[data-play-state="authenticated"] .map-item[aria-pressed="true"] {
+  border-color: var(--focus); background: #332b1c; box-shadow: inset 0 0 0 1px var(--focus);
+}
+body[data-play-state="authenticated"] :is(.context-grid div, .map-evidence, .history-list li) { background: var(--background); }
+body[data-play-state="authenticated"] .operations-map {
+  background-color: var(--background);
+  background-image: linear-gradient(#dcdebe0a 1px, transparent 1px),
+    linear-gradient(90deg, #dcdebe0a 1px, transparent 1px), radial-gradient(ellipse at 50% 35%, #273627, #0b110e 75%);
+  background-size: 2rem 2rem, 2rem 2rem, 100% 100%;
+  box-shadow: inset 0 0 24px #0007;
+}
+.workspace-nav { background: linear-gradient(145deg, #171e19, #0d120e); border-top: 2px solid #7a6748; }
+.workspace-nav :is(a, button) { border: 1px solid #39483c; text-decoration: none; }
+.workspace-nav [aria-current="location"] { color: var(--accent); background: #332b1c; border-color: #af8c4b; }
+#orders-panel { border-color: #79694b; box-shadow: 0 4px 22px #0007; }
+.dock-heading { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+/* Single real composer is laid out as the approved field-terminal input row,
+   including on desktop. The mobile dock overrides sizing, not authority. */
+.field-composer-row { display: flex; align-items: stretch; gap: .45rem; min-width: 0; }
+.field-composer-wrap { flex: 1 1 auto; min-width: 0; }
+.composer-tokens { display:flex; align-items:center; gap:3px; min-width:0; overflow:hidden; padding:3px; }
+.composer-tokens > .field-recipient { flex:none; white-space:nowrap; }
+#draft-tokens { display:flex; align-items:center; gap:3px; flex:1; min-width:0; overflow-x:auto; overflow-y:hidden; scrollbar-width:none; }
+/* Each editable chip must contain BOTH its word and independent X hit area.
+   Intrinsic sizing matters inside the horizontal scrollport: a child X must
+   never overflow its own chip and overlap the following word. */
+.draft-chip { display:inline-grid; grid-template-columns:max-content 26px; align-items:stretch; flex:none; width:max-content; min-width:max-content; border:1px solid #ad8b50; border-radius:4px; background:#2e3428; }
+.draft-chip button { flex:none; width:auto; min-width:24px; min-height:24px; margin:0; padding:1px 4px; border:0; border-radius:3px; background:transparent; color:#e9dbb8; font-size:11px; line-height:22px; white-space:nowrap; }
+.draft-word { max-width:none; flex:0 0 auto; }
+.draft-chip .draft-remove { flex:0 0 26px; width:26px; min-width:26px; max-width:26px; }
+.draft-word, #contextual-actions button { touch-action:none; user-select:none; cursor:grab; }
+.draft-remove { touch-action:manipulation; }
+#draft-tokens button:focus-visible, #contextual-actions button:focus-visible { outline:2px solid #ffdc88; outline-offset:-2px; }
+.draft-drop-hint { padding:4px; font-size:11px; color:var(--muted); }
+#order-form[data-chip-dragging] .composer-tokens,
+#order-form[data-chip-dragging="draft"] #contextual-actions { outline:2px dashed #ffdc88; outline-offset:-2px; }
+.field-recipient { font-size: .68rem; color: #e8c47e; margin: 0 0 .15rem; }
+.field-send-icon { display: inline-block; width: 18px; height: 18px;
+  flex: none; stroke: currentColor; stroke-width: 1.9; fill: none;
+  stroke-linecap: round; stroke-linejoin: round; }
+.field-composer-row > #submit-command { display: inline-flex; justify-content: center;
+  align-items: center; gap: .3rem; }
+.field-conversation-tabs { display: flex; align-items: center; gap: .3rem; }
+.field-conversation-tab { border: 1px solid #596a55; border-radius: .3rem;
+  background: #1b251d; padding: .25rem .45rem; color: #d0d9c6; }
+.field-conversation-current { color: #f1cd81; background: #42351e; border-color: #c4974f; }
+.dock-heading h2 { font-size: 1rem; min-width: 0; }
+#toggle-orders { flex: 0 0 auto; max-width: 45%; font-size: .875rem; padding: .5rem; }
+#order-readback { max-height: min(24rem, 38dvh); overflow-y: auto; overscroll-behavior-y: contain; padding: .25rem; }
+#order-form { grid-template-columns: minmax(0, 1fr) auto; gap: .5rem; }
+#order-form > :is(.panel-label, textarea, details, .inputrow, #contextual-action-status) { grid-column: 1 / -1; }
+#order-form > .panel-label { margin: 0; }
+.order-method { display: flex; align-items: center; gap: .5rem; min-width: 0; }
+#order-via { min-width: 0; margin: 0; }
+#order-text { min-height: 5rem; font-size: 16px; background: var(--background); border-color: #9a916c; }
+#submit-command { width: auto; max-width: 10rem; min-height: 3.5rem; padding: .5rem .75rem; }
+#orders-panel .order-outcome { max-height: 6rem; overflow-y: auto; padding: .5rem; margin: .5rem 0; font-size: .875rem; }
+.order-wording { margin: 0; }
+
+@media (max-width: 42rem), (max-width: 1024px) and (max-height: 550px) {
+  .workspace-header .context-panel { padding: 0; }
+  #orders-panel { padding: .5rem; }
+  #operational-workspace[data-section="map"][data-dock-flow="false"] {
+    padding-bottom: var(--workspace-dock-height, 18rem);
+  }
+  #operational-workspace[data-dock-flow="false"] #orders-panel[data-dock="compact"] {
+    position: fixed; z-index: 2;
+    left: max(.5rem, env(safe-area-inset-left)); right: max(.5rem, env(safe-area-inset-right));
+    bottom: calc(var(--workspace-bottom, 0px) + var(--workspace-nav-height, 4rem));
+    border-radius: .65rem .65rem 0 0;
+  }
+  #operational-workspace[data-section="map"][data-dock-flow="false"] #map-panel :is(button, a, summary, [tabindex]) {
+    scroll-margin-bottom: calc(var(--workspace-dock-height, 18rem) + var(--workspace-nav-height, 4rem) + 1rem);
+  }
+  /* Focusable controls inside the dock already clear the nav. */
+  #orders-panel :is(button, textarea, select, [tabindex]) { scroll-margin-bottom: calc(var(--workspace-nav-height, 4rem) + 1rem); }
+  #order-readback { max-height: min(20rem, calc(var(--workspace-height, 100dvh) * .3)); }
+}
+@media (min-width: 64rem) {
+  .workspace-header { grid-template-columns: minmax(12rem, 1fr) minmax(16rem, 2fr) auto; }
+  .workspace-header .context-panel { grid-column: 2; grid-row: 1; padding: 0; }
+  .workspace-header #logout { grid-column: 3; grid-row: 1; }
+}
+
+/* One mounted proposal strip in both dock sizes; Send keeps its own grid cell. */
+.contextual-action-strip { grid-column: 1 / -1; min-width: 0; }
+#contextual-actions { display: flex; gap: .4rem; overflow-x: auto; padding: .25rem; }
+#contextual-actions button { flex: 0 0 auto; width: auto; min-height: 44px; min-width: 44px; font-size: .875rem; }
+#contextual-action-status { margin: .25rem 0 0; font-size: .8rem; color: var(--muted); max-height: 3.5rem; overflow-y: auto; }
+
+/* Public authored geography. Contact and received reports remain unlocated controls. */
+.synthetic-range { margin: 0 0 .75rem; }
+.synthetic-range svg { display: block; width: 100%; max-height: 26rem; background: #23281f; border: 1px solid #71847a; }
+.synthetic-range text { fill: #f4edda; font: 42px system-ui, sans-serif; paint-order: stroke; stroke: #20251e; stroke-width: 8px; stroke-linejoin: round; }
+.synthetic-range figcaption { margin-top: .4rem; font-size: .8rem; color: var(--muted); }
+.range-grid { fill: none; stroke: #adb79a; stroke-width: 2; opacity: .25; }
+.range-route { fill: none; stroke: #eac486; stroke-width: 12; stroke-linejoin: round; }
+.range-route-long { stroke: #d4e2b5; stroke-dasharray: 25 15; }
+.range-place { fill: #f4edda; stroke: #242a20; stroke-width: 6; }
+.range-scale { fill: none; stroke: #f4edda; stroke-width: 5; }
+
+.range-route[data-selected="true"] { stroke: #fff2c7; stroke-width: 20; }
+
+/* Knowledge overlays qualify authored geometry; selection retains its wider stroke. */
+.range-route-short[data-knowledge="reported-blocked"] { stroke: #ffc08a; stroke-dasharray: 18 14; }
+.range-route-short[data-knowledge="reported-not-blocking"] { stroke: #a9d6e5; stroke-dasharray: 40 12 8 12; }
+.range-route-short[data-knowledge="uncertain"] { stroke: #d5b9ed; stroke-dasharray: 8 18; }
+.route-knowledge { margin: 0 0 .75rem; color: var(--muted); font-size: .85rem; overflow-wrap: anywhere; }
+
+
+/* Field-terminal v0.7: no-scroll operational map shell.
+   Source of truth: nomatoka-ui-preview @ 9f202b96794e8f526a321cb063eefe556d8ce756.
+   The mobile map fills the viewport; the ONE real order composer sits above
+   the nav. No fake command input, duplicate action handler, or hidden server
+   side effect. Orders/History/evidence scroll INSIDE their own panels only. */
+@media (max-width: 42rem), (max-width: 1024px) and (max-height: 550px) {
+  :root {
+    --field-top: 55px;
+    --field-nav: 66px;
+    /* Two compact readback lines, real suggestions and the single composer,
+       including the approved eight-pixel gap above navigation. */
+    --field-dock: 248px;
+  }
+  html:has(body[data-play-state="authenticated"] #operational-workspace:not([hidden])),
+  body[data-play-state="authenticated"]:has(#operational-workspace:not([hidden])) {
+    width: 100%;
+    height: var(--workspace-height, 100dvh);
+    min-height: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+  body[data-play-state="authenticated"] .play-shell {
+    width: 100%;
+    height: var(--workspace-height, 100dvh);
+    min-height: 0;
+    padding: 0;
+    display: block;
+    overflow: hidden;
+  }
+  body[data-play-state="authenticated"] .workspace {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    min-height: 0;
+    gap: 0;
+    overflow: hidden;
+    background: #0b100d;
+  }
+  :is(.top, .nav, .dock) { --gold:#edb449; --cyan:#8dc7b9; }
+  /* Literal v0.7 component declarations from approved 9f202b96794e8f526a321cb063eefe556d8ce756,
+     blob dfdd36e11bb429177a49e6e1a1ebc50b2978cbad. Selectors are scoped to
+     existing real controls. The native menu summary stands in for menuBtn;
+     field-top/field-nav retain the app's viewport accounting. No demo JS. */
+  body[data-play-state="authenticated"] .top { height:var(--field-top);flex:0 0 var(--field-top);display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 9px;border-bottom:2px solid #73613e;background:linear-gradient(#232924,#141a16 58%,#111713);z-index:20;position:relative;box-shadow:0 2px 8px #0007 }
+  body[data-play-state="authenticated"] .top :is(#open-people, .field-main-menu > summary) { min-height:44px;min-width:44px;border:1px solid #586756;border-radius:8px;background:linear-gradient(145deg,#293129,#19211b);display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:7px }
+  body[data-play-state="authenticated"] .top .top-title { display:flex;flex-direction:column;min-width:0;flex:1;line-height:1.05;padding-left:2px }
+  body[data-play-state="authenticated"] .top .brand { font-size:13px;letter-spacing:.17em;font-weight:900;color:#e6ddbf }
+  body[data-play-state="authenticated"] .top .sub { font-size:10px;letter-spacing:.065em;color:#b7a67d;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis }
+  body[data-play-state="authenticated"] .top .topstate { display:flex;align-items:center;gap:5px;font-size:9px;font-weight:800;color:#e2c27c;letter-spacing:.04em }
+  body[data-play-state="authenticated"] .top .topstate .dot { width:6px;height:6px;border-radius:50%;background:#e6aa3f;box-shadow:0 0 7px #d9ac59 }
+  body[data-play-state="authenticated"] .top .ico { width:20px;height:20px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;flex:none }
+  body[data-play-state="authenticated"] .top .ico.big { width:24px;height:24px }
+  /* Native heading/summary defaults are absent from the prototype spans/buttons. */
+  body[data-play-state="authenticated"] .top { margin:0; width:100%; border-radius:0; border-inline:0; border-top:0; }
+  body[data-play-state="authenticated"] .top .brand { margin:0; white-space:nowrap; }
+  body[data-play-state="authenticated"] .top .sub { margin-bottom:0; font-weight:400; }
+  body[data-play-state="authenticated"] .top .field-main-menu { margin:0; flex:none; }
+  body[data-play-state="authenticated"] .top .field-main-menu > summary { width:44px; height:44px; list-style:none; cursor:pointer; }
+  .workspace-header .field-main-menu > summary::-webkit-details-marker { display: none; }
+  /* The header is itself a stacking context. While its real hamburger is
+     open, lift THAT context above the fixed command dock, not just its child. */
+  body[data-play-state="authenticated"] .workspace-header:has(#field-main-menu[open]) {
+    z-index: 40;
+  }
+  .workspace-header .field-main-menu-items {
+    display: flex;
+    position: fixed;
+    top: calc(var(--field-top) + .25rem);
+    left: .35rem;
+    z-index: 60;
+    width: min(15rem, calc(100vw - .7rem));
+    max-height: max(44px, calc(var(--workspace-height, 100dvh)
+      - var(--field-top) - var(--field-nav) - 12px - env(safe-area-inset-bottom)));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: .4rem;
+    flex-direction: column;
+    gap: .35rem;
+    background: #1c261ef5;
+    border: 1px solid #a28a52;
+    border-radius: .35rem;
+    box-shadow: 0 8px 20px #000c;
+  }
+  .workspace-header .field-main-menu-items button {
+    width: 100%;
+    min-height: 44px;
+    padding: .45rem .6rem;
+    text-align: left;
+  }
+  body[data-play-state="authenticated"] .workspace-header .context-panel {
+    grid-column: 4;
+    grid-row: 1;
+    padding: 0;
+    border: 0;
+    margin: 0;
+    min-width: 0;
+    background: none;
+    box-shadow: none;
+  }
+  body[data-play-state="authenticated"] .workspace-header .profile-summary {
+    display: flex;
+    gap: .2rem;
+    align-items: center;
+  }
+  body[data-play-state="authenticated"] .workspace-header .profile-summary > div {
+    display: none;
+  }
+  body[data-play-state="authenticated"] .workspace-header #control-warning:not([hidden]),
+  body[data-play-state="authenticated"] .workspace-header #claim-control:not([hidden]) {
+    position: fixed;
+    top: calc(var(--field-top) + 5px);
+    left: max(.5rem, env(safe-area-inset-left));
+    right: max(.5rem, env(safe-area-inset-right));
+    z-index: 40;
+    width: auto;
+    max-height: min(22dvh, 140px);
+    overflow-y: auto;
+    margin: 0;
+    padding: .4rem;
+    border: 2px solid var(--focus);
+    background: #272018;
+  }
+  #inactive-device:not([hidden]) {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    margin: .5rem;
+  }
+  body[data-play-state="authenticated"] #operational-workspace:not([hidden]) {
+    display: block;
+    position: relative;
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
+    min-width: 0;
+    padding: 0;
+    gap: 0;
+    overflow: hidden;
+  }
+  body[data-play-state="authenticated"] .nav { height:calc(var(--field-nav) + env(safe-area-inset-bottom,0px));flex:0 0 calc(var(--field-nav) + env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:linear-gradient(145deg,#171e19,#0d120e);border-top:2px solid #7a6748;padding:4px 5px env(safe-area-inset-bottom,0px);z-index:20;gap:3px }
+  body[data-play-state="authenticated"] .nav :is(a,button) { display:flex;flex-direction:column;gap:2px;min-width:0;min-height:0;padding:3px 1px;border-radius:5px;background:transparent;border:1px solid #39483c;color:#a4afa2;font-size:10px;letter-spacing:.01em }
+  body[data-play-state="authenticated"] .nav :is(a,button):is([aria-current="location"],[aria-expanded="true"]) { color:#f2ba59;border-color:#af8c4b;background:#332b1c }
+  body[data-play-state="authenticated"] .nav :is(a,button):is([aria-current="location"],[aria-expanded="true"])::after { content:"";width:25px;height:2px;background:var(--gold);border-radius:2px }
+  body[data-play-state="authenticated"] .nav .ico { width:20px;height:20px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;flex:none }
+  body[data-play-state="authenticated"] .nav :is(a,button) .ico { width:23px;height:23px }
+  /* Real navigation lives inside the mounted workspace and follows the visual viewport. */
+  body[data-play-state="authenticated"] .nav { position:fixed; inset:auto 0 var(--workspace-bottom,0px); z-index:26; margin:0; border-radius:0; border-inline:0; border-bottom:0; }
+  body[data-play-state="authenticated"] .nav :is(a,button) { width:auto; height:auto; justify-content:center; font-weight:400; line-height:normal; outline:0; }
+  /* Android Chromium otherwise flashes the platform's teal selection ink
+     over the approved olive/gold v0.7 navigation. Keyboard focus remains
+     explicit and gold via :focus-visible immediately below. */
+  body[data-play-state="authenticated"] .nav :is(a,button) {
+    -webkit-tap-highlight-color: transparent;
+  }
+  body[data-play-state="authenticated"] .nav :is(a,button):focus-visible { outline:2px solid #edb449; outline-offset:-3px; }
+  /* The map is a single bounded instrument, not a 1900px document. */
+  body[data-play-state="authenticated"] #operational-workspace[data-section="map"] #map-panel {
+    display: flex;
+    position: absolute;
+    inset: 0 0 calc(var(--field-dock) + var(--field-nav) + env(safe-area-inset-bottom)) 0;
+    width: 100%;
+    min-height: 0;
+    padding: 0;
+    flex-direction: column;
+    gap: 0;
+    overflow: hidden;
+    border: 0;
+    border-radius: 0;
+    background: #111b16;
+  }
+  body[data-play-state="authenticated"] #map-panel .operations-heading {
+    /* v0.7 map metadata floats ON the map; it never consumes map height. */
+    display: flex;
+    position: absolute;
+    top: 12px;
+    left: 13px;
+    z-index: 6;
+    width: min(calc(100% - 4.6rem), 19rem);
+    height: auto;
+    min-height: 0;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: .2rem;
+    padding: 0;
+    flex-direction: column;
+    background: transparent;
+    text-shadow: 0 2px 6px #000;
+    border-left: 0;
+    border-bottom: 0;
+    border-radius: .2rem;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  #map-panel .operations-heading > div {
+    min-width: 0;
+  }
+  /* Approved v0.7 field-sector hierarchy, with truthful synthetic source
+     and a zoom value updated by the live map controls. */
+  body[data-play-state="authenticated"] #map-panel .operations-heading h2 {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip-path: inset(50%); white-space: nowrap;
+  }
+  #map-panel .field-map-zoom-readout {
+    margin: 0; color: #b5c5b0; font-size: 10px;
+    font-weight: 400; line-height: 1.3; letter-spacing: .01em;
+  }
+  #map-panel .map-qualification {
+    color: #a5b2a1; font-size: 10px; letter-spacing: .02em;
+    text-transform: uppercase;
+  }
+  #map-panel .operations-heading .panel-label {
+    margin: 0;
+    color: #e2b45e;
+    font-size: 11px;
+    letter-spacing: .12em;
+    white-space: nowrap;
+  }
+  #map-panel .operations-heading h2 {
+    margin: 0;
+    font-size: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+    color: #a5b2a1;
+  }
+  #map-panel .map-qualification {
+    flex: none;
+    margin: 0;
+    font-size: 10px;
+    max-width: 100%;
+    text-align: left;
+    color: #e6c57f;
+  }
+  body[data-play-state="authenticated"] #map-panel .operations-layout {
+    display: block;
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    gap: 0;
+    overflow: hidden;
+  }
+  body[data-play-state="authenticated"] #map-panel #operations-map {
+    position: absolute;
+    inset: 0;
+    min-height: 0;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    border: 0;
+    border-radius: 0;
+    background-color: #0b120e;
+    background-image: radial-gradient(ellipse at 48% 39%, #243126 0%, #121d16 56%, #0b110e 98%);
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+  }
+  #map-panel #operations-map::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    box-shadow: inset 0 0 36px #0509069c;
+  }
+  #map-panel #operations-map > .synthetic-range {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    display: block;
+    margin: 0;
+    overflow: hidden;
+    opacity: .87;
+  }
+  /* v0.7 was a charcoal/olive topo instrument, not a bright terrain chart.
+     All contours and points below are still the SAME authored synthetic map. */
+  /* The real synthetic range's north indicator is anchored at SVG (45,70),
+     underneath the approved v0.7 heading/zoom HUD on phone screens.
+     Reposition ONLY the compass label visually: no terrain, coordinate,
+     route, place, or source evidence changes. */
+  #map-panel .synthetic-range svg > text[x="45"][y="70"] {
+    transform: translateY(320px);
+  }
+  #map-panel .synthetic-range .range-height-cell { opacity: .13; }
+  #map-panel .synthetic-range .range-grid {
+    stroke: #6b846b;
+    stroke-width: 1.2;
+    opacity: .13;
+  }
+  #map-panel .synthetic-range .range-route {
+    stroke: #b7a173;
+    stroke-width: 7;
+    opacity: .76;
+  }
+  #map-panel .synthetic-range .range-route-long {
+    stroke: #899c7d;
+    stroke-dasharray: 15 18;
+    opacity: .7;
+  }
+  #map-panel .synthetic-range text {
+    fill: #e5d2a1;
+    font-size: 29px;
+    font-weight: 700;
+    stroke: #101810;
+    stroke-width: 6px;
+  }
+  #map-panel .synthetic-range .range-place {
+    fill: #e2c381;
+    stroke: #263728;
+    stroke-width: 8;
+  }
+  #map-panel .synthetic-range svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    border: 0;
+    background: transparent;
+    object-fit: cover;
+  }
+  #map-panel .synthetic-range figcaption {
+    position: absolute;
+    z-index: 2;
+    top: .25rem;
+    right: .3rem;
+    max-width: 42%;
+    margin: 0;
+    padding: .22rem .35rem;
+    background: #111a15db;
+    border: 1px solid #667054;
+    border-radius: .25rem;
+    font-size: .53rem;
+    line-height: 1.35;
+    pointer-events: none;
+  }
+  #map-panel #route-knowledge {
+    position: absolute;
+    top: 4rem;
+    left: .35rem;
+    z-index: 3;
+    max-width: min(72%, 19rem);
+    max-height: 3rem;
+    overflow-y: auto;
+    padding: .2rem .35rem;
+    margin: 0;
+    color: #e0dabd;
+    background: #182117e0;
+    border-left: 2px solid #d5ae63;
+    font-size: .61rem;
+    line-height: 1.3;
+  }
+  #map-panel .map-selection-bar {
+    display: flex;
+    position: absolute;
+    z-index: 5;
+    bottom: 0;
+    left: 9px;
+    right: auto;
+    width: max-content;
+    max-width: calc(100% - 18px);
+    height: 44px;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: .4rem;
+    margin: 0;
+    padding: .12rem .3rem;
+    overflow: hidden;
+    border: 0;
+    background: #152017eb;
+    border-top: 0;
+    border-radius: 6px;
+  }
+  #map-panel .map-selection-bar p {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: .67rem;
+  }
+  #map-panel .map-selection-bar a {
+    flex: 0 0 auto;
+    display: inline-flex;
+    min-width: 44px;
+    min-height: 44px;
+    align-items: center;
+    padding: .1rem .35rem;
+    font-size: .68rem;
+    text-decoration: underline;
+    color: #efbb62;
+  }
+  /* An actual received-report affordance, not an automatically opened
+     pseudo-marker over the map and zoom controls. Collapsed by default.
+     Expanded records scroll inside this panel; map and document do not. */
+  #map-panel #map-report-layer:not([hidden]) {
+    position: absolute;
+    z-index: 6;
+    /* Keep the collapsed Reports affordance in open map space instead of
+       covering the source-backed Lower path at the previous bottom offset. */
+    inset: 45% 10px auto auto;
+    width: min(176px, 48%);
+    max-height: 44px;
+    overflow: hidden;
+    margin: 0;
+    background: #18231df5;
+    border: 1px solid #8f7951;
+    border-radius: 7px;
+    box-shadow: 0 3px 12px #0009;
+  }
+  #map-panel #map-report-layer > summary {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 4px 9px;
+    font-size: 11px;
+    line-height: 1.25;
+    color: #e7c17e;
+    cursor: pointer;
+  }
+  #map-panel #map-report-layer[open]:not([hidden]) {
+    right: 60px;
+    max-height: min(34%, 140px);
+    overflow-y: auto;
+  }
+  /* Evidence is the optional anchored inspector, opened deliberately from
+     the map's Inspect selection action. Never lengthens document height. */
+  #operational-workspace[data-section="map"] #map-evidence {
+    display: none;
+  }
+  #operational-workspace[data-section="map"][data-evidence-open="true"] #map-evidence {
+    display: block;
+    position: absolute;
+    z-index: 9;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    min-height: 0;
+    margin: 0;
+    padding: .7rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border: 2px solid #94743e;
+    border-radius: 0;
+    background: linear-gradient(#253024f7, #131b17fa);
+    box-shadow: 0 0 30px #000b;
+  }
+  #close-map-evidence:not([hidden]) {
+    display: inline-flex;
+    float: right;
+    min-height: 44px;
+    padding: .4rem .7rem;
+    border: 1px solid #9f8751;
+    background: #312a1a;
+    color: #f6db9e;
+    border-radius: .3rem;
+  }
+  /* The original #dock is the real #orders-panel. Keep the existing 240px
+     reservation so the source-truthful map viewport does not move. */
+  #orders-panel[data-dock="compact"].dock { position:absolute;z-index:7;left:9px;right:9px;bottom:8px;padding:6px;border:1px solid #79694b;background:linear-gradient(155deg,#272b23f9,#121a15f9);box-shadow:0 4px 22px #000b;border-radius:10px;min-width:0 }
+  #orders-panel[data-dock="compact"] .dock-top { height:27px;display:flex;align-items:center;gap:5px;min-width:0 }
+  #orders-panel[data-dock="compact"] .tabstrip { display:flex;overflow-x:auto;scrollbar-width:none;flex:1;gap:3px;min-width:0;scroll-snap-type:x proximity }
+  #orders-panel[data-dock="compact"] .tabstrip::-webkit-scrollbar { display:none }
+  #orders-panel[data-dock="compact"] .tab { white-space:nowrap;flex:none;min-height:26px;border:1px solid #54614e;background:#1b251d;border-radius:5px;color:#abb6a4;padding:2px 8px;font-size:11px }
+  #orders-panel[data-dock="compact"] .tab.on { border-color:#c4974f;background:#42351e;color:#f1cd81 }
+  #orders-panel[data-dock="compact"] .dock-icon { min-height:27px;min-width:28px;border-radius:5px;padding:3px 5px }
+  #orders-panel[data-dock="compact"] .dock-icon .ico { width:15px;height:15px }
+  #orders-panel[data-dock="compact"] .dock-chat { padding-top:3px;max-height:52px;overflow:auto;scrollbar-width:thin }
+  #orders-panel[data-dock="compact"] .message-row { width:100%;min-height:23px;display:flex;gap:5px;align-items:center;text-align:left;background:transparent;border:0;border-bottom:1px solid #4c5a484d;padding:2px 3px;font-size:11px;color:#e9ebd9 }
+  #orders-panel[data-dock="compact"] .message-row .direction { width:13px;color:var(--gold);flex:none }
+  #orders-panel[data-dock="compact"] .message-row.reply .direction { color:var(--cyan) }
+  #orders-panel[data-dock="compact"] .message-row .line { white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0 }
+  #orders-panel[data-dock="compact"] .chiprow { display:flex;gap:4px;overflow-x:auto;padding:5px 1px 4px;scrollbar-width:none;min-width:0 }
+  #orders-panel[data-dock="compact"] .chiprow::-webkit-scrollbar { display:none }
+  #orders-panel[data-dock="compact"] .cmdchip { white-space:nowrap;flex:none;min-height:28px;border:1px solid #63735f;border-radius:5px;background:#2b352b;font-size:11px;padding:4px 9px;color:#d5ddc8 }
+  #orders-panel[data-dock="compact"] .inputrow { display:flex;gap:5px;align-items:end }
+  #orders-panel[data-dock="compact"] .composer-wrap { border:1px solid #9a916c;border-radius:6px;background:#0d130e;display:flex;flex:1;min-width:0;min-height:44px }
+  #orders-panel[data-dock="compact"] .composer-wrap:focus-within { border-color:#e3b559;box-shadow:0 0 0 1px #dcab4b }
+  #orders-panel[data-dock="compact"] .inputrow .small-action { height:44px;min-width:44px;flex:none }
+  #orders-panel[data-dock="compact"] .dock-foot { display:flex;justify-content:space-between;gap:5px;align-items:center;min-height:12px;padding:2px 1px 0 }
+  #orders-panel[data-dock="compact"] .dock-foot span { font-size:9px;color:#8e9f88;white-space:nowrap;overflow:hidden;text-overflow:ellipsis }
+  #orders-panel[data-dock="compact"] .small-action { min-height:44px;min-width:44px;border:1px solid #586756;border-radius:8px;background:linear-gradient(145deg,#293129,#19211b);display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:7px }
+  #orders-panel[data-dock="compact"] .small-action.send { border-color:#b68d4d;background:#3e321d;color:#f9cb70 }
+  #orders-panel[data-dock="compact"] .composer-wrap { flex-direction:column;align-items:stretch;justify-content:center }
+  #orders-panel[data-dock="compact"] .composer-tokens { display:flex;align-items:center;flex-wrap:nowrap;gap:3px;padding:3px 4px 0;min-width:0;max-height:30px;overflow:hidden;white-space:nowrap }
+  #orders-panel[data-dock="compact"] .entity-token { display:inline-flex;align-items:center;gap:2px;flex:none;max-width:100%;border:1px solid #766645;background:#2e3428;border-radius:4px;color:#e9dbb8;font-size:11px;padding:1px 2px 1px 6px;line-height:20px }
+  #orders-panel[data-dock="compact"] .entity-token.person { border-color:#ad8b50 }
+  #orders-panel[data-dock="compact"] #order-text { width:100%;min-width:0;resize:none;border:0;background:transparent;color:var(--text);padding:11px 10px;font-size:14px;line-height:20px;min-height:42px;max-height:88px;outline:0;overflow-y:auto }
+  #orders-panel[data-dock="compact"] #order-text { padding:6px 9px 7px;min-height:35px }
+  #orders-panel[data-dock="compact"] #order-text::placeholder { color:#9b9d87 }
+  #orders-panel[data-dock="compact"] #contextual-action-status { font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#c0cbaa;min-width:0;max-width:100%;padding:0 4px 1px }
+  #orders-panel[data-dock="compact"] #order-via { min-height:25px;border:1px solid #607459;color:#deb979;background:#1a261d;font-size:10px;border-radius:4px;padding:3px 7px;white-space:nowrap }
+  #orders-panel[data-dock="compact"] .ico { width:20px;height:20px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;flex:none }
+  /* Necessary app adaptations: one form, fixed recipient, native VIA select,
+     explicit retry/outcome and proposal evidence; no unsupported mic/pin actions. */
+  #operational-workspace[data-section="map"] #orders-panel[data-dock="compact"].dock {
+    display:flex; flex-direction:column; position:fixed; z-index:24;
+    left:max(9px,env(safe-area-inset-left)); right:max(9px,env(safe-area-inset-right));
+    bottom:calc(var(--workspace-bottom,0px) + var(--field-nav) + 2px + env(safe-area-inset-bottom));
+    width:auto; height:calc(var(--field-dock) - 8px); max-height:calc(var(--field-dock) - 8px);
+    min-height:0; margin:0; overflow-y:auto; line-height:normal;
+    /* Extremely short visual viewports scroll the dock internally, never the document. */
+    max-height:min(calc(var(--field-dock) - 8px), calc(var(--workspace-height,100dvh) - var(--field-top) - var(--field-nav) - 8px - env(safe-area-inset-bottom)));
+  }
+  #orders-panel[data-dock="compact"] :is(.tab,.cmdchip,.small-action,.dock-icon) { width:auto; font-weight:400; line-height:normal; box-shadow:none; }
+  #orders-panel[data-dock="compact"] .dock-top { flex:none; }
+  #orders-panel[data-dock="compact"] .dock-icon { border:1px solid #586756; background:linear-gradient(145deg,#293129,#19211b); max-width:none; flex:none; }
+  #orders-panel[data-dock="compact"] .dock-chat { flex:none; }
+  #orders-panel[data-dock="compact"] .message-row { margin:0; }
+  #orders-panel[data-dock="compact"] #order-readback,
+  #orders-panel[data-dock="compact"] .order-wording { display:none; }
+  #orders-panel[data-dock="compact"] #order-form { display:flex; flex-direction:column; flex:1; min-height:0; gap:0; margin:0; }
+  #orders-panel[data-dock="compact"] .contextual-action-strip { flex:none; margin:0; padding:0; }
+  #orders-panel[data-dock="compact"] .contextual-action-strip:has(.chiprow:empty) { display:none; }
+  #orders-panel[data-dock="compact"] .inputrow { flex:1; min-height:0; }
+  #orders-panel[data-dock="compact"] .composer-wrap { height:100%; min-height:64px; }
+  #orders-panel[data-dock="compact"] #order-text { flex:1; height:35px; margin:0; border-radius:0; }
+  #orders-panel[data-dock="compact"] .small-action.send { display:inline-flex; flex-direction:column; max-width:none; min-height:44px; font-size:0; }
+  #orders-panel[data-dock="compact"] .small-action.send span { font-size:0; }
+  #orders-panel[data-dock="compact"] .small-action.send[data-retry="true"]::after { content:"Retry"; font-size:9px; }
+  #orders-panel[data-dock="compact"] #contextual-action-status { flex:none; height:13px; margin:0; line-height:12px; }
+  #orders-panel[data-dock="compact"] #contextual-action-status:focus { white-space:normal; overflow-y:auto; }
+  #orders-panel[data-dock="compact"] .dock-foot { flex:none; }
+  #orders-panel[data-dock="compact"] .dock-foot label { font-size:10px; color:#deb979; font-weight:400; }
+  #orders-panel[data-dock="compact"] #order-via { width:auto; height:25px; margin:0; }
+  #orders-panel[data-dock="compact"] .field-dock-hint { margin-left:auto; min-width:0; }
+  #orders-panel[data-dock="compact"] .order-outcome:not(:empty) { flex:none; max-height:2.5rem; margin:3px 0; padding:3px 4px; overflow-y:auto; font-size:11px; line-height:1.2; }
+  #orders-panel[data-dock="compact"]:has(.order-outcome:not(:empty)) .dock-chat { display:none; }
+  #orders-panel[data-dock="expanded"] .field-live-thread { display:none; }
+  /* Orders and History are genuine pages within the shell, not sections
+     that push the map or dock off screen. Their content alone can scroll. */
+  #operational-workspace[data-section="orders"] #orders-panel[data-dock="expanded"],
+  #operational-workspace[data-section="history"] #history-panel {
+    display: block;
+    position: absolute;
+    z-index: 2;
+    inset: 0 0 calc(var(--field-nav) + env(safe-area-inset-bottom)) 0;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    padding: .7rem .6rem;
+    margin: 0;
+    border-radius: 0;
+  }
+  #operational-workspace[data-section="orders"] #orders-panel[data-dock="expanded"] #order-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: none;
+    gap: .6rem;
+  }
+  #orders-panel[data-dock="expanded"] #order-text {
+    min-height: 5.5rem;
+    max-height: none;
+    height: auto;
+    resize: vertical;
+  }
+  #operational-workspace[data-section="orders"] #orders-panel[data-dock="expanded"] #order-form > :is(.panel-label, textarea, details) {
+    grid-column: 1 / -1;
+  }
+  #operational-workspace[data-section="orders"] #orders-panel[data-dock="expanded"] .order-method {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  #operational-workspace[data-section="orders"] #orders-panel[data-dock="expanded"] #submit-command {
+    grid-column: 2;
+    grid-row: auto;
+  }
+  #operational-workspace[data-section="history"] #history-panel .history-list {
+    max-height: none;
+  }
+  #notifications[open] {
+    position: fixed;
+    top: calc(var(--field-top) + .5rem);
+    bottom: calc(var(--workspace-bottom, 0px) + var(--field-nav) + .5rem);
+    left: .4rem;
+    right: .4rem;
+    width: auto;
+    /* A native dialog with top/bottom and auto height can still expand
+       past its bottom bound when populated with durable report records.
+       Bound its actual box to the live visual viewport; scroll internally. */
+    box-sizing: border-box;
+    height: max(44px, calc(var(--workspace-height, 100dvh)
+      - var(--field-top) - var(--field-nav) - 1rem
+      - env(safe-area-inset-bottom)));
+    max-height: max(44px, calc(var(--workspace-height, 100dvh)
+      - var(--field-top) - var(--field-nav) - 1rem
+      - env(safe-area-inset-bottom)));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    z-index: 35;
+    margin: 0;
+  }
+}
+@media (max-width: 359px) {
+  :root { --field-top: 52px; --field-nav: 61px; }
+  body[data-play-state="authenticated"] .top { padding-inline:6px; }
+  body[data-play-state="authenticated"] .top .brand { font-size:12px; }
+  body[data-play-state="authenticated"] .top .sub { font-size:9px; }
+  #orders-panel[data-dock="compact"] .chiprow { padding:4px 0; }
+  #orders-panel[data-dock="compact"] .cmdchip { font-size:10px; padding:3px 7px; }
+  #orders-panel[data-dock="compact"] .message-row { font-size:10px; }
+
+}
+/* The map viewport is authoritative in landscape too; other workspaces
+   retain their own scrollable content without affecting the map shell. */
+@media (max-width: 1024px) and (max-height: 550px) {
+  :root { --field-dock: 204px; }
+
+}
+
+/* Field-terminal topographic controls and factual command readback. */
+@media (max-width: 42rem), (max-width: 1024px) and (max-height: 550px) {
+  .field-map-tools {
+    position: absolute;
+    top: 12px;
+    right: 10px;
+    z-index: 8;
+    display: grid;
+    gap: 6px;
+    width: 44px;
+  }
+  .field-map-tools button {
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
+    border: 1px solid #586756;
+    border-radius: 8px;
+    background: #222c23e9;
+    font-weight: 400;
+    font-size: 1.5rem;
+    color: #e3e3d5;
+    box-shadow: 0 2px 8px #0008;
+  }
+  .field-map-tools button:active {
+    background: #3a3b28;
+  }
+  #map-panel #route-knowledge {
+    max-width: 168px;
+    top: 76px;
+    left: 13px;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    color: #a5b2a1;
+  }
+  #map-panel .synthetic-range figcaption {
+    top: auto;
+    bottom: 98px;
+    left: 13px;
+    right: auto;
+    max-width: calc(100% - 26px);
+    padding: 0;
+    border: 0;
+    background: transparent;
+    text-shadow: 0 1px 3px #000;
+  }
+
+}
+
+/* Source-derived contours come from the genuine synthetic elevation model,
+   not fake reports or unqualified Nomatoka archipelago geography. */
+.range-contour {
+  fill: none;
+  stroke: #c0c5a0;
+  stroke-width: 1.6;
+  opacity: .29;
+  vector-effect: non-scaling-stroke;
+}
+.range-contour-major {
+  stroke: #d6bc79;
+  opacity: .37;
+  stroke-width: 2.1;
+}
+.range-height-cell { opacity: .88; }
+
+.workspace-header #field-main-menu:not([open]) > .field-main-menu-items {display:none}
+.workspace-header .field-main-menu-items a {
+  display:flex;align-items:center;width:100%;min-height:44px;padding:.45rem .6rem;
+  border:1px solid #53644e;border-radius:.3rem;background:#202c22;
+  color:#ecdfb9;font-size:.875rem;font-weight:650;text-decoration:none;
+}
+.workspace-header .field-main-menu-items a:focus-visible {outline:2px solid #edb449;outline-offset:1px}
+#field-items,#field-places {
+  width:min(36rem,calc(100% - 1rem));max-height:min(85dvh,35rem);
+  padding:.85rem;overflow-y:auto;color:#e3e3d5;background:#19221b;
+  border:1px solid #aa8d57;border-radius:.45rem;box-shadow:0 14px 45px #000a;
+}
+#field-items::backdrop,#field-places::backdrop {background:rgb(0 0 0 / .7)}
+#field-items .notification-heading,#field-places .notification-heading {
+  align-items:center;padding-bottom:.4rem;border-bottom:1px solid #697757;
+}
+#field-items .panel-copy,#field-places .panel-copy {
+  color:#c7d2bc;font-size:.875rem;line-height:1.45;
+}
+.field-place-options {display:grid;gap:.45rem}
+.field-place-options button {
+  min-height:44px;padding:.45rem .7rem;color:#ecd4a1;border:1px solid #718363;
+  border-radius:.3rem;background:#263326;text-align:left;
+}
+.field-place-options button:focus-visible {outline:2px solid #edb449}
+/* Authoritative authored 10-km source is unchanged. The elevation tiles
+   previously lacked the class needed for the v0.7 charcoal treatment. */
+@media (max-width: 42rem), (max-width: 1024px) and (max-height: 550px) {
+  #map-panel .synthetic-range .range-height-cell {opacity:.11}
+  #map-panel .synthetic-range .range-contour {
+    fill:none;stroke:#79836b;stroke-width:1.4;opacity:.4;
+  }
+  #map-panel .synthetic-range .range-contour-major {
+    stroke:#b9a46e;stroke-width:1.8;opacity:.42;
+  }
+  #map-panel .synthetic-range .range-route {stroke-width:3;opacity:.65}
+  /* Reporting semantics and deliberate map selection outrank the generic
+     olive/gold source palette. Keep blocked/clear/uncertain states truthful,
+     including when a selected line is emphasized. */
+  #map-panel .synthetic-range .range-route-short[data-knowledge="reported-blocked"] {
+    stroke: #ffc08a; stroke-dasharray: 18 14;
+  }
+  #map-panel .synthetic-range .range-route-short[data-knowledge="reported-not-blocking"] {
+    stroke: #a9d6e5; stroke-dasharray: 40 12 8 12;
+  }
+  #map-panel .synthetic-range .range-route-short[data-knowledge="uncertain"] {
+    stroke: #d5b9ed; stroke-dasharray: 8 18;
+  }
+  #map-panel .synthetic-range .range-route[data-selected="true"] {
+    stroke-width: 7; opacity: 1;
+  }
+  #map-panel .synthetic-range .range-route[data-selected="true"][data-knowledge="unconfirmed"] {
+    stroke: #fff2c7;
+  }
+  #map-panel .synthetic-range .range-place {
+    fill:#d0b676;stroke:#263728;stroke-width:7;
+  }
+}
+
+/* Preserve the existing outcome reservation and synthetic-range presentation. */
+@media (max-width: 42rem), (max-width: 1024px) and (max-height: 550px) {
+  :root:has(#orders-panel[data-dock="compact"] .order-outcome:not(:empty)) { --field-dock: 262px; }
+  #map-panel .synthetic-range .range-height-cell {opacity:.03}
+  #map-panel .synthetic-range .range-contour {opacity:.19}
+  #map-panel .synthetic-range .range-contour-major {opacity:.24}
+}
+
+/* At keyboard-sized heights, keep the real suggestions, method and Send
+   reachable; full conversation readback remains in Orders/Reports. */
+@media (max-width: 1024px) and (max-height: 550px) {
+  :root:has(#orders-panel[data-dock="compact"] .order-outcome:not(:empty)) { --field-dock: 214px; }
+  #orders-panel[data-dock="compact"] .dock-chat { display:none; }
+  #orders-panel[data-dock="compact"] .order-outcome:not(:empty) { max-height:1.4rem; }
+  #map-panel :is(#route-knowledge, .synthetic-range figcaption) { display: none; }
+  #map-panel .field-map-tools {
+    top: 2px; right: 6px; width: auto; display: flex; gap: 3px;
+  }
+  body[data-play-state="authenticated"] #map-panel .operations-heading {
+    /* The title remains the map's accessible name. On very short screens,
+       reserve the top row for selection and zoom. Places remains in navigation. */
+    width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%);
+  }
+  #map-panel .map-selection-bar { top: 2px; bottom: auto; max-width: calc(100% - 158px); }
+}
+
+/* Short-height map reports: native details remains an honest, tappable
+   disclosure rather than hiding or covering fixed zoom/navigation controls. */
+@media (max-width: 42rem) and (max-height: 700px), (max-width: 1024px) and (max-height: 550px) {
+  #map-panel #map-report-layer:not([hidden]) {
+    right: 60px;
+    top: 45%;
+    bottom: auto;
+    width: min(160px, 45%);
+  }
+  #map-panel #map-report-layer[open]:not([hidden]) {
+    max-height: min(30%, 88px);
+  }
+}
+@media (max-width: 1024px) and (max-height: 550px) {
+  #map-panel #map-report-layer:not([hidden]),
+  #map-panel #map-report-layer[open]:not([hidden]) {
+    top: 51px;
+    bottom: auto;
+    left: 9px;
+    right: auto;
+    width: min(150px, 47%);
+    max-height: min(44px, calc(100% - 56px));
+  }
+  #map-panel #map-report-layer[open]:not([hidden]) {
+    overflow-y: auto;
+  }
+}
+
+/* Extremely short map: dock the report disclosure as a rail control.
+   The map is ~103px high at 320x420: the title/zoom controls already
+   fill that space, so a third floating 44px row is mathematically impossible.
+   Expanded reports are a deliberately opened, scrollable in-map sheet. */
+@media (max-width: 42rem) and (max-height: 450px), (max-width: 1024px) and (max-height: 450px) {
+  #map-panel #map-report-layer:not([hidden]) {
+    inset: auto 7px 0 auto;
+    width: 48px;
+    height: 46px;
+    max-height: 46px;
+  }
+  #map-panel #map-report-layer:not([hidden]) > summary {
+    justify-content: center;
+    padding: 0;
+    font-size: 0;
+  }
+  #map-panel #map-report-layer:not([hidden]) > summary::before {
+    content: "RPT";
+    font-size: 10px;
+    font-weight: 750;
+    letter-spacing: .06em;
+  }
+  #map-panel #map-report-layer[open]:not([hidden]) {
+    inset: 0;
+    width: auto;
+    height: auto;
+    max-height: none;
+    overflow-y: auto;
+    z-index: 9;
+    background: #17211bf8;
+  }
+  #map-panel #map-report-layer[open]:not([hidden]) > summary {
+    justify-content: flex-start;
+    padding: 4px 10px;
+    font-size: 11px;
+  }
+  #map-panel #map-report-layer[open]:not([hidden]) > summary::before {
+    content: none;
+  }
+}
+
+/* Rotated mobile phones (e.g. 844x390) must retain the approved field
+   terminal. Orientation is decided by available height as well as width;
+   wide short phones are NOT desktop workstations. */
+/* On short landscape phone screens the map may be only ~65px tall.
+   Place selection, zoom, and the compact
+   Reports disclosure on ONE horizontal touch rail. Do not stack 44px
+   controls into a space that cannot physically contain two rows. */
+@media (min-width: 540px) and (max-width: 1024px) and (max-height: 450px) {
+  #map-panel .map-selection-bar {
+    top: 2px;
+    bottom: auto;
+    left: 9px;
+    right: auto;
+    width: min(190px, 24%);
+    max-width: min(190px, 24%);
+    height: 44px;
+  }
+  #map-panel .field-map-tools {
+    top: 2px;
+    right: 57px;
+    left: auto;
+    width: auto;
+  }
+  #map-panel #map-report-layer:not([hidden]) {
+    top: 2px;
+    bottom: auto;
+    right: 7px;
+    left: auto;
+    width: 48px;
+    height: 46px;
+    max-height: 46px;
+  }
+  #map-panel #map-report-layer[open]:not([hidden]) {
+    inset: 0;
+    width: auto;
+    height: auto;
+    max-height: none;
+    overflow-y: auto;
+  }
+}
+
+
+/* 780x360 (or similar rotated phones): reserve a real 46px map viewport,
+   even with a received outcome. The dock scrolls internally, never the Map
+   document. Compact the visible proposal row and keep Send/VIA accessible. */
+@media (min-width: 540px) and (max-width: 1024px) and (max-height: 380px) {
+  :root { --field-dock: 176px; }
+  :root:has(#orders-panel[data-dock="compact"] .order-outcome:not(:empty)) {
+    --field-dock: 186px;
+  }
+  #orders-panel[data-dock="compact"] .inputrow {
+    min-height: 48px; height: 48px; flex-basis: 48px;
+  }
+  #orders-panel[data-dock="compact"] .composer-wrap {
+    min-height: 48px; height: 48px;
+  }
+  #orders-panel[data-dock="compact"] .chiprow {
+    max-height: 25px; padding: 0;
+  }
+  #orders-panel[data-dock="compact"] .cmdchip {
+    min-height: 24px; padding: 2px 7px;
+  }
+}
+
+/* Landscape field-map compromise: reclaim ~48px of genuinely visible map
+   from redundant dock/nav chrome on rotated phones. Keep the sole real form,
+   compact proposals, Send, status and VIA visible. Smaller virtual/IME viewports
+   retain the existing independently-scrollable fallback. */
+@media (min-width: 540px) and (max-width: 1024px) and (min-height: 350px) and (max-height: 450px) {
+  :root { --field-nav: 50px; --field-dock: 172px; }
+  :root:has(#orders-panel[data-dock="compact"] .order-outcome:not(:empty)) {
+    --field-dock: 194px;
+  }
+  /* Received outcome remains a deliberate scrollable status, without
+     pushing VIA below the fixed dock on a rotated phone. */
+  #orders-panel[data-dock="compact"] .order-outcome:not(:empty) {
+    margin: 1px 0;
+    padding: 1px 4px;
+  }
+  #orders-panel[data-dock="compact"] .inputrow {
+    flex: 0 0 53px;
+    min-height: 53px;
+    height: 53px;
+  }
+  #orders-panel[data-dock="compact"] .composer-wrap {
+    min-height: 53px;
+    height: 53px;
+  }
+  #orders-panel[data-dock="compact"] #order-text {
+    min-height: 22px;
+    height: 22px;
+    padding: 0 8px 1px;
+    line-height: 20px;
+  }
+}
+
+/* Legacy mobile #order-form button sizing must not inflate nested draft
+   word/X controls to 56px. Keep the editable token and suggestion rows alike. */
+#order-form #draft-tokens .draft-chip button {
+  min-height: 24px;
+  width: auto;
+}
+/* Suggestions share the draft-word chip's 26px visible height at every
+   compact-dock viewport; retain horizontal scrolling and drag interactions. */
+#orders-panel[data-dock="compact"] #contextual-actions .cmdchip {
+  height: 26px;
+  min-height: 26px;
+  padding: 1px 7px;
+  font-size: 11px;
+  line-height: 22px;
+}
+
+/* Hits enlarge the four immutable briefing features in screen pixels only. */
+.range-feature { cursor: pointer; outline: none; }
+.range-feature > text, .range-feature > .range-route, .range-feature > .range-place { pointer-events: none; }
+.range-place-hit { fill: transparent; stroke: transparent; stroke-width: 44px; vector-effect: non-scaling-stroke; pointer-events: all; }
+.range-route-hit { fill: none; stroke: transparent; stroke-width: 44px; vector-effect: non-scaling-stroke; pointer-events: stroke; }
+.range-feature[aria-disabled="true"] { pointer-events: none; cursor: default; }
+.range-feature[aria-disabled="true"] > :is(.range-place-hit, .range-route-hit) { pointer-events: none; }
+#map-panel .range-feature[aria-pressed="true"] .range-place,
+#map-panel .range-feature:focus-visible .range-place {
+  fill: #fff2c7; stroke: #fff2c7; stroke-width: 4px; vector-effect: non-scaling-stroke;
+}
+.range-feature:focus-visible > :is(.range-place-hit, .range-route-hit) { stroke: #eac48655; }
+
+
+/* Approved v0.7 compact floating update box; its data comes ONLY from the
+   active authority-bound report/order feed, never the prototype demo. */
+.field-alert-box { position:fixed; z-index:23; width: min(185px, calc(100vw - 18px));
+  left: 9px; top: calc(var(--field-top,55px) + 60px); }
+#operational-workspace:not([data-section="map"]) .field-alert-box { display:none }
+.field-alert-toggle { display:flex; align-items:center; gap:5px; width:100%; min-height:46px;
+  border:1px solid #9f7544; background:linear-gradient(120deg,#302920ed,#1a211bed);
+  color:#e3e3d5; border-radius:8px; padding:5px; text-align:left; box-shadow:0 3px 15px #000a;
+  touch-action:none; user-select:none; cursor:grab; font-size:10px; }
+.field-alert-toggle.repositioning { cursor:grabbing; border-color:#f3c36a }
+.field-alert-mark { display:grid;place-items:center;min-width:26px;height:29px;
+  border:1px solid #b77d4a;border-radius:6px;color:#edb449; font-size:17px }
+#field-alert-caption { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; }
+#field-alert-count { border-radius:8px; background:#a34e36; color:#fff; padding:1px 5px; }
+.field-alert-peek { position:absolute; bottom:calc(100% + 2px); left:var(--field-alert-peek-left,0px);
+  width:min(300px, calc(100vw - 18px)); max-height:var(--field-alert-peek-limit,230px);
+  overflow:auto; border:1px solid #9c784c; border-radius:10px; background:#20271ff9;
+  box-shadow:0 -5px 20px #000a; padding:8px; }
+.field-alert-box.peek-below .field-alert-peek { top:calc(100% + 2px);bottom:auto }
+.field-alert-head { display:flex; align-items:center;justify-content:space-between;
+  font-size:11px; color:#e4bb72; }
+.field-alert-head button { width:auto;min-height:30px;padding:3px 8px;font-size:11px;
+  background:#293327;color:#e4bb72;border:1px solid #8b764f }
+#field-alert-list {margin:6px 0 0;padding:0;list-style:none}
+#field-alert-list li {font-size:11px;line-height:1.35;padding:7px 2px;
+  border-top:1px solid #435043;overflow-wrap:anywhere}
+#field-alert-list li strong,#field-alert-list li span {display:block}
+#field-alert-list li span{font-size:10px;color:#bbc8b4}
+.field-mini-tray {position:fixed;z-index:24;bottom:calc(var(--field-nav,66px) + 9px);
+  left:9px;display:flex;gap:5px}
+.field-mini-tray[hidden]{display:none}
+.field-mini-tray button { width:auto;min-height:44px;padding:5px 12px;
+  background:#222b21;color:#edc67f;border:1px solid #9d784b;border-radius:7px }
+.field-mini-tray .field-mini-mic {min-width:44px;padding:5px;opacity:.5}
+#orders-panel[data-dock="compact"][data-minimized="true"] {display:none!important}
+#orders-panel[data-dock="compact"] .field-microphone {width:44px;min-width:44px;
+  flex:none;align-self:flex-end;height:44px;min-height:44px;opacity:.55}
+#orders-panel[data-dock="compact"] #field-minimize-dock {display:inline-flex;align-items:center;
+  justify-content:center;min-height:27px;min-width:28px;padding:3px 5px}
+/* One single visible pill height for recipient, prepared draft and predictions. */
+#orders-panel[data-dock="compact"] {
+  --command-chip-height:26px;
+}
+#orders-panel[data-dock="compact"] :is(.entity-token.person,.draft-chip,#contextual-actions .cmdchip) {
+  height:var(--command-chip-height);min-height:var(--command-chip-height);
+}
+#orders-panel[data-dock="compact"] .draft-chip button {height:24px;min-height:24px}
+/* Rotated phones are map-first: dock floats to one side, map remains fully
+   exposed alongside it rather than shrinking to a sliver across the screen. */
+@media (min-width:540px) and (max-width:1024px) and (max-height:450px) {
+  body[data-play-state="authenticated"] #operational-workspace[data-section="map"] #map-panel {
+    bottom:calc(var(--field-nav) + env(safe-area-inset-bottom));
+  }
+  #operational-workspace[data-section="map"] #orders-panel[data-dock="compact"].dock {
+    left:auto;right:max(9px,env(safe-area-inset-right));
+    width:min(410px,48vw);
+  }
+  #orders-panel[data-dock="compact"] .dock-chat {display:none}
+  #orders-panel[data-dock="compact"] .field-dock-hint {display:none}
+}
+@media (max-width:1024px) {
+  :root:has(#orders-panel[data-dock="compact"][data-minimized="true"]) {
+    --field-dock:56px;
+  }
+}
+
+#operational-workspace:not([data-section="map"]) .field-mini-tray { display:none }
+
+
+/* A single narrow action column returns the other 44px to the real text entry.
+   The mic is deliberately disabled until an actual STT capability exists. */
+.field-action-stack { display:flex; gap:4px; align-items:stretch; }
+@media (max-width:42rem), (max-width:1024px) and (max-height:550px) {
+  #orders-panel[data-dock="compact"] .field-action-stack {
+    display:flex; flex:0 0 44px; flex-direction:column; gap:4px;
+    align-self:stretch; justify-content:center; width:44px; min-width:44px;
+  }
+  #orders-panel[data-dock="compact"] .field-action-stack > :is(#field-microphone,#submit-command) {
+    display:flex;flex:0 0 44px;align-items:center;justify-content:center;
+    width:44px;min-width:44px;min-height:44px;height:44px;
+    margin:0;padding:7px;border-radius:8px;align-self:center;
+  }
+  #orders-panel[data-dock="compact"] .field-action-stack #field-microphone {
+    opacity:.55;
+  }
+  #orders-panel[data-dock="compact"] .inputrow {
+    align-items:stretch;
+    min-height:92px;
+  }
+  #orders-panel[data-dock="compact"] .composer-wrap {
+    min-height:92px;
+  }
+  /* Identical visible pill shape and text centering across recipient, draft and
+     prediction; recipient keeps its distinctive gold border and no X button. */
+  #orders-panel[data-dock="compact"] .field-recipient.entity-token.person {
+    box-sizing:border-box;margin:0;padding:1px 6px;
+    height:26px;min-height:26px;max-height:26px;
+    border-radius:4px;font-size:11px;line-height:22px;
+    display:inline-flex;align-items:center;justify-content:center;
+  }
+  #orders-panel[data-dock="compact"] #contextual-actions .cmdchip {
+    border-radius:4px;
+  }
+}
+/* Landscape remains a separate pending usability pass, but the stacked
+   column must stay contained while the map remains independently usable. */
+@media (min-width:540px) and (max-width:1024px) and (max-height:450px) {
+  :root { --field-dock:206px; }
+  :root:has(#orders-panel[data-dock="compact"] .order-outcome:not(:empty)) {
+    --field-dock:226px;
+  }
+  #orders-panel[data-dock="compact"] .inputrow {
+    flex:0 0 92px;height:92px;min-height:92px;
+  }
+  #orders-panel[data-dock="compact"] .composer-wrap {
+    height:92px;min-height:92px;
+  }
+}
+
+
+/* Reclaim space from redundant prose instead of letting a stacked 44px action
+   column push VIA below the fixed panel. The real suggestion row is one line
+   of short source-backed chips, with horizontal scrolling for additional options. */
+@media (max-width:42rem) {
+  :root { --field-dock:260px; }
+}
+@media (max-width:42rem) and (max-height:550px) {
+  :root { --field-dock:222px; }
+  /* A populated outcome needs its own reserved height. Never force VIA
+     below the bottom navigation when the 44px buttons are stacked. */
+  :root:has(#orders-panel[data-dock="compact"] .order-outcome:not(:empty)) {
+    --field-dock:248px;
+  }
+}
+@media (min-width:540px) and (max-width:1024px) and (max-height:450px) {
+  :root { --field-dock:220px; }
+  :root:has(#orders-panel[data-dock="compact"] .order-outcome:not(:empty)) {
+    --field-dock:242px;
+  }
+}
+
+/* Extremely short portrait/IME: two genuine rows of map controls still need
+   physical room. Compress chrome and the outcome readback (retained in Orders),
+   not the 44px Mic/Send targets or the horizontally scrollable proposal chips. */
+@media (max-width:359px) and (max-height:450px) {
+  :root,
+  :root:has(#orders-panel[data-dock="compact"] .order-outcome:not(:empty)) {
+    --field-dock:210px;
+  }
+  #operational-workspace[data-section="map"] #orders-panel[data-dock="compact"].dock {
+    padding:3px;
+  }
+  #orders-panel[data-dock="compact"] .chiprow {
+    height:26px;max-height:26px;padding:0;
+  }
+  #orders-panel[data-dock="compact"] #contextual-action-status {
+    display:none;
+  }
+  #orders-panel[data-dock="compact"] .order-outcome:not(:empty) {
+    max-height:14px;height:14px;min-height:0;
+    margin:0;padding:0;line-height:13px;white-space:nowrap;overflow:auto;
+  }
+}
+
+
+/* Compact command delivery choices sit immediately beneath the Send stack.
+   Keep the actual native VIA selector and its accessible label, and preserve
+   the separate source-backed status readback after the selection. */
+@media (max-width:42rem), (max-width:1024px) and (max-height:550px) {
+  #orders-panel[data-dock="compact"] .order-method.dock-foot {
+    order:0;
+    justify-content:flex-end;
+    align-self:stretch;
+    gap:5px;
+    min-height:25px;
+    padding:0;
+    margin:0;
+  }
+  #orders-panel[data-dock="compact"] .order-method #order-via {
+    width:84px;
+    flex:0 0 84px;
+    min-width:0;
+  }
+  #orders-panel[data-dock="compact"] #contextual-action-status {
+    order:1;
+  }
+}
+
+
+/* Compact delivery/voice/send column. VIA is the actual native, labelled
+   selector, never a duplicated decorative control. Full descriptive guidance
+   stays available to screen readers and in the expanded Orders workspace. */
+@media (max-width:42rem), (max-width:1024px) and (max-height:550px) {
+  #orders-panel[data-dock="compact"] .field-action-stack {
+    flex:0 0 62px;width:62px;min-width:62px;
+    align-items:center;justify-content:flex-end;gap:4px;
+  }
+  #orders-panel[data-dock="compact"] .field-action-stack #order-via {
+    box-sizing:border-box;display:block;flex:0 0 30px;
+    width:62px;min-width:62px;max-width:62px;
+    height:30px;min-height:30px;max-height:30px;margin:0;
+    border:1px solid #a68a52;border-radius:6px;
+    background:#202d23;color:#e8cc8c;font-size:10px;line-height:normal;
+    padding:2px 1px;
+  }
+  #orders-panel[data-dock="compact"] .field-action-stack > :is(#field-microphone,#submit-command) {
+    flex:0 0 44px;
+    width:44px;height:44px;min-height:44px;max-height:44px;
+    padding:7px;
+  }
+  #orders-panel[data-dock="compact"] .inputrow {
+    min-height:126px;
+    align-items:stretch;
+  }
+  #orders-panel[data-dock="compact"] .composer-wrap {
+    min-height:126px;
+  }
+  #orders-panel[data-dock="compact"] #contextual-action-status {
+    /* Removing the *visible* line must not discard genuine contextual facts
+       or silently hide the field from assistive technology. */
+    position:absolute;width:1px;height:1px;min-height:0;
+    padding:0;margin:-1px;overflow:hidden;white-space:nowrap;
+    clip-path:inset(50%);border:0;
+  }
+  #orders-panel[data-dock="compact"] #contextual-action-status:focus-visible {
+    width:min(290px,calc(100% - 16px));height:auto;max-height:5rem;
+    position:absolute;left:6px;bottom:calc(100% + 4px);
+    clip-path:none;white-space:normal;overflow:auto;
+    margin:0;padding:6px 8px;z-index:30;
+    background:#202a22;border:1px solid #d8ae68;
+  }
+  /* The compact chat still carries actual outgoing/incoming readback, one
+     scrollable line at a time instead of hiding communications entirely. */
+  #orders-panel[data-dock="compact"] .dock-chat {max-height:29px;overflow-y:auto}
+  #orders-panel[data-dock="compact"] .field-composer-row.inputrow {gap:4px}
+}
+@media (max-width:42rem) {
+  :root { --field-dock:238px; }
+}
+@media (max-width:42rem) and (max-height:550px) {
+  :root { --field-dock:205px; }
+  :root:has(#orders-panel[data-dock="compact"] .order-outcome:not(:empty)) {
+    --field-dock:226px;
+  }
+}
+@media (min-width:540px) and (max-width:1024px) and (max-height:450px) {
+  :root { --field-dock:205px; }
+  :root:has(#orders-panel[data-dock="compact"] .order-outcome:not(:empty)) {
+    --field-dock:226px;
+  }
+  #orders-panel[data-dock="compact"] .inputrow {
+    flex:0 0 126px;height:126px;min-height:126px;
+  }
+  #orders-panel[data-dock="compact"] .composer-wrap {
+    min-height:126px;height:126px;
+  }
+}
+@media (max-width:359px) and (max-height:450px) {
+  :root,:root:has(#orders-panel[data-dock="compact"] .order-outcome:not(:empty)) {
+    --field-dock:205px;
+  }
+}
+
+
+/* When a receipt occupies short landscape, a one-line scrollable outcome
+   preserves the 3-button column without bleeding below the fixed dock. */
+@media (min-width:540px) and (max-width:1024px) and (max-height:450px) {
+  #orders-panel[data-dock="compact"] .order-outcome:not(:empty) {
+    max-height:17px;min-height:0;
+    margin:0;padding:1px 3px;
+    line-height:14px;overflow:auto;
+  }
+}
+/* Orders readback/desktop preserves the same real native VIA selector without
+   letting the generic 100%-width form control consume the whole row. */
+#orders-panel[data-dock="expanded"] .field-action-stack {
+  flex:0 0 88px;display:flex;flex-direction:column;
+  align-items:center;gap:5px;justify-content:flex-end;min-width:88px;
+}
+#orders-panel[data-dock="expanded"] .field-action-stack #order-via {
+  flex:0 0 32px;width:88px;min-width:88px;min-height:32px;
+  padding:2px 4px;font-size:11px;margin:0;
+}
+#orders-panel[data-dock="expanded"] .field-action-stack > :is(#field-microphone,#submit-command) {
+  width:44px;min-width:44px;min-height:44px;height:44px;
+  margin:0;
+}
+
+
+/* Map-first minimalist controls: no redundant explanatory prose, no fixed
+   zoom buttons. Synthetic identity remains in the accessible SVG title/desc,
+   map readout and live route-knowledge records, and in Inspect/History. */
+@media (max-width:42rem), (max-width:1024px) and (max-height:550px) {
+  #map-panel .operations-heading,
+  #map-panel .synthetic-range figcaption,
+  #map-panel #route-knowledge {
+    position:absolute!important;width:1px!important;height:1px!important;
+    min-height:0!important;max-height:1px!important;
+    overflow:hidden!important;clip-path:inset(50%)!important;
+    white-space:nowrap!important;margin:0!important;padding:0!important;
+    border:0!important;pointer-events:none!important;
+  }
+  #map-panel .map-selection-bar:not([hidden]) {
+    position:absolute;z-index:12;bottom:auto;right:auto;
+    top:var(--map-quick-top,8px);left:var(--map-quick-left,8px);
+    display:flex;align-items:center;gap:3px;
+    min-width:0;width:max-content;max-width:min(222px,calc(100% - 12px));
+    height:39px;padding:3px 4px;
+    border:1px solid #b38e54;border-radius:8px;
+    background:#19241bf2;box-shadow:0 5px 15px #000a;
+    pointer-events:auto;
+  }
+  #map-panel .map-selection-bar p {
+    min-width:0;max-width:72px;white-space:nowrap;text-overflow:ellipsis;
+    font-size:10px;color:#f0d59c;
+  }
+  #map-panel .map-selection-bar :is(a,button) {
+    flex:none;display:inline-flex;align-items:center;justify-content:center;
+    width:auto;height:32px;min-width:32px;min-height:32px;
+    margin:0;padding:2px 5px;font-size:10px;line-height:1;
+    background:#283729;border:1px solid #697858;border-radius:5px;
+    color:#edc987;text-decoration:none;
+  }
+  #map-panel .map-selection-bar #map-quick-close {
+    min-width:32px;font-size:17px;color:#e9dbb8;
+  }
+  #map-panel .map-selection-bar :is(a,button):focus-visible {
+    outline:2px solid #ffdc88;outline-offset:1px;
+  }
+}
+/* At any viewport, hide the old persistent strip until an intentional map
+   selection has opened this same evidence-backed quick-action surface. */
+.map-selection-bar[hidden] {display:none!important}
+
+/* Affordance only when the row genuinely overflows: fade upcoming options
+   and show a hairline scroll progress marker instead of a bulky arrow row. */
+#orders-panel[data-dock="compact"] #contextual-actions[data-can-scroll="true"]:not([data-at-end="true"]),
+#orders-panel[data-dock="compact"] #draft-tokens[data-can-scroll="true"]:not([data-at-end="true"]) {
+  -webkit-mask-image:linear-gradient(to right,#000 0%,#000 calc(100% - 16px),transparent 100%);
+  mask-image:linear-gradient(to right,#000 0%,#000 calc(100% - 16px),transparent 100%);
+}
+#orders-panel[data-dock="compact"] .chip-scroll-rail {
+  display:none;height:2px;min-height:2px;margin:0 3px 2px;
+  background:#4d5947;border-radius:8px;overflow:hidden;
+  pointer-events:none;
+}
+#orders-panel[data-dock="compact"] .contextual-action-strip[data-overflow="true"] .chip-scroll-rail {
+  display:block;
+}
+#orders-panel[data-dock="compact"] .chip-scroll-progress {
+  display:block;height:100%;width:var(--chip-scroll-size,35%);
+  transform:translateX(var(--chip-scroll-progress,0%));
+  background:#c9a15d;border-radius:8px;
+}
+
+
+/* The scroll rail is a quiet progress cue rather than another full-size row. */
+#orders-panel[data-dock="compact"] .contextual-action-strip {position:relative}
+#orders-panel[data-dock="compact"] .chip-scroll-rail {
+  position:absolute;bottom:-2px;left:0;right:0;
+  margin:0 4px;height:2px;min-height:2px;
+}
+#orders-panel[data-dock="compact"] .chip-scroll-progress {
+  transform:none;
+}
+#map-panel .synthetic-range svg {touch-action:none}
+
+
+/* Desktop keeps the same evidence-backed quick actions, not a dead inspector
+   after removing the persistent selection strip on mobile. */
+@media (min-width:1025px), (min-width:43rem) and (min-height:551px) {
+  #operations-map .map-selection-bar:not([hidden]) {
+    display:flex;position:absolute;z-index:12;
+    top:var(--map-quick-top,8px);left:var(--map-quick-left,8px);
+    bottom:auto;right:auto;width:max-content;max-width:min(222px,calc(100% - 12px));
+    height:39px;align-items:center;gap:3px;
+    margin:0;padding:3px 4px;
+    border:1px solid #b38e54;border-radius:8px;
+    background:#19241bf2;box-shadow:0 5px 15px #000a;
+  }
+  #operations-map .map-selection-bar p {
+    flex:1 1 auto;max-width:72px;overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap;font-size:10px;color:#f0d59c;
+  }
+  #operations-map .map-selection-bar :is(a,button) {
+    flex:none;display:inline-flex;align-items:center;justify-content:center;
+    min-height:32px;min-width:32px;width:auto;height:32px;
+    padding:2px 5px;font-size:10px;line-height:1;text-decoration:none;
+    border:1px solid #697858;border-radius:5px;color:#edc987;background:#283729;
+  }
+}
+
+
+/* Fixed screen-space scale HUD: lower-left, never dragged or scaled with the
+   SVG. Kilometres and pixel width are derived from the actual SVG viewBox. */
+#map-panel .synthetic-range .range-scale,
+#map-panel .synthetic-range svg text[x="45"][y="915"] { display:none }
+#map-panel #map-scale-hud {
+  position:absolute;z-index:5;left:14px;bottom:9px;pointer-events:none;
+  display:flex;flex-direction:column;gap:4px;align-items:flex-start;
+  width:max-content;max-width:calc(100% - 28px);
+  margin:0;padding:0;background:transparent;color:#e7d5a7;
+  text-shadow:0 1px 4px #000;font-size:11px;line-height:1.1;
+}
+#map-panel #map-scale-rule {
+  box-sizing:border-box;display:block;height:10px;
+  border-left:2px solid #e7d5a7;border-right:2px solid #e7d5a7;
+  border-bottom:2px solid #e7d5a7;min-width:1px;max-width:100%;
+}
+/* Match Ortega's optical center in the chat tab and the recipient token. */
+#orders-panel[data-dock="compact"] .field-conversation-tab {
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:26px;height:26px;line-height:20px;vertical-align:middle;
+  padding:2px 8px;
+}
+#orders-panel[data-dock="compact"] .field-recipient.entity-token.person {
+  display:inline-flex;align-items:center;justify-content:center;
+  height:26px;min-height:26px;line-height:22px;margin:0;
+}

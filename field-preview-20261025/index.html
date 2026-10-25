@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Workspace | Nomatoka</title>
+  <link rel="stylesheet" href="./assets/play.css">
+</head>
+<body data-play-state="authenticated">
+  <main class="play-shell">
+    <div class="workspace" aria-labelledby="workspace-title">
+      <header class="workspace-header top">
+        <details id="field-main-menu" class="field-main-menu">
+          <summary aria-label="Open field terminal menu" title="Menu"><svg class="field-top-icon ico big" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></summary>
+          <div class="field-main-menu-items" role="group" aria-label="Field terminal actions">
+            <a id="nav-orders" href="#order-form" aria-controls="orders-panel">Orders &amp; command readback</a>
+            <a id="nav-history" href="#history-title" aria-controls="history-panel">Order history &amp; reports</a>
+            <button id="open-notifications" class="quiet-button" type="button" aria-haspopup="dialog" aria-controls="notifications" aria-expanded="false" disabled>Recent updates</button>
+            <button id="refresh-history" class="quiet-button" type="button" aria-label="Refresh workspace">Refresh reports</button>
+            <button id="logout" class="quiet-button" type="button">Sign out</button>
+          </div>
+        </details>
+        <div class="field-top-title top-title">
+          <p class="eyebrow brand">NOMATOKA <span aria-hidden="true">/</span> <span id="field-view-label">MAP</span></p>
+          <h1 class="sub" id="workspace-title">UI DEMO · SYNTHETIC DATA · NO LIVE ORDERS</h1>
+        </div>
+        <span class="field-topstate topstate" title="Experimental alpha interface"><span class="field-topstate-dot dot" aria-hidden="true"></span>ALPHA</span>
+        <section class="panel context-panel" aria-labelledby="commander-title">
+          <div class="profile-summary">
+            <div>
+              <h2 id="commander-title">Commander</h2>
+              <p id="commander-name">Loading…</p>
+            </div>
+            <button id="open-people" class="quiet-button" type="button" aria-label="Open People panel" aria-haspopup="dialog" aria-controls="people" aria-expanded="false" disabled title="People"><svg class="field-top-icon ico big" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16M9 4v6M16 14v6"/></svg></button>
+          </div>
+          <div id="control-warning" class="control-row" role="alert" hidden>
+            <p id="control-state" class="control-state"></p>
+          </div>
+          <button id="claim-control" class="secondary-button" type="button" hidden>Move command control here</button>
+        </section>
+      </header>
+
+      <section id="inactive-device" class="panel" aria-labelledby="inactive-title">
+        <h2 id="inactive-title">This device is locked</h2>
+        <p>Platform security: operational records require active control.</p>
+        <p id="connection-status" role="status">Checking connection…</p>
+        <p id="local-draft-status"></p>
+      </section>
+      <div id="operational-workspace" hidden>
+      <dialog id="people" aria-labelledby="people-title" aria-describedby="people-scope">
+        <div class="notification-heading">
+          <h2 id="people-title">People</h2>
+          <button id="close-people" class="quiet-button" type="button" autofocus>Close</button>
+        </div>
+        <p id="people-scope" class="panel-copy">Active mercenary · commander records and received reports. Last reported information is not a live position.</p>
+        <section aria-labelledby="people-name">
+          <h3 id="people-name"></h3>
+          <dl class="evidence-list">
+            <div><dt>Assignment knowledge</dt><dd id="people-status"></dd></div>
+            <div><dt>Recorded assignment</dt><dd id="people-assignment"></dd></div>
+            <div><dt>Location knowledge</dt><dd id="people-location"></dd></div>
+          </dl>
+        </section>
+        <section aria-labelledby="people-reports-title">
+          <h3 id="people-reports-title">Recent received reports</h3>
+          <p id="people-reports-empty" class="panel-copy"></p>
+          <ol id="people-reports" class="history-list" aria-label="Recent received reports" tabindex="-1"></ol>
+        </section>
+        <div class="people-actions">
+          <button id="people-view-reports" class="secondary-button" type="button" aria-describedby="people-reports-empty" disabled>View reports</button>
+          <button id="people-inspect" class="secondary-button" type="button" disabled>Inspect contact</button>
+          <button id="people-write" type="button" aria-describedby="people-order-reason" disabled>Write order</button>
+        </div>
+        <p id="people-order-reason" class="panel-copy"></p>
+      </dialog>
+      <nav class="workspace-nav nav" aria-label="Workspace sections">
+        <a id="nav-map" href="#operations-title" aria-controls="map-panel"><svg class="field-nav-icon ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 5 6-2 6 3 6-3v16l-6 2-6-3-6 2zM9 3v15M15 6v15"/></svg><span>Map</span></a>
+        <button id="nav-people" type="button" aria-haspopup="dialog" aria-controls="people" aria-expanded="false" disabled><svg class="field-nav-icon ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M17 6a3 3 0 0 1 0 6m2 3a5 5 0 0 1 2 4v2"/></svg><span>People</span></button>
+        <button id="nav-items" type="button" aria-haspopup="dialog" aria-controls="field-items" aria-expanded="false"><svg class="field-nav-icon ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 7 9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10"/></svg><span>Items</span></button>
+        <button id="nav-places" type="button" aria-haspopup="dialog" aria-controls="field-places" aria-expanded="false"><svg class="field-nav-icon ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V8l8-5 8 5v13M3 21h18M9 21v-7h6v7M8 10h.01M16 10h.01"/></svg><span>Places</span></button>
+      </nav>
+      <dialog id="field-items" aria-labelledby="field-items-title" aria-describedby="field-items-scope">
+        <div class="notification-heading">
+          <h2 id="field-items-title">Items</h2>
+          <button id="close-field-items" type="button" class="quiet-button">Close</button>
+        </div>
+        <p id="field-items-scope" class="panel-copy">No inventory or equipment observations are available in this alpha. Nothing here is simulated as an owned item.</p>
+      </dialog>
+      <dialog id="field-places" aria-labelledby="field-places-title" aria-describedby="field-places-scope">
+        <div class="notification-heading">
+          <h2 id="field-places-title">Places</h2>
+          <button id="close-field-places" type="button" class="quiet-button">Close</button>
+        </div>
+        <p id="field-places-scope" class="panel-copy">Places and routes from the authored synthetic test-range briefing, not live positions or confirmed passage.</p>
+        <div class="field-place-options" role="group" aria-label="Select a known briefing target on the real map">
+          <button type="button" data-place-focus="staging-area">Staging Area</button>
+          <button type="button" data-place-focus="ridge">Ridge</button>
+          <button type="button" data-place-focus="short">Short path · unconfirmed</button>
+          <button type="button" data-place-focus="long">Lower path · unconfirmed</button>
+        </div>
+      </dialog>
+      <dialog id="notifications" aria-labelledby="notifications-title" aria-describedby="notifications-scope">
+        <div class="notification-heading">
+          <h2 id="notifications-title">Recent updates</h2>
+          <button id="close-notifications" class="quiet-button" type="button" autofocus>Close</button>
+        </div>
+        <p id="notifications-scope" class="panel-copy">Latest 20 orders and retained reports. Times are local.</p>
+        <p id="notification-availability" class="panel-copy"></p>
+        <ol id="notification-list" class="history-list" aria-label="Recent updates"></ol>
+      </dialog>
+      <aside id="notification-toast" aria-label="New report preview" hidden>
+        <button id="open-notification-toast" type="button"></button>
+        <button id="dismiss-notification-toast" class="quiet-button" type="button">Dismiss preview</button>
+      </aside>
+      <p id="notification-announcement" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></p>
+
+      <aside id="field-alert-box" class="field-alert-box" aria-label="Movable field updates" hidden>
+        <div id="field-alert-peek" class="field-alert-peek" hidden>
+          <div class="field-alert-head"><strong>FIELD UPDATES</strong>
+            <button id="field-alert-full" type="button">Full log</button></div>
+          <ol id="field-alert-list" aria-label="Recent field updates"></ol>
+        </div>
+        <button id="field-alert-toggle" class="field-alert-toggle" type="button"
+          aria-expanded="false" aria-controls="field-alert-peek"
+          title="Tap to expand; hold to move; Shift+arrow to reposition"
+          aria-label="Field updates. Tap to expand or hold to reposition">
+          <span class="field-alert-mark" aria-hidden="true"><svg class="field-send-icon" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 8-3 10h18c0-2-3-3-3-10M10 21h4"/></svg></span>
+          <span id="field-alert-caption">Field updates</span>
+          <span id="field-alert-count">0</span>
+        </button>
+      </aside>
+      <div id="field-mini-tray" class="field-mini-tray" hidden>
+        <button id="field-restore-dock" type="button" aria-label="Restore command bar">⌃ Command</button>
+        <button class="field-mini-mic" type="button" disabled title="Voice input coming later" aria-label="Microphone unavailable until voice input is enabled"><svg class="field-send-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg></button>
+      </div>
+
+      <section id="map-panel" class="panel operations-panel" aria-labelledby="operations-title">
+        <div class="operations-heading">
+          <div>
+            <p class="panel-label">Field sector · Alpha</p>
+            <h2 id="operations-title" tabindex="-1">Local operations picture</h2>
+          </div>
+          <p class="map-qualification">SCHEMATIC · Synthetic test range</p>
+          <p id="field-map-zoom-readout" class="field-map-zoom-readout">ZOOM 100% · TAP TO SELECT</p>
+        </div>
+        <div class="operations-layout">
+          <div id="operations-map" class="operations-map" role="group" tabindex="0" aria-label="Selectable synthetic local operations picture. Pinch to zoom; keyboard plus and minus zoom.">
+            <figure class="synthetic-range" data-scenario="nomatoka-synthetic-range@1:sha256:28331c7c9489161ef8e1b765f6202c66fd4393918946a252b9a92dcb2df45729">
+    <svg viewBox="0 0 1000 1000" role="group" aria-labelledby="range-title range-description">
+      <title id="range-title">Synthetic test range · 10 × 10 km</title>
+      <desc id="range-description">Authored elevation rises from the southern valley to the northeast ridge. Short path climbs directly; Lower path follows the valley then ascends. Known briefing geography only; no live positions or clearance.</desc>
+      <rect class="range-height-cell" x="0" y="750" width="250" height="250" fill="hsl(65, 15%, 20%)"/><rect class="range-height-cell" x="250" y="750" width="250" height="250" fill="hsl(65, 15%, 20%)"/><rect class="range-height-cell" x="500" y="750" width="250" height="250" fill="hsl(65, 15%, 19%)"/><rect class="range-height-cell" x="750" y="750" width="250" height="250" fill="hsl(65, 15%, 20%)"/><rect class="range-height-cell" x="0" y="500" width="250" height="250" fill="hsl(65, 15%, 21%)"/><rect class="range-height-cell" x="250" y="500" width="250" height="250" fill="hsl(65, 15%, 21%)"/><rect class="range-height-cell" x="500" y="500" width="250" height="250" fill="hsl(65, 15%, 21%)"/><rect class="range-height-cell" x="750" y="500" width="250" height="250" fill="hsl(65, 15%, 24%)"/><rect class="range-height-cell" x="0" y="250" width="250" height="250" fill="hsl(65, 15%, 23%)"/><rect class="range-height-cell" x="250" y="250" width="250" height="250" fill="hsl(65, 15%, 23%)"/><rect class="range-height-cell" x="500" y="250" width="250" height="250" fill="hsl(65, 15%, 26%)"/><rect class="range-height-cell" x="750" y="250" width="250" height="250" fill="hsl(65, 15%, 32%)"/><rect class="range-height-cell" x="0" y="0" width="250" height="250" fill="hsl(65, 15%, 25%)"/><rect class="range-height-cell" x="250" y="0" width="250" height="250" fill="hsl(65, 15%, 25%)"/><rect class="range-height-cell" x="500" y="0" width="250" height="250" fill="hsl(65, 15%, 31%)"/><rect class="range-height-cell" x="750" y="0" width="250" height="250" fill="hsl(65, 15%, 40%)"/>
+      <path class="range-contour range-contour-major" d="M900.0 967.4L863.6 950.0M950.0 985.8L900.0 967.4M1000.0 1000.0L950.0 985.8M200.0 903.2L194.4 900.0M250.0 928.6L200.0 903.2M293.5 900.0L250.0 928.6M800.0 906.3L793.1 900.0M850.0 942.3L800.0 906.3M863.6 950.0L850.0 942.3M150.0 870.4L125.0 850.0M194.4 900.0L150.0 870.4M293.5 900.0L300.0 895.2M350.0 851.9L300.0 895.2M351.9 850.0L350.0 851.9M750.0 850.0L750.0 850.0M793.1 900.0L750.0 850.0M100.0 826.1L76.9 800.0M125.0 850.0L100.0 826.1M351.9 850.0L395.2 800.0M700.0 815.2L680.6 800.0M750.0 850.0L700.0 815.2M50.0 763.2L41.7 750.0M76.9 800.0L50.0 763.2M395.2 800.0L400.0 793.5M428.6 750.0L400.0 793.5M650.0 773.8L625.0 750.0M680.6 800.0L650.0 773.8M41.7 750.0L0.0 700.0M428.6 750.0L450.0 725.8M469.5 700.0L450.0 725.8M550.0 717.4L530.5 700.0M600.0 742.5L550.0 717.4M625.0 750.0L600.0 742.5M469.5 700.0L500.0 650.0M530.5 700.0L500.0 650.0"/><path class="range-contour" d="M1000.0 750.0L1000.0 750.0M900.0 714.8L861.1 700.0M950.0 732.9L900.0 714.8M1000.0 750.0L950.0 732.9M750.0 653.8L741.9 650.0M800.0 675.4L750.0 653.8M850.0 695.7L800.0 675.4M861.1 700.0L850.0 695.7M700.0 626.1L665.7 600.0M741.9 650.0L700.0 626.1M250.0 590.9L208.3 550.0M288.1 550.0L250.0 590.9M650.0 585.2L620.2 550.0M665.7 600.0L650.0 585.2M200.0 540.8L166.7 500.0M208.3 550.0L200.0 540.8M288.1 550.0L300.0 535.7M326.9 500.0L300.0 535.7M600.0 518.7L590.0 500.0M620.2 550.0L600.0 518.7M150.0 482.1L123.1 450.0M166.7 500.0L150.0 482.1M326.9 500.0L350.0 476.6M375.0 450.0L350.0 476.6M550.0 450.0L550.0 450.0M590.0 500.0L550.0 450.0M100.0 418.4L87.8 400.0M123.1 450.0L100.0 418.4M375.0 450.0L400.0 422.1M419.0 400.0L400.0 422.1M550.0 450.0L526.7 400.0M87.8 400.0L58.6 350.0M419.0 400.0L450.0 362.1M459.5 350.0L450.0 362.1M526.7 400.0L511.5 350.0M50.0 333.3L34.1 300.0M58.6 350.0L50.0 333.3M459.5 350.0L496.8 300.0M511.5 350.0L500.8 300.0M34.1 300.0L13.2 250.0M496.8 300.0L500.0 295.5M500.8 300.0L500.0 295.5M13.2 250.0L0.0 214.3"/><path class="range-contour" d="M1000.0 650.0L1000.0 650.0M900.0 609.2L879.0 600.0M950.0 630.1L900.0 609.2M1000.0 650.0L950.0 630.1M800.0 563.4L772.7 550.0M850.0 587.0L800.0 563.4M879.0 600.0L850.0 587.0M750.0 538.5L710.0 500.0M772.7 550.0L750.0 538.5M650.0 460.5L638.2 450.0M700.0 494.7L650.0 460.5M710.0 500.0L700.0 494.7M600.0 405.2L596.5 400.0M638.2 450.0L600.0 405.2M250.0 357.1L243.8 350.0M256.8 350.0L250.0 357.1M596.5 400.0L569.2 350.0M243.8 350.0L204.5 300.0M256.8 350.0L300.0 302.2M301.9 300.0L300.0 302.2M550.0 300.0L550.0 300.0M569.2 350.0L550.0 300.0M200.0 293.7L171.1 250.0M204.5 300.0L200.0 293.7M301.9 300.0L343.8 250.0M550.0 300.0L535.7 250.0M171.1 250.0L151.0 200.0M343.8 250.0L350.0 240.4M378.4 200.0L350.0 240.4M535.7 250.0L525.1 200.0M150.0 197.4L131.4 150.0M151.0 200.0L150.0 197.4M378.4 200.0L400.0 172.4M419.1 150.0L400.0 172.4M525.1 200.0L515.0 150.0M131.4 150.0L112.2 100.0M419.1 150.0L450.0 117.2M467.7 100.0L450.0 117.2M515.0 150.0L505.3 100.0M100.0 67.6L93.4 50.0M112.2 100.0L100.0 67.6M467.7 100.0L500.0 71.4M505.3 100.0L500.0 71.4M93.4 50.0L75.0 0.0"/><path class="range-contour range-contour-major" d="M1000.0 550.0L1000.0 550.0M900.0 503.5L892.9 500.0M950.0 527.4L900.0 503.5M1000.0 550.0L950.0 527.4M750.0 464.3L726.5 450.0M800.0 476.8L750.0 464.3M850.0 489.3L800.0 476.8M892.9 500.0L850.0 489.3M700.0 430.9L666.3 400.0M726.5 450.0L700.0 430.9M650.0 381.6L626.9 350.0M666.3 400.0L650.0 381.6M600.0 301.7L599.2 300.0M626.9 350.0L600.0 301.7M599.2 300.0L578.6 250.0M578.6 250.0L567.0 200.0M567.0 200.0L556.0 150.0M550.0 121.8L545.5 100.0M556.0 150.0L550.0 121.8M250.0 62.5L244.9 50.0M258.9 50.0L250.0 62.5M545.5 100.0L535.3 50.0M244.9 50.0L225.0 0.0M258.9 50.0L300.0 0.0M300.0 0.0L300.0 0.0M535.3 50.0L525.6 0.0"/><path class="range-contour" d="M950.0 460.7L907.1 450.0M1000.0 473.2L950.0 460.7M750.0 410.7L736.0 400.0M800.0 423.2L750.0 410.7M850.0 435.7L800.0 423.2M900.0 448.2L850.0 435.7M907.1 450.0L900.0 448.2M700.0 367.0L684.6 350.0M736.0 400.0L700.0 367.0M650.0 302.6L648.4 300.0M684.6 350.0L650.0 302.6M648.4 300.0L621.4 250.0M621.4 250.0L608.9 200.0M600.0 162.8L597.0 150.0M608.9 200.0L600.0 162.8M597.0 150.0L585.6 100.0M585.6 100.0L574.6 50.0M574.6 50.0L564.1 0.0"/><path class="range-contour" d="M950.0 407.1L921.4 400.0M1000.0 419.6L950.0 407.1M750.0 357.1L742.3 350.0M800.0 369.6L750.0 357.1M850.0 382.1L800.0 369.6M900.0 394.6L850.0 382.1M921.4 400.0L900.0 394.6M700.0 303.2L697.5 300.0M742.3 350.0L700.0 303.2M697.5 300.0L664.3 250.0M664.3 250.0L650.8 200.0M650.0 196.8L638.0 150.0M650.8 200.0L650.0 196.8M638.0 150.0L625.7 100.0M625.7 100.0L613.9 50.0M613.9 50.0L602.6 0.0"/><path class="range-contour range-contour-major" d="M950.0 353.6L935.7 350.0M1000.0 366.1L950.0 353.6M750.0 303.6L746.7 300.0M800.0 316.1L750.0 303.6M850.0 328.6L800.0 316.1M900.0 341.1L850.0 328.6M935.7 350.0L900.0 341.1M746.7 300.0L707.1 250.0M700.0 225.5L692.7 200.0M707.1 250.0L700.0 225.5M692.7 200.0L679.0 150.0M679.0 150.0L665.8 100.0M665.8 100.0L653.1 50.0M650.0 37.2L641.0 0.0M653.1 50.0L650.0 37.2"/><path class="range-contour" d="M950.0 300.0L950.0 300.0M1000.0 312.5L950.0 300.0M750.0 250.0L750.0 250.0M800.0 262.5L750.0 250.0M850.0 275.0L800.0 262.5M900.0 287.5L850.0 275.0M950.0 300.0L900.0 287.5M750.0 250.0L734.6 200.0M734.6 200.0L719.9 150.0M719.9 150.0L705.9 100.0M700.0 78.4L692.4 50.0M705.9 100.0L700.0 78.4M692.4 50.0L679.5 0.0"/><path class="range-contour" d="M1000.0 258.9L964.3 250.0M900.0 209.1L885.7 200.0M950.0 240.9L900.0 209.1M964.3 250.0L950.0 240.9M850.0 177.3L807.1 150.0M885.7 200.0L850.0 177.3M750.0 113.6L746.0 100.0M800.0 145.5L750.0 113.6M807.1 150.0L800.0 145.5M746.0 100.0L731.7 50.0M731.7 50.0L717.9 0.0"/>
+      <path d="M250 0V1000M500 0V1000M750 0V1000M0 250H1000M0 500H1000M0 750H1000" class="range-grid"/>
+      <g class="range-feature" role="button" tabindex="0" data-map-id="short" aria-label="Short path" aria-describedby="route-knowledge" aria-pressed="false">
+          <polyline points="150,750 350,580 580,400 800,250" class="range-route-hit"/>
+          <polyline data-range-route="short" points="150,750 350,580 580,400 800,250" class="range-route range-route-short"/>
+          <text x="350" y="635" text-anchor="middle">Short path</text>
+        </g><g class="range-feature" role="button" tabindex="0" data-map-id="long" aria-label="Lower path" aria-describedby="route-knowledge" aria-pressed="false">
+          <polyline points="150,750 400,830 650,800 870,580 900,400 800,250" class="range-route-hit"/>
+          <polyline data-range-route="long" points="150,750 400,830 650,800 870,580 900,400 800,250" class="range-route range-route-long"/>
+          <text x="650" y="855" text-anchor="middle">Lower path</text>
+        </g>
+      <g class="range-feature" role="button" tabindex="0" data-map-id="staging-area" aria-label="Staging Area" aria-pressed="true">
+        <circle cx="150" cy="750" r="16" class="range-place-hit"/>
+        <circle cx="150" cy="750" r="16" class="range-place"/>
+        <text x="150" y="715" text-anchor="middle">Staging Area</text>
+      </g><g class="range-feature" role="button" tabindex="0" data-map-id="ridge" aria-label="Ridge" aria-pressed="false">
+        <circle cx="800" cy="250" r="16" class="range-place-hit"/>
+        <circle cx="800" cy="250" r="16" class="range-place"/>
+        <text x="800" y="215" text-anchor="middle">Ridge</text>
+      </g>
+      <text x="45" y="70">N ↑</text><text x="620" y="80">High ridge</text>
+      <path d="M40 950H290M40 935V965M290 935V965" class="range-scale"/><text x="45" y="915">2.5 km</text>
+    </svg>
+    <figcaption>10 × 10 km · local metres · N ↑<br>Light = higher ground. Routes: passage unconfirmed.</figcaption>
+  </figure>
+            <output id="map-scale-hud" class="map-scale-hud" aria-label="Map scale: 2.5 kilometers">
+              <span id="map-scale-label">2.5 km</span>
+              <span id="map-scale-rule" aria-hidden="true"></span>
+            </output>
+            <p id="route-knowledge" class="route-knowledge" role="status" aria-live="polite" aria-atomic="true">Short path: passage unconfirmed. Lower path: passage unconfirmed.</p>
+            <div class="map-selection-bar" hidden role="group" aria-label="Selected map point quick actions">
+              <p id="map-selection-label" role="status" aria-live="polite" aria-atomic="true">Staging Area</p>
+              <a href="#map-selection-title" aria-label="Inspect selected location">Inspect</a>
+              <button id="map-quick-prepare" type="button" aria-label="Prepare an order for this location">Prepare</button>
+              <button id="map-quick-close" type="button" aria-label="Dismiss map quick actions">×</button>
+            </div>
+            <details id="map-report-layer" class="map-report-layer" hidden>
+              <summary>Received reports · positions unreported</summary>
+              <div id="reported-map-items" class="reported-map-items"></div>
+            </details>
+          </div>
+          <section id="map-evidence" class="map-evidence" aria-labelledby="map-selection-title">
+            <button id="close-map-evidence" type="button" hidden>Back to map</button>
+            <p class="panel-label">Selected evidence</p>
+            <h3 id="map-selection-title" tabindex="-1">Staging Area</h3>
+            <p id="map-known" class="map-known">Local command reference supplied by the briefing.</p>
+            <details id="map-provenance">
+              <summary>Source, timing &amp; order provenance</summary>
+              <dl class="evidence-list">
+                <div><dt>Source</dt><dd id="map-source">Local briefing</dd></div>
+                <div><dt>Received</dt><dd id="map-received">Available briefing</dd></div>
+                <div><dt>Observed</dt><dd id="map-observed">Not supplied</dd></div>
+                <div><dt>Precision</dt><dd id="map-precision">Authored local geography</dd></div>
+                <div><dt>Related order</dt><dd id="map-order">None</dd></div>
+              </dl>
+            </details>
+            <p id="map-unknown" class="map-unknown">Static briefing geography; live position and passage are unconfirmed.</p>
+            <button id="prepare-observe-held" class="secondary-button" type="button" hidden>Observe here</button>
+            <button id="prepare-return-base" class="secondary-button" type="button" hidden>Return to base</button>
+            <p id="map-radio-state" aria-live="polite"></p>
+            <button id="prepare-map-order" class="secondary-button" type="button">Prepare “observe here”</button>
+            <button id="prepare-scout-ridge" class="secondary-button" type="button" hidden>Scout Ridge &amp; report</button>
+            <button id="prepare-clear-trunk" class="secondary-button" type="button" hidden>Prepare “clear the fallen trunk”</button>
+            <p id="map-action-status" tabindex="-1" class="status" role="status" aria-live="polite"></p>
+          </section>
+        </div>
+      </section>
+
+      <section id="orders-panel" class="panel command-panel dock" aria-labelledby="command-title">
+        <div class="dock-heading dock-top" aria-label="Field command conversations">
+          <h2 id="command-title" class="visually-hidden">Orders &amp; received reports</h2>
+          <div class="field-conversation-tabs tabstrip" role="group" aria-label="Available command context">
+            <span class="field-conversation-tab field-conversation-current tab on" aria-current="true">◆ Ortega</span>
+            <button id="field-read-reports" class="field-conversation-tab tab" type="button" aria-label="Open actual received reports">Reports</button>
+          </div>
+          <button id="field-minimize-dock" class="quiet-button dock-icon" type="button"
+            title="Minimize command bar" aria-label="Minimize command bar">−</button>
+          <button id="toggle-orders" class="quiet-button dock-icon" type="button" aria-expanded="true" aria-controls="order-readback" title="Expand command readback" aria-label="Expand command readback">⌃</button>
+        </div>
+        <div class="field-live-thread dock-chat" role="region" aria-label="Recent recorded orders and received reports">
+          <p class="message-row"><span class="direction" aria-hidden="true">↗</span><span id="field-command-preview" class="field-command-preview line" aria-live="polite">No recorded order. Your draft stays local until Send.</span></p>
+          <p class="message-row reply"><span class="direction" aria-hidden="true">↙</span><span id="field-report-preview" class="field-report-preview line" aria-live="polite">No received field report.</span></p>
+        </div>
+        <div id="order-readback" tabindex="0" role="region" aria-label="Order and report readback">
+          <dl class="context-grid">
+            <div><dt>Assignment knowledge</dt><dd id="ortega-status">Loading…</dd></div>
+            <div><dt>Last reported location</dt><dd id="ortega-location">Staging Area</dd></div>
+          </dl>
+          <details>
+            <summary>Order state &amp; version</summary>
+            <dl class="context-grid">
+              <div><dt>Version</dt><dd id="ortega-version">—</dd></div>
+              <div><dt>Last accepted assignment</dt><dd id="ortega-current-order">None</dd></div>
+            </dl>
+          </details>
+          <p id="ortega-response-label" class="panel-label">Latest issued command</p>
+          <p id="ortega-response" class="panel-copy"></p>
+          <details id="delivered-status-brief" hidden>
+            <summary id="delivered-status-label">Commander records / delivered status brief — NOT A REPLY</summary>
+            <p id="delivered-status-contact" class="panel-copy"></p>
+            <ol id="delivered-status-reports" class="history-list"></ol>
+          </details>
+          <p id="status-attribution" class="panel-copy" hidden>Status summarizes delivered knowledge, not live progress. Earlier received reports remain in the operations picture.</p>
+          <p id="known-targets" class="panel-copy"></p>
+          <details>
+            <summary id="ortega-report-label">No received report</summary>
+            <p id="ortega-report" class="panel-copy">No outing report received.</p>
+          </details>
+        </div>
+        <p id="access-status" class="status order-outcome" tabindex="0" role="status" aria-live="polite" aria-atomic="true"></p>
+        <form id="order-form" tabindex="-1" aria-label="Order to Ortega">
+          <div class="contextual-action-strip">
+            <div id="contextual-actions" class="chiprow" role="group" aria-label="Next command words; swipe horizontally for more suggestions"></div>
+            <div class="chip-scroll-rail" aria-hidden="true"><span class="chip-scroll-progress"></span></div>
+          </div>
+          <div class="field-composer-row inputrow">
+            <div class="field-composer-wrap composer-wrap">
+              <div class="composer-tokens"><span class="field-recipient entity-token person" aria-label="Command recipient">TO: Ortega</span><span id="draft-tokens" role="group" aria-label="Draft words; drag to reorder or back to suggestions to remove"></span></div>
+              <label class="visually-hidden" for="order-text">Your order to Ortega</label>
+              <textarea id="order-text" class="composer" disabled rows="1" placeholder="Issue an order or ask…" required></textarea>
+            </div>
+            <div class="field-action-stack" role="group" aria-label="Delivery method, voice input and Send">
+              <label for="order-via" class="visually-hidden">VIA, delivery method</label>
+              <select id="order-via" name="via" required disabled>
+                <option value="in-person">Person</option>
+                <option value="radio">Radio</option>
+              </select>
+              <button id="field-microphone" class="small-action field-microphone" type="button"
+                disabled title="Voice dictation coming later" aria-label="Microphone unavailable until voice input is enabled">
+                <svg class="field-send-icon ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg>
+              </button>
+              <button id="submit-command" class="small-action send" type="submit" disabled aria-label="Send real order to Ortega"><svg class="field-send-icon ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 3-8 18-3-8-8-3zM21 3 10 13"/></svg><span>Send</span></button>
+            </div>
+          </div>
+          <p id="contextual-action-status" tabindex="0" role="status" aria-live="polite" aria-atomic="true"></p>
+          <details class="order-wording">
+            <summary>Order wording · 1–280 characters</summary>
+            <p class="panel-copy">You can issue any order, including while Ortega is away. Issuing does not confirm delivery, understanding or execution. Examples, not limits: hold here · rest · observe · status · explore the ridge cautiously.</p>
+            <p class="panel-copy">Tap next words or drag them into the draft. Drag draft words to rearrange, or back to suggestions to remove; × erases a word. Focus a draft word and use Left or Right to reorder. These words mirror your text, not a validated order. Only Send dispatches.</p>
+          </details>
+        </form>
+      </section>
+
+      <section id="history-panel" class="panel history-panel" aria-labelledby="history-title">
+        <div class="history-heading">
+          <div>
+            <p class="panel-label">Durable readback</p>
+            <h2 id="history-title" tabindex="-1">Order history</h2>
+          </div>
+          <button id="newer-history" class="quiet-button" type="button" hidden>Newer</button>
+          <button id="latest-history" class="quiet-button" type="button" hidden>Latest</button>
+          <button id="older-history" class="quiet-button" type="button" hidden>Older orders</button>
+        </div>
+        <p id="history-new-items" class="panel-copy" role="status"></p>
+        <details id="received-reports">
+          <summary>Received reports (including earlier orders)</summary>
+          <ol id="received-report-history" class="history-list" aria-label="Received report history" tabindex="0"></ol>
+        </details>
+        <h3>Orders</h3>
+        <ol id="command-history" class="history-list" tabindex="0" aria-label="Order history page">
+          <li class="empty-history">Loading order history…</li>
+        </ol>
+      </section>
+      </div>
+    </div>
+  </main>
+  <script src="./mock-api.js" defer></script>
+  <script src="./assets/play.js" defer></script>
+</body>
+</html>
