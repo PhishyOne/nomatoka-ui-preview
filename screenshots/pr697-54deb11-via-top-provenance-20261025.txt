@@ -1,0 +1,9 @@
+Nomatoka UI PR #697: compact native VIA at top of right action column.
+Exact game Draft head: 54deb11f2a6aad07da3410bbe8bb95139bc2a05c
+Portrait 390x844 and landscape 844x390 images rendered in Chromium from
+this exact frontend tree against isolated controlled synthetic HTTP fixture,
+including a source-backed blocked-route received report.
+No order was submitted and no private account/production state was accessed.
+Verified local 205/205 affected standalone source and Chromium tests green.
+The full candidate qualification, independent review, actual Android device
+touch/keyboard approval, and deployment are NOT complete.
