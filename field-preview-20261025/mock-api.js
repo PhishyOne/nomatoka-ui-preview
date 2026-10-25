@@ -46,12 +46,37 @@
     return Promise.resolve(response({error:{code:"ui_preview_only",
       message:"This synthetic UI build cannot perform game actions."}},405));
   };
+  // Real game session actions are unsupported in this static test page.
+  // Report this visibly without calling the original logout handler (which
+  // would otherwise terminal-lock the UI before the fake endpoint rejects it).
+  const notice=document.createElement("div");
+  notice.id="ui-preview-notice";notice.setAttribute("role","status");
+  notice.hidden=true;
+  Object.assign(notice.style,{position:"fixed",top:"58px",left:"8px",right:"8px",
+    zIndex:"200",pointerEvents:"none",maxWidth:"380px",margin:"auto",
+    padding:"10px",border:"1px solid #c6a260",borderRadius:"7px",
+    background:"#182318f5",color:"#f2d8a0",fontSize:"12px",
+    textAlign:"center",boxShadow:"0 4px 18px #000b"});
+  document.body.append(notice);
+  let clearNotice;
+  function showNotice(message){
+    notice.textContent=message;notice.hidden=false;
+    clearTimeout(clearNotice);
+    clearNotice=setTimeout(()=>{notice.hidden=true;},4500);
+  }
+  document.addEventListener("click",event=>{
+    if(!event.target.closest?.("#logout"))return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    showNotice("UI demonstration only. No live session to sign out of.");
+  },true);
   // Capture and block the real order form before the game's listener sees it.
   // This is a deliberate preview safety gate, not a simulated order receipt.
   document.addEventListener("submit",event=>{
     if(event.target?.id!=="order-form")return;
     event.preventDefault();
     event.stopImmediatePropagation();
+    showNotice("UI demonstration only. No order was sent.");
     const label=document.querySelector("#access-status");
     if(label)label.textContent="UI demonstration only. No order was sent.";
   },true);

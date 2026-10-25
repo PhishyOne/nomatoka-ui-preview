@@ -893,6 +893,11 @@
     // Sensitive map children are reconstructed on authentication/control change.
     // Delegate through the stable parent; detached descendants lose listeners.
     const mapInspectLink = () => operationsMap.querySelector(".map-selection-bar a");
+    function focusVisibleMapAction() {
+      const link=mapInspectLink();
+      if(link && !link.closest(".map-selection-bar")?.hidden)link.focus({preventScroll:true});
+      else operationsMap.focus?.({preventScroll:true});
+    }
     const quickPanel = () => operationsMap.querySelector(".map-selection-bar");
     let mapQuickAnchor, mapPinchSuppressUntil = 0;
     function hideMapQuickActions() {
@@ -970,7 +975,7 @@
     });
     mapEvidenceClose?.addEventListener("click", () => {
       closeMapEvidence();
-      mapInspectLink()?.focus({ preventScroll: true });
+      focusVisibleMapAction();
     });
     platform.addEventListener("keydown", event => {
       if (event.key === "Escape" && quickPanel() && !quickPanel().hidden && operationalWorkspace.dataset.evidenceOpen !== "true") {
@@ -980,7 +985,7 @@
       if (event.key === "Escape" && operationalWorkspace.dataset.evidenceOpen === "true"
         && !field("#people")?.open && !field("#notifications")?.open) {
         closeMapEvidence();
-        mapInspectLink()?.focus({ preventScroll: true });
+        focusVisibleMapAction();
       }
     });
     function sizeMapTargets() {
@@ -999,7 +1004,7 @@
         const disabled = compact || !!clipped;
         target.setAttribute("tabindex", disabled ? "-1" : "0");
         target.setAttribute("aria-disabled", String(disabled));
-        if (disabled && target.contains(platform.document.activeElement)) mapInspectLink()?.focus({preventScroll:true});
+        if (disabled && target.contains(platform.document.activeElement)) focusVisibleMapAction();
       }
     }
     // 100 SVG units = one kilometre on the authored 1000-unit square map.
@@ -1515,8 +1520,15 @@
       closeFieldDialog(navPlaces, placesDialog);
       selectWorkspaceSection("map");
       selectMapObject(target.dataset.placeFocus);
-      if (item.getAttribute("tabindex") === "0") item.focus({preventScroll:true});
-      else mapInspectLink()?.focus({preventScroll:true});
+      if (item.getAttribute("tabindex") === "0" && item.getAttribute("aria-disabled")!=="true") {
+        item.focus({preventScroll:true});
+      } else if (mobileWorkspace?.matches === true) {
+        // Source-based Places selection remains inspectable even when the
+        // projected SVG marker has been clipped or disabled on a short map.
+        hideMapQuickActions();
+        operationalWorkspace.dataset.evidenceOpen="true";
+        field("#map-selection-title").focus({preventScroll:true});
+      } else focusVisibleMapAction();
     });
     navPeople.addEventListener("click", () => {
       if (!peopleButton.disabled && operationalVisible) {
