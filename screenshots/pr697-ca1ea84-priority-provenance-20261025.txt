@@ -1,0 +1,10 @@
+Nomatoka draft PR #697 source: ca1ea84f4bde67f32f3ba9c9773007d0c376e766
+Captured from the working tree that became this commit, in real Chromium
+390x844 portrait and 844x390 landscape, with controlled, synthetic authenticated
+test HTTP responses. One verified blocked-route report plus an ordinary report
+were provided by the test fixture. The priority card reflects only the blocking
+report. The ordinary report remains in the full communications history.
+No order was sent; no production account, database, or world was accessed.
+These are static frontend acceptance captures. Physical Android validation,
+independent exact-head review, PostgreSQL-backed candidate qualification and
+family deployment remain pending.
