@@ -1,0 +1,10 @@
+Nomatoka field terminal UI visual checkpoint: 2026-10-25
+Canonical game repository: PhishyOne/Nomatoka, ID 1334737344
+Exact Draft PR #697 head: c2d92f28a7f32bd4313a035262714be9d7ab94ef
+Screens: 390x844 portrait, 844x390 landscape, 780x360 short landscape.
+Captured with Chromium from that exact frontend source against controlled
+authenticated mock HTTP projections containing only public synthetic range
+scenario facts; no live world, accounts, private secrets or order submission.
+The real application layout/JS/CSS were used, not a hand-redrawn design.
+Not evidence of physical Android keyboard/touch acceptance, PostgreSQL
+durability, family preview readiness, independent review, or production.
