@@ -2190,3 +2190,9 @@ body[data-play-state="authenticated"] .operations-map {
   display:inline-flex;align-items:center;justify-content:center;
   height:26px;min-height:26px;line-height:22px;margin:0;
 }
+
+/* No nonfunctional minimize button in desktop or expanded Orders workspace. */
+#orders-panel:not([data-dock="compact"]) #field-minimize-dock,
+#orders-panel #field-minimize-dock[hidden] {
+  display:none!important;
+}

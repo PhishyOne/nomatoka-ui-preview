@@ -1050,6 +1050,15 @@
     }
     platform.addEventListener("resize",()=>renderMapScale());
     platform.visualViewport?.addEventListener?.("resize",()=>renderMapScale());
+    // The fixed command dock can change the map element's size WITHOUT a
+    // window/visualViewport event (minimize/restore, readback, etc.).
+    // Observe the stable map container, not the transient SVG child which
+    // is rebuilt during authority scrubs. The HUD is absolute, so adjusting
+    // its bar cannot feed back into the observed map dimensions.
+    if (platform.ResizeObserver) {
+      const mapScaleObserver = new platform.ResizeObserver(()=>renderMapScale());
+      mapScaleObserver.observe(operationsMap);
+    }
     // A real two-pointer pinch replaces the removed +, minus and reset
     // buttons. Gestures change only the bounded SVG viewBox; no order or
     // gameplay mutation occurs. Keyboard +/- and Home remain available.
@@ -1143,6 +1152,14 @@
       const compact = mobile && workspaceSection === "map";
       operationalWorkspace.dataset.section = workspaceSection;
       ordersPanel.dataset.dock = compact ? "compact" : "expanded";
+      const minimizeControl=field("#field-minimize-dock");
+      if (minimizeControl) minimizeControl.hidden=!compact;
+      if (alertUiReady && !compact) {
+        // A stale minimized state must not survive entry to Orders/desktop.
+        dockMinimized=false;
+        ordersPanel.dataset.minimized="false";
+        miniTray.hidden=true;
+      }
       orderReadback.hidden = compact;
       dockToggle.hidden = !mobile;
       dockToggle.setAttribute("aria-expanded", String(!compact));
@@ -1440,7 +1457,8 @@
       alertExpanded=false;updateAttentionBox();openNotifications();
     });
     field("#field-minimize-dock").addEventListener("click",()=>{
-      if(!operationalVisible || !notificationsActive() || workspaceSection!=="map")return;
+      if(!operationalVisible || !notificationsActive() || workspaceSection!=="map"
+        || ordersPanel.dataset.dock!=="compact")return;
       dockMinimized=true;ordersPanel.dataset.minimized="true";miniTray.hidden=false;
       sizeMobileWorkspace();positionAlert();field("#field-restore-dock").focus({preventScroll:true});
     });
