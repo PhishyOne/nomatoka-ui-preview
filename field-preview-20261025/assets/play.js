@@ -1793,6 +1793,9 @@
     }
     peopleButton.addEventListener("click", () => {
       if (!peopleActive()) return;
+      // Unlike modal dialogs, workspace sheets cannot obscure an open
+      // hamburger. Dismiss the menu before selecting the People sheet.
+      mainMenu.open = false;
       renderPeople(); returnPeopleFocus = true;
       closeWorkspaceSheets(peopleDialog);
       if (!peopleDialog.open) peopleDialog.show();

@@ -2384,3 +2384,34 @@ body[data-play-state="authenticated"] .workspace-header .field-top-icon.ico.big 
   width:100%;min-height:44px;margin:3px 0 0;text-align:left;
   font-size:13px;
 }
+
+
+/* Expanded desktop/tablet is scrollable (not the compact fixed-dock shell).
+   Non-modal People/Items/Places and contextual map tools still need explicit
+   stacking and viewport bounds: dialog.show() does not enter the top layer.
+   Keep their top edge BELOW the existing desktop sticky nav's initial slot
+   and above background map paint; the real navigation remains hit-testable. */
+@media (min-width:1025px) and (min-height:705px) {
+  #operational-workspace > :is(#people,#field-items,#field-places)[open],
+  #operational-workspace > #field-context-tools:not([hidden]) {
+    display:block;
+    position:fixed;
+    box-sizing:border-box;
+    z-index:30;
+    top:clamp(235px,30dvh,265px);
+    bottom:max(12px,env(safe-area-inset-bottom,0px));
+    left:auto;
+    right:max(12px,env(safe-area-inset-right,0px));
+    width:min(35rem,calc(100vw - 24px));
+    height:auto;max-height:none;min-height:0;
+    margin:0;padding:12px;
+    overflow:auto;overscroll-behavior:contain;
+    border:1px solid #a8874e;border-radius:9px;
+    background:linear-gradient(#283127fa,#141c17fc);
+    box-shadow:0 12px 30px #000c;
+  }
+  #operational-workspace > #field-context-tools:not([hidden]) {
+    width:min(310px,calc(100vw - 24px));
+    z-index:32;
+  }
+}

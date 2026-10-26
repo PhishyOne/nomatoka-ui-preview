@@ -1,7 +1,7 @@
 # Nomatoka — October 25 isolated UI demo
 
 **Synthetic UI only.** Generated from exact canonical game Draft PR #697
-head `3ec2fb36fe71a6ff694f820391f2f7ca67579589`, retaining the actual
+head `5bdb8f983263152271e09ac489803013c1e5315a`, retaining the actual
 play DOM, CSS, JS, map evidence and touch handlers.
 
 An interception shim serves only bounded synthetic HTTP fixture responses and
