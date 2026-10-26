@@ -1310,7 +1310,7 @@ body[data-play-state="authenticated"] .operations-map {
   #operational-workspace[data-section="map"] #orders-panel[data-dock="compact"].dock {
     display:flex; flex-direction:column; position:fixed; z-index:24;
     left:max(9px,env(safe-area-inset-left)); right:max(9px,env(safe-area-inset-right));
-    bottom:calc(var(--workspace-bottom,0px) + var(--field-nav) + 2px + env(safe-area-inset-bottom));
+    bottom:calc(var(--workspace-bottom,0px) + var(--field-nav) + 2px + var(--field-safe-bottom,env(safe-area-inset-bottom,0px)));
     width:auto; height:calc(var(--field-dock) - 8px); max-height:calc(var(--field-dock) - 8px);
     min-height:0; margin:0; overflow-y:auto; line-height:normal;
     /* Extremely short visual viewports scroll the dock internally, never the document. */
@@ -1826,7 +1826,7 @@ body[data-play-state="authenticated"] .operations-map {
    exposed alongside it rather than shrinking to a sliver across the screen. */
 @media (min-width:540px) and (max-width:1024px) and (max-height:450px) {
   body[data-play-state="authenticated"] #operational-workspace[data-section="map"] #map-panel {
-    bottom:calc(var(--field-nav) + env(safe-area-inset-bottom));
+    bottom:calc(var(--field-nav) + var(--field-safe-bottom,env(safe-area-inset-bottom,0px)));
   }
   #operational-workspace[data-section="map"] #orders-panel[data-dock="compact"].dock {
     left:auto;right:max(9px,env(safe-area-inset-right));
@@ -2274,7 +2274,7 @@ body[data-play-state="authenticated"] .workspace-header .field-top-icon.ico.big 
     display:block;position:fixed;box-sizing:border-box;
     z-index:18;
     top:calc(var(--field-top,55px) + 4px);
-    bottom:calc(var(--workspace-bottom,0px) + var(--field-nav,66px) + var(--field-dock,238px) + 4px);
+    bottom:calc(var(--workspace-bottom,0px) + var(--field-nav,66px) + var(--field-dock,238px) + var(--field-safe-bottom,env(safe-area-inset-bottom,0px)) + 4px);
     left:max(6px,env(safe-area-inset-left,0px));
     right:max(6px,env(safe-area-inset-right,0px));
     width:auto;height:auto;min-height:0;max-height:none;
@@ -2415,3 +2415,9 @@ body[data-play-state="authenticated"] .workspace-header .field-top-icon.ico.big 
     z-index:32;
   }
 }
+
+
+/* Shared geometry token for compact nav/dock/sheets. It evaluates the real
+   device safe-area inset; browser acceptance may inject a nonzero value to
+   prove that sheets clear the same raised dock as on notched devices. */
+:root { --field-safe-bottom:env(safe-area-inset-bottom,0px); }

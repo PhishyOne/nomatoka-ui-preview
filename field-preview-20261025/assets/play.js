@@ -1211,6 +1211,11 @@
       if (alertUiReady) updateAttentionBox();
     }
     function selectWorkspaceSection(section, navigate = true) {
+      // One navigation contract owns auxiliary-sheet cleanup. Direct Reports,
+      // dock expansion, menu links, hashchange Back/Forward, and programmatic
+      // commands all enter HERE; per-button cleanup missed valid routes.
+      // At initial mounting, there cannot be open private sheets.
+      if (operationalVisible) closeWorkspaceSheets(null);
       if (section !== "map") closeMapEvidence();
       workspaceSection = section; renderWorkspaceSection();
       mainMenu?.removeAttribute("open");
@@ -1227,7 +1232,6 @@
         platform.history.replaceState(platform.history.state, "", workspaceFragments.map);
     }
     dockToggle.addEventListener("click", () => {
-      closeWorkspaceSheets(null);
       const section = workspaceSection === "orders" ? "map" : "orders";
       selectWorkspaceSection(section);
       field(section === "orders" ? "#order-text" : "#operations-title").focus();
@@ -1236,7 +1240,6 @@
     for (const section of workspaceSections) {
       field(`#nav-${section}`).addEventListener("click", event => {
         if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
-        closeWorkspaceSheets(null);
         // Reveal and focus synchronously at every width, even for the current fragment.
         // Native anchor navigation still owns the URL, history and scrolling.
         selectWorkspaceSection(section, false);
