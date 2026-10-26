@@ -1175,6 +1175,20 @@
       return field(workspaceSection==="orders"?"#order-form":
         workspaceSection==="history"?"#history-title":"#operations-title");
     }
+    function syncBottomNavSelection() {
+      // People/Items/Places are workspace sheets over Map, not simultaneous
+      // destinations. One visible selection is shared by visual styling and
+      // aria-current; aria-expanded independently describes each disclosure.
+      const selectedSheet = [["people","#people"],["items","#field-items"],
+        ["places","#field-places"]].find(([,selector])=>field(selector)?.open);
+      const selected = selectedSheet?.[0] ?? workspaceSection;
+      for (const destination of ["map","orders","history","people","items","places"]) {
+        const link = field("#nav-"+destination);
+        if (!link) continue;
+        if (destination===selected) link.setAttribute("aria-current","location");
+        else link.removeAttribute("aria-current");
+      }
+    }
     function renderWorkspaceSection() {
       const mobile = mobileWorkspace?.matches === true;
       if (!mobile || workspaceSection !== "map") {
@@ -1203,10 +1217,8 @@
       dockToggle.title = compact ? "Expand command readback" : "Back to map";
       for (const section of workspaceSections) {
         field(`#${section}-panel`).hidden = mobile && section !== workspaceSection && !(section === "orders" && compact);
-        const link = field(`#nav-${section}`);
-        if (mobile && section === workspaceSection) link.setAttribute("aria-current", "location");
-        else link.removeAttribute("aria-current");
       }
+      syncBottomNavSelection();
       sizeMapTargets();
       if (alertUiReady) updateAttentionBox();
     }
@@ -1724,6 +1736,7 @@
         if (sheet!==except) trigger.setAttribute("aria-expanded","false");
       }
       if (contextPanel!==except) {contextPanel.hidden=true;contextButton.setAttribute("aria-expanded","false");}
+      syncBottomNavSelection();
     }
     function openFieldDialog(button, dialog) {
       if (!operationalVisible || button.disabled || dialog.open) return;
@@ -1735,12 +1748,14 @@
       // navigation remain usable at all times, including while typing.
       dialog.show();
       button.setAttribute("aria-expanded", "true");
+      syncBottomNavSelection();
       field("#field-view-label").textContent=dialog===itemsDialog?"ITEMS":"PLACES";
       dialog.querySelector(".notification-heading button")?.focus({preventScroll:true});
     }
     function closeFieldDialog(button, dialog) {
       if (dialog.open) dialog.close();
       button.setAttribute("aria-expanded", "false");
+      syncBottomNavSelection();
       if (operationalVisible && !button.disabled) button.focus({preventScroll:true});
       if (!peopleDialog.open&&!itemsDialog.open&&!placesDialog.open&&contextPanel.hidden)
         field("#field-view-label").textContent=workspaceSection.toUpperCase();
@@ -1778,7 +1793,10 @@
     field("#close-field-items").addEventListener("click", () => closeFieldDialog(navItems, itemsDialog));
     field("#close-field-places").addEventListener("click", () => closeFieldDialog(navPlaces, placesDialog));
     for (const [trigger,dialog] of [[navItems,itemsDialog],[navPlaces,placesDialog]]) {
-      dialog.addEventListener("close", () => trigger.setAttribute("aria-expanded","false"));
+      dialog.addEventListener("close", () => {
+        trigger.setAttribute("aria-expanded","false");
+        syncBottomNavSelection();
+      });
     }
     placesDialog.addEventListener("click", event => {
       const target = event.target.closest?.("button[data-place-focus]");
@@ -1867,6 +1885,7 @@
       if (!peopleDialog.open) peopleDialog.show();
       peopleButton.setAttribute("aria-expanded", "true");
       navPeople.setAttribute("aria-expanded", "true");
+      syncBottomNavSelection();
       field("#field-view-label").textContent="PEOPLE";
       field("#close-people").focus({preventScroll:true});
     });
@@ -1889,6 +1908,7 @@
     peopleDialog.addEventListener("close", () => {
       peopleButton.setAttribute("aria-expanded", "false");
       navPeople.setAttribute("aria-expanded", "false");
+      syncBottomNavSelection();
       if (returnPeopleFocus && peopleActive()) peopleReturnFocus.focus({ preventScroll: true });
       if (!itemsDialog.open&&!placesDialog.open&&contextPanel.hidden)
         field("#field-view-label").textContent=workspaceSection.toUpperCase();
