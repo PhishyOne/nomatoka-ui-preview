@@ -2273,8 +2273,8 @@ body[data-play-state="authenticated"] .workspace-header .field-top-icon.ico.big 
   #operational-workspace > #field-context-tools:not([hidden]) {
     display:block;position:fixed;box-sizing:border-box;
     z-index:18;
-    top:calc(var(--field-top,55px) + 4px);
-    bottom:calc(var(--workspace-bottom,0px) + var(--field-nav,66px) + var(--field-dock,238px) + var(--field-safe-bottom,env(safe-area-inset-bottom,0px)) + 4px);
+    top:var(--workspace-sheet-top,calc(var(--field-top,55px) + 4px));
+    bottom:var(--workspace-sheet-bottom,calc(var(--workspace-bottom,0px) + var(--field-nav,66px) + var(--field-dock,238px) + var(--field-safe-bottom,env(safe-area-inset-bottom,0px)) + 4px));
     left:max(6px,env(safe-area-inset-left,0px));
     right:max(6px,env(safe-area-inset-right,0px));
     width:auto;height:auto;min-height:0;max-height:none;
@@ -2421,3 +2421,72 @@ body[data-play-state="authenticated"] .workspace-header .field-top-icon.ico.big 
    device safe-area inset; browser acceptance may inject a nonzero value to
    prove that sheets clear the same raised dock as on notched devices. */
 :root { --field-safe-bottom:env(safe-area-inset-bottom,0px); }
+
+
+/* Keyboard-constrained viewport: all compact shell parts obey the same
+   visualViewport-derived state. Do not reserve a nominal 200+px dock when
+   the keyboard leaves only 300px of actual display. All data/identity stays
+   mounted; only secondary visual chrome folds away. */
+@media (max-width:64rem), (max-height:44rem) {
+  :root:has(#operational-workspace[data-visual-constrained="true"][data-section="map"]) {
+    --field-top:48px!important;
+    --field-nav:50px!important;
+    --field-dock:92px!important;
+  }
+  body[data-play-state="authenticated"]:has(#operational-workspace[data-visual-constrained="true"][data-section="map"]) .top {
+    height:var(--field-top)!important;min-height:0;
+  }
+  #operational-workspace[data-visual-constrained="true"][data-section="map"] #orders-panel[data-dock="compact"].dock {
+    height:calc(var(--field-dock) - 8px)!important;
+    max-height:calc(var(--field-dock) - 8px)!important;
+    min-height:0!important;
+    overflow:hidden!important;
+    padding:3px!important;
+  }
+  #operational-workspace[data-visual-constrained="true"][data-section="map"] #orders-panel[data-dock="compact"] :is(
+    .dock-top,.dock-chat,.contextual-action-strip,#field-microphone) {
+    display:none!important;
+  }
+  /* The real status and audit evidence survive in DOM/Orders/History; the
+     outgoing form is the only screen-height priority while keyboard is up. */
+  #operational-workspace[data-visual-constrained="true"][data-section="map"] #orders-panel[data-dock="compact"] .order-outcome:not(:empty) {
+    position:absolute;width:1px;height:1px;min-height:0;max-height:1px;
+    padding:0;margin:0;overflow:hidden;clip-path:inset(50%);
+  }
+  #operational-workspace[data-visual-constrained="true"][data-section="map"] #orders-panel[data-dock="compact"] #order-form {
+    flex:1 1 auto;min-height:0;margin:0;
+  }
+  #operational-workspace[data-visual-constrained="true"][data-section="map"] #orders-panel[data-dock="compact"] .field-composer-row.inputrow {
+    flex:1 1 auto!important;min-height:0!important;height:100%!important;
+    max-height:100%!important;
+  }
+  #operational-workspace[data-visual-constrained="true"][data-section="map"] #orders-panel[data-dock="compact"] .composer-wrap {
+    height:100%!important;min-height:0!important;
+  }
+  #operational-workspace[data-visual-constrained="true"][data-section="map"] #orders-panel[data-dock="compact"] .field-action-stack {
+    justify-content:center;gap:3px;
+  }
+  #operational-workspace[data-visual-constrained="true"][data-section="map"] #orders-panel[data-dock="compact"] .field-via-anchor,
+  #operational-workspace[data-visual-constrained="true"][data-section="map"] #orders-panel[data-dock="compact"] .field-via-anchor #order-via {
+    height:26px!important;min-height:26px!important;max-height:26px!important;
+  }
+  #operational-workspace[data-visual-constrained="true"][data-section="map"] #orders-panel[data-dock="compact"] .composer-tokens {
+    max-height:25px;padding-top:0;
+  }
+  #operational-workspace[data-visual-constrained="true"][data-section="map"] #orders-panel[data-dock="compact"] #order-text {
+    min-height:22px!important;max-height:none!important;
+    padding:1px 7px!important;
+  }
+  /* Sheets remain truly scrollable above the compressed dock; no fake
+     controls, duplicate send form or modal blocker are introduced. */
+  #operational-workspace[data-visual-constrained="true"] > :is(#people,#field-items,#field-places)[open],
+  #operational-workspace[data-visual-constrained="true"] > #field-context-tools:not([hidden]) {
+    padding:5px;
+  }
+}
+
+@media (max-width:64rem), (max-height:44rem) {
+  :root:has(#operational-workspace[data-visual-constrained="true"][data-section="map"]):has(#orders-panel[data-dock="compact"][data-minimized="true"]) {
+    --field-dock:56px!important;
+  }
+}

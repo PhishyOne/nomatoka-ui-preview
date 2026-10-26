@@ -1218,6 +1218,7 @@
       if (operationalVisible) closeWorkspaceSheets(null);
       if (section !== "map") closeMapEvidence();
       workspaceSection = section; renderWorkspaceSection();
+      sizeMobileWorkspace();
       mainMenu?.removeAttribute("open");
       if (navigate && mobileWorkspace?.matches && platform.location.hash !== workspaceFragments[section])
         platform.location.hash = workspaceFragments[section];
@@ -1248,8 +1249,17 @@
       });
     }
     platform.addEventListener("hashchange", () => {
-      selectWorkspaceSection(sectionFromFragment() ?? "map", false);
-      if (operationalVisible
+      const next=sectionFromFragment()??"map";
+      // Programmatically opening a People sheet can also move the underlying
+      // mobile workspace back to Map. The resulting same-section hashchange
+      // is NOT a second user navigation, and must not close that new sheet
+      // OR steal keyboard focus from its Close/Inspect controls.
+      const unchanged=next===workspaceSection;
+      if (!unchanged)selectWorkspaceSection(next,false);
+      const sheetFocused=unchanged && (field("#people")?.open
+        || field("#field-items")?.open || field("#field-places")?.open
+        || !field("#field-context-tools")?.hidden);
+      if (!sheetFocused && operationalVisible
         && !field(`#${workspaceSection}-panel`).contains(platform.document.activeElement))
         field(fragmentForSection(workspaceSection)).focus();
     });
@@ -1281,21 +1291,68 @@
       const height = viewport?.height ?? platform.innerHeight;
       if (!Number.isFinite(height)) return;
       const style = platform.document.documentElement.style;
-      style.setProperty("--workspace-height", `${height}px`);
-      style.setProperty("--workspace-bottom", `${Math.max(0, platform.innerHeight - height - (viewport?.offsetTop ?? 0))}px`);
-      // Native document scrolling is the escape hatch for IME, short landscape
-      // and enlarged text. Never trap the composer behind a fixed-height shell.
-      operationalWorkspace.dataset.dockFlow = String(height < 560 || ordersPanel.getBoundingClientRect().height > height * .55);
-      style.setProperty("--workspace-nav-height", `${field(".workspace-nav").getBoundingClientRect().height}px`);
-      style.setProperty("--workspace-dock-height", `${ordersPanel.getBoundingClientRect().height}px`);
-      style.setProperty("--workspace-header-height", `${field(".workspace-header")?.getBoundingClientRect().height ?? 0}px`);
+      const px=(name,value)=>{
+        const next=Math.round(value)+"px";
+        if (style.getPropertyValue?.(name)!==next)style.setProperty(name,next);
+      };
+      const visualTop=viewport?.offsetTop??0;
+      px("--workspace-height",height);
+      px("--workspace-bottom",Math.max(0,platform.innerHeight-height-visualTop));
+      // When the IME shrinks visualViewport independently of CSS media
+      // queries, preserving the nominal three-button stack leaves NO space
+      // above the real dock for a sheet. Compress only unimplemented voice
+      // and nonessential readbacks; retain the one real textarea, VIA, Send
+      // and four bottom destinations. Also cover physically tiny screens.
+      const keyboardReduced=platform.innerHeight-height>110;
+      // Insets consume real display height even when a native keyboard has
+      // not opened. On a notched short phone the nominal dock can still leave
+      // only 50px above it: use the same stable compact presentation rather
+      // than deriving layout mode from its OWN adjusted measurements.
+      const safeBottom=Number.parseFloat(
+        platform.getComputedStyle?.(platform.document.documentElement)
+          ?.getPropertyValue("--field-safe-bottom"))||0;
+      const constrained=mobileWorkspace?.matches===true
+        && (height<=380 || (keyboardReduced && height<490)
+          || (height<=445 && safeBottom>=12));
+      operationalWorkspace.dataset.visualConstrained=String(constrained);
+      const nav=field(".workspace-nav").getBoundingClientRect();
+      const dock=ordersPanel.getBoundingClientRect();
+      const header=field(".workspace-header")?.getBoundingClientRect();
+      operationalWorkspace.dataset.dockFlow=String(height<560||dock.height>height*.55);
+      px("--workspace-nav-height",nav.height);
+      px("--workspace-dock-height",dock.height);
+      px("--workspace-header-height",header?.height??0);
+      // Geometry, not --field-dock estimates, owns every sheet's bottom
+      // boundary. The actual dock may shrink or move as visualViewport opens
+      // the keyboard, as safe-area padding changes, or after minimization.
+      // Both edges are FIXED-layout coordinates, adjusted for visualViewport.
+      const blockers=[nav.top];
+      // display:none minimized dock has a zero rect at (0,0). It MUST NOT
+      // collapse sheets above it; the separate Restore tray is the actual
+      // live control to keep uncovered.
+      if (dock.height>0 && !ordersPanel.hidden)blockers.push(dock.top);
+      const tray=field("#field-mini-tray");
+      if (tray && !tray.hidden) {
+        const rect=tray.getBoundingClientRect();
+        if (rect.height>0)blockers.push(rect.top);
+      }
+      const boundary=Math.min(...blockers)-8;
+      const sheetTop=Math.max(visualTop+4,(header?.bottom??visualTop)+4);
+      px("--workspace-sheet-top",sheetTop);
+      px("--workspace-sheet-bottom",Math.max(0,platform.innerHeight-boundary));
       sizeMapTargets();
     }
     platform.visualViewport?.addEventListener("resize", sizeMobileWorkspace);
     platform.visualViewport?.addEventListener("scroll", sizeMobileWorkspace);
     platform.addEventListener("resize", sizeMobileWorkspace);
+    if(platform.ResizeObserver){
+      const shellGeometry=new platform.ResizeObserver(sizeMobileWorkspace);
+      shellGeometry.observe(ordersPanel);
+      shellGeometry.observe(field(".workspace-nav"));
+    }
     sizeMobileWorkspace();
     renderWorkspaceSection();
+    sizeMobileWorkspace();
     const mapTemplate = operationsMap.innerHTML;
     const newer = field("#newer-history"), latest = field("#latest-history"), indication = field("#history-new-items");
     const opaque = () => `ortega:${platform.crypto.randomUUID()}`;
@@ -1671,6 +1728,8 @@
     function openFieldDialog(button, dialog) {
       if (!operationalVisible || button.disabled || dialog.open) return;
       mainMenu.open = false;
+      if (mobileWorkspace?.matches === true && workspaceSection!=="map")
+        selectWorkspaceSection("map");
       closeWorkspaceSheets(dialog);
       // Non-modal, dock-aware workspace sheet: the actual composer and bottom
       // navigation remain usable at all times, including while typing.
@@ -1689,6 +1748,8 @@
     contextButton.addEventListener("click",()=>{
       if(!operationalVisible||contextButton.disabled)return;
       const opening=contextPanel.hidden;
+      if(opening && mobileWorkspace?.matches === true && workspaceSection!=="map")
+        selectWorkspaceSection("map");
       closeWorkspaceSheets(opening?contextPanel:null);
       if(opening){
         contextPanel.hidden=false;contextButton.setAttribute("aria-expanded","true");
@@ -1799,6 +1860,8 @@
       // Unlike modal dialogs, workspace sheets cannot obscure an open
       // hamburger. Dismiss the menu before selecting the People sheet.
       mainMenu.open = false;
+      if (mobileWorkspace?.matches===true && workspaceSection!=="map")
+        selectWorkspaceSection("map");
       renderPeople(); returnPeopleFocus = true;
       closeWorkspaceSheets(peopleDialog);
       if (!peopleDialog.open) peopleDialog.show();
