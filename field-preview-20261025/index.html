@@ -17,7 +17,10 @@
             <a id="nav-orders" href="#order-form" aria-controls="orders-panel">Orders &amp; command readback</a>
             <a id="nav-history" href="#history-title" aria-controls="history-panel">Order history &amp; reports</a>
             <button id="open-notifications" class="quiet-button" type="button" aria-haspopup="dialog" aria-controls="notifications" aria-expanded="false" disabled>Recent updates</button>
-            <button id="refresh-history" class="quiet-button" type="button" aria-label="Refresh workspace">Refresh reports</button>
+            <details id="field-connection-recovery" class="field-connection-recovery">
+              <summary>Connection recovery</summary>
+              <button id="refresh-history" class="quiet-button" type="button" aria-label="Retry synchronization">Retry synchronization</button>
+            </details>
             <button id="logout" class="quiet-button" type="button">Sign out</button>
           </div>
         </details>
@@ -32,7 +35,7 @@
               <h2 id="commander-title">Commander</h2>
               <p id="commander-name">Loading…</p>
             </div>
-            <button id="open-people" class="quiet-button" type="button" aria-label="Open People panel" aria-haspopup="dialog" aria-controls="people" aria-expanded="false" disabled title="People"><svg class="field-top-icon ico big" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16M9 4v6M16 14v6"/></svg></button>
+            <button id="open-context-tools" class="quiet-button" type="button" aria-label="Open contextual tools" aria-haspopup="dialog" aria-controls="field-context-tools" aria-expanded="false" disabled title="Contextual tools"><svg class="field-top-icon ico big" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16M9 4v6M16 14v6"/></svg></button>
           </div>
           <div id="control-warning" class="control-row" role="alert" hidden>
             <p id="control-state" class="control-state"></p>
@@ -41,19 +44,39 @@
         </section>
       </header>
 
-      <section id="inactive-device" class="panel" aria-labelledby="inactive-title">
+      <section id="inactive-device" class="panel" aria-labelledby="inactive-title" tabindex="-1">
         <h2 id="inactive-title">This device is locked</h2>
         <p>Platform security: operational records require active control.</p>
         <p id="connection-status" role="status">Checking connection…</p>
         <p id="local-draft-status"></p>
       </section>
       <div id="operational-workspace" hidden>
+      <aside id="field-context-tools" class="field-context-tools" role="dialog" aria-modal="false"
+        aria-labelledby="context-tools-title" hidden>
+        <div class="notification-heading">
+          <h2 id="context-tools-title">Map / Tools</h2>
+          <button id="close-context-tools" type="button" class="quiet-button">× Close</button>
+        </div>
+        <section aria-label="Map presentation layers">
+          <h3>Map layers</h3>
+          <label><input id="context-contours" type="checkbox" checked> Elevation contours</label>
+          <label><input id="context-routes" type="checkbox" checked> Route lines</label>
+          <label><input id="context-labels" type="checkbox" checked> Feature labels</label>
+          <p class="panel-copy">These controls change only the presentation of the authored test-range map. Hidden layers do not change what the commander actually knows.</p>
+        </section>
+        <p id="context-section-note" class="panel-copy">Tap a known map feature to see quick actions; only received observations count as reports.</p>
+      </aside>
       <dialog id="people" aria-labelledby="people-title" aria-describedby="people-scope">
         <div class="notification-heading">
           <h2 id="people-title">People</h2>
           <button id="close-people" class="quiet-button" type="button" autofocus>Close</button>
         </div>
         <p id="people-scope" class="panel-copy">Active mercenary · commander records and received reports. Last reported information is not a live position.</p>
+        <div class="people-actions">
+          <button id="people-view-reports" class="secondary-button" type="button" aria-describedby="people-reports-empty" disabled>View reports</button>
+          <button id="people-inspect" class="secondary-button" type="button" disabled>Inspect contact</button>
+          <button id="people-write" type="button" aria-describedby="people-order-reason" disabled>Write order</button>
+        </div>
         <section aria-labelledby="people-name">
           <h3 id="people-name"></h3>
           <dl class="evidence-list">
@@ -67,11 +90,6 @@
           <p id="people-reports-empty" class="panel-copy"></p>
           <ol id="people-reports" class="history-list" aria-label="Recent received reports" tabindex="-1"></ol>
         </section>
-        <div class="people-actions">
-          <button id="people-view-reports" class="secondary-button" type="button" aria-describedby="people-reports-empty" disabled>View reports</button>
-          <button id="people-inspect" class="secondary-button" type="button" disabled>Inspect contact</button>
-          <button id="people-write" type="button" aria-describedby="people-order-reason" disabled>Write order</button>
-        </div>
         <p id="people-order-reason" class="panel-copy"></p>
       </dialog>
       <nav class="workspace-nav nav" aria-label="Workspace sections">
@@ -274,10 +292,14 @@
             </div>
             <div class="field-action-stack" role="group" aria-label="Delivery method, voice input and Send">
               <label for="order-via" class="visually-hidden">VIA, delivery method</label>
-              <select id="order-via" name="via" required disabled>
-                <option value="in-person">Person</option>
-                <option value="radio">Radio</option>
-              </select>
+              <div class="field-via-anchor">
+                <select id="order-via" name="via" required disabled>
+                  <option value="in-person">Person</option>
+                  <option value="radio">Radio</option>
+                </select>
+                <button id="field-via-touch" type="button" tabindex="-1" aria-hidden="true"
+                  disabled title="Open delivery methods beside VIA"></button>
+              </div>
               <button id="field-microphone" class="small-action field-microphone" type="button"
                 disabled title="Voice dictation coming later" aria-label="Microphone unavailable until voice input is enabled">
                 <svg class="field-send-icon ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg>
