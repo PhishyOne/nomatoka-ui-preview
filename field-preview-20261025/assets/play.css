@@ -2262,3 +2262,125 @@ body[data-play-state="authenticated"] .workspace-header .field-top-icon.ico.big 
 @media (prefers-reduced-motion:reduce) {
   #draft-tokens.chip-reorder-active > .draft-chip {transition:none!important}
 }
+
+
+/* People, Items and Places are non-modal sheets in the same persistent
+   phone shell. Their content scrolls inside the visible map region and
+   deliberately cannot cover the genuine command dock or bottom navigation.
+   No second composer or dummy action is introduced. */
+@media (max-width: 64rem), (max-height: 44rem) {
+  #operational-workspace > :is(#people,#field-items,#field-places)[open],
+  #operational-workspace > #field-context-tools:not([hidden]) {
+    display:block;position:fixed;box-sizing:border-box;
+    z-index:18;
+    top:calc(var(--field-top,55px) + 4px);
+    bottom:calc(var(--workspace-bottom,0px) + var(--field-nav,66px) + var(--field-dock,238px) + 4px);
+    left:max(6px,env(safe-area-inset-left,0px));
+    right:max(6px,env(safe-area-inset-right,0px));
+    width:auto;height:auto;min-height:0;max-height:none;
+    margin:0;padding:10px;
+    overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;
+    background:linear-gradient(#283127f9,#141c17fb);
+    color:#e3e3d5;border:1px solid #a8874e;border-radius:9px;
+    box-shadow:0 8px 20px #000a;
+  }
+  #operational-workspace > #field-context-tools:not([hidden]) {
+    left:auto;width:min(310px,calc(100vw - 12px));
+    z-index:22;
+  }
+  #operational-workspace > :is(#people,#field-items,#field-places)[open]::backdrop {
+    display:none;
+  }
+  #operational-workspace > :is(#people,#field-items,#field-places)[open] .notification-heading {
+    position:static;z-index:auto;
+    background:#273027;padding:8px 0;
+  }
+  /* Small sheets compete with floating map alerts, especially at 320x420.
+     The selected sheet owns this region until dismissed; the underlying
+     received update remains in its genuine log and is restored on close. */
+  #operational-workspace:has(> #people[open],> #field-items[open],> #field-places[open],> #field-context-tools:not([hidden])) .field-alert-box {
+    visibility:hidden!important;pointer-events:none!important;
+  }
+  #operational-workspace > #people[open] #people-reports {max-height:35dvh}
+  /* A 320x420 phone has very little map real estate; keep sheets scrollable
+     inside that space rather than stealing the protected 44px Send control. */
+}
+.field-context-tools[hidden]{display:none!important}
+.field-context-tools label {
+  display:flex;align-items:center;gap:10px;min-height:44px;
+  padding:5px;border-bottom:1px solid #53604a;color:#eddfbf;font-size:13px;
+}
+.field-context-tools label input {width:17px;height:17px;accent-color:#edb449}
+.field-context-tools h3 {color:#efc981;margin:9px 0;font-size:13px}
+#operations-map.hide-context-contours :is(.range-contour,.range-height-cell),
+#operations-map.hide-context-routes .range-route,
+#operations-map.hide-context-labels .synthetic-range svg text {
+  opacity:0!important;
+}
+
+
+/* Most common People actions should be reachable first, without scrolling
+   past every dossier section. On short landscape the sheet may be smaller
+   than a single row; keep the actions at its beginning and scroll internally. */
+#people[open] .people-actions {
+  display:flex;flex-wrap:wrap;gap:5px;margin:5px 0 9px;
+}
+#people[open] .people-actions button {
+  flex:1 1 90px;min-width:90px;min-height:40px;padding:5px;
+  font-size:11px;
+}
+
+
+/* VIA remains the ONE native form select (keyboard, screen-reader, contract).
+   A transparent pointer hit target opens a small, anchored, no-write choices
+   surface. Choices stay inside the actual in-person/radio capabilities. */
+.field-via-anchor {position:relative;flex:none;width:88px;min-width:0;align-self:center}
+.field-via-anchor #order-via {width:100%!important;min-width:0!important;margin:0}
+.field-via-anchor #field-via-touch {
+  position:absolute;inset:0;z-index:2;opacity:0;cursor:pointer;
+  display:block;width:100%;height:100%;min-width:0;min-height:0;
+  border:0;margin:0;padding:0;touch-action:manipulation;
+}
+.field-via-choices[hidden] {display:none!important}
+.field-via-choices {
+  position:fixed;z-index:180;display:grid;gap:3px;
+  min-width:130px;width:146px;max-width:calc(100vw - 12px);
+  margin:0;padding:6px;background:#202b23;
+  border:1px solid #d1a755;border-radius:8px;
+  box-shadow:0 10px 25px #000b;
+}
+.field-via-choices button {
+  display:block;width:100%;min-height:44px;margin:0;padding:6px 10px;
+  font-size:13px;text-align:left;color:#ead5a6;background:#29372b;
+  border:1px solid #526b52;border-radius:5px;
+}
+.field-via-choices button[aria-pressed="true"] {
+  color:#f9d77d;background:#44371f;border-color:#d0a753;
+}
+.field-via-choices button:focus-visible {outline:2px solid #f0c45d;outline-offset:-2px}
+@media (max-width:64rem), (max-height:44rem){
+  #orders-panel[data-dock="compact"] .field-via-anchor {
+    width:62px;min-width:62px;max-width:62px;height:30px;min-height:30px;
+  }
+  #orders-panel[data-dock="compact"] .field-via-anchor #order-via {
+    height:30px;min-height:30px;max-height:30px;
+  }
+}
+
+
+/* Normal reports synchronize in the background. A manual retry remains
+   accessible only in the secondary recovery disclosure for transport or
+   control trouble; it is not a prominent Refresh reports action. */
+.field-main-menu-items .field-connection-recovery > summary {
+  display:flex;align-items:center;min-height:44px;padding:7px 10px;
+  border:1px solid #53644e;border-radius:5px;
+  background:#202c22;color:#e5d9b9;cursor:pointer;
+  font-size:13px;font-weight:600;
+}
+.field-main-menu-items .field-connection-recovery[open] > summary {
+  border-color:#bd9c58;color:#edc982;
+}
+.field-main-menu-items .field-connection-recovery > button {
+  width:100%;min-height:44px;margin:3px 0 0;text-align:left;
+  font-size:13px;
+}

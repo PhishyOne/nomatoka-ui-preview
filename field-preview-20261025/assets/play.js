@@ -865,6 +865,7 @@
     let minimumVersion = 1, controlMessage = "Checking command control…", orderMessage = "", refreshMessage = "";
     const field = selector => platform.document.querySelector(selector);
     const methodSelect = field("#order-via");
+    const viaTouch=field("#field-via-touch");
     const composer = field("#order-text"), orderForm = field("#order-form"), older = field("#older-history");
     if (!composer || !orderForm) return;
     const draftList = field("#draft-tokens");
@@ -1226,6 +1227,7 @@
         platform.history.replaceState(platform.history.state, "", workspaceFragments.map);
     }
     dockToggle.addEventListener("click", () => {
+      closeWorkspaceSheets(null);
       const section = workspaceSection === "orders" ? "map" : "orders";
       selectWorkspaceSection(section);
       field(section === "orders" ? "#order-text" : "#operations-title").focus();
@@ -1234,6 +1236,7 @@
     for (const section of workspaceSections) {
       field(`#nav-${section}`).addEventListener("click", event => {
         if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+        closeWorkspaceSheets(null);
         // Reveal and focus synchronously at every width, even for the current fragment.
         // Native anchor navigation still owns the URL, history and scrolling.
         selectWorkspaceSection(section, false);
@@ -1310,7 +1313,83 @@
       return true;
     }
     composer.addEventListener("input", () => mutateDraft(composer.value, true));
-    methodSelect.addEventListener("change", replaceDraftIdentity);
+    // Pointer VIA menu sits beside the real native select, not an alternative
+    // delivery contract. The native select stays available to keyboard and
+    // assistive technology, including the same form serialization.
+    const viaChoices=platform.document.createElement("div");
+    viaChoices.id="field-via-choices";
+    viaChoices.className="field-via-choices";
+    viaChoices.setAttribute("role","group");
+    viaChoices.setAttribute("aria-label","Choose delivery method");
+    viaChoices.hidden=true;
+    for(const [value,label] of [["in-person","Person"],["radio","Radio"]]){
+      const button=platform.document.createElement("button");
+      button.type="button";button.dataset.method=value;button.textContent=label;
+      button.setAttribute("aria-label",label+" delivery method");
+      button.setAttribute("aria-pressed","false");
+      viaChoices.append(button);
+    }
+    platform.document.body.append(viaChoices);
+    function closeViaChoices(returnFocus=false){
+      if(viaChoices.hidden)return;
+      viaChoices.hidden=true;viaTouch.setAttribute("aria-expanded","false");
+      if(returnFocus&&!methodSelect.disabled)methodSelect.focus({preventScroll:true});
+    }
+    function positionViaChoices(){
+      if(viaChoices.hidden)return;
+      const anchor=methodSelect.getBoundingClientRect();
+      const height=viaChoices.getBoundingClientRect().height;
+      const width=viaChoices.getBoundingClientRect().width;
+      const left=Math.max(6,Math.min(platform.innerWidth-width-6,anchor.right-width));
+      const bottom=Math.max(6,platform.innerHeight-anchor.top+5);
+      const top=Math.max(6,anchor.top-height-5);
+      viaChoices.style.left=Math.round(left)+"px";
+      viaChoices.style.top=Math.round(top)+"px";
+      // In a keyboard-reduced viewport the popup may have to open downward.
+      if(top+height>anchor.top-2&&anchor.bottom+height+6<platform.innerHeight)
+        viaChoices.style.top=Math.round(anchor.bottom+5)+"px";
+    }
+    function syncViaChoices(){
+      viaTouch.disabled=methodSelect.disabled;
+      viaTouch.setAttribute("aria-expanded",String(!viaChoices.hidden));
+      for(const button of viaChoices.querySelectorAll("button")){
+        button.setAttribute("aria-pressed",String(button.dataset.method===methodSelect.value));
+        button.disabled=methodSelect.disabled;
+      }
+      if(methodSelect.disabled)closeViaChoices();
+    }
+    viaTouch.addEventListener("click",event=>{
+      event.stopPropagation();
+      if(methodSelect.disabled)return;
+      viaChoices.hidden=!viaChoices.hidden;
+      syncViaChoices();
+      positionViaChoices();
+      if(!viaChoices.hidden){
+        const active=viaChoices.querySelector('[aria-pressed="true"]');
+        active?.focus({preventScroll:true});
+      }
+    });
+    viaChoices.addEventListener("click",event=>{
+      const button=event.target.closest?.("button[data-method]");
+      if(!button||methodSelect.disabled)return;
+      methodSelect.value=button.dataset.method;
+      methodSelect.dispatchEvent(new platform.Event("change",{bubbles:true}));
+      closeViaChoices(true);
+    });
+    platform.document.addEventListener("pointerdown",event=>{
+      if(!viaChoices.hidden&&!viaChoices.contains(event.target)&&event.target!==viaTouch)
+        closeViaChoices();
+    },true);
+    platform.document.addEventListener("keydown",event=>{
+      if(event.key==="Escape"&&!viaChoices.hidden){
+        event.preventDefault();event.stopPropagation();closeViaChoices(true);
+      }
+    },true);
+    platform.addEventListener("resize",positionViaChoices);
+    platform.visualViewport?.addEventListener?.("resize",positionViaChoices);
+    methodSelect.addEventListener("change",()=>{
+      replaceDraftIdentity();syncViaChoices();
+    });
     function retireAttemptDraft(attempt) {
       // Draft identity survives privacy scrubs, but not edits or account round trips.
       // Definitive headers can retire it without admitting any old private body.
@@ -1559,20 +1638,76 @@
       if (focusedId && !entries.some(entry => entry.id === focusedId)) field("#close-notifications").focus({ preventScroll: true });
       notificationList.scrollTop = scroll;
     }
-    const peopleDialog = field("#people"), peopleButton = field("#open-people"), navPeople = field("#nav-people");
+    const peopleDialog = field("#people"), navPeople = field("#nav-people"), peopleButton = navPeople;
+    const contextButton=field("#open-context-tools"), contextPanel=field("#field-context-tools");
+    const contextClose=field("#close-context-tools");
     const itemsDialog = field("#field-items"), navItems = field("#nav-items");
     const placesDialog = field("#field-places"), navPlaces = field("#nav-places");
     const mainMenu = field("#field-main-menu");
     let peopleReturnFocus = peopleButton;
+    function focusPublicRecovery(hadFocus) {
+      if(!hadFocus || platform.document.hidden)return;
+      // Scrubbing runs before the authenticated shell is hidden; wait until
+      // render has exposed the public recovery surface before moving focus.
+      Promise.resolve().then(()=>{
+        const target=field("#inactive-device");
+        if (!operationalVisible && target && !target.hidden){
+          const control=!claimButton.hidden&&!claimButton.disabled?claimButton:target;
+          control.focus?.({preventScroll:true});
+        }
+      });
+    }
+    function closeWorkspaceSheets(except) {
+      if(except!==peopleDialog && peopleDialog.open) returnPeopleFocus=false;
+      for(const [trigger,sheet] of [[navPeople,peopleDialog],[navItems,itemsDialog],[navPlaces,placesDialog]]) {
+        if (sheet!==except && sheet.open) sheet.close();
+        if (sheet!==except) trigger.setAttribute("aria-expanded","false");
+      }
+      if (contextPanel!==except) {contextPanel.hidden=true;contextButton.setAttribute("aria-expanded","false");}
+    }
     function openFieldDialog(button, dialog) {
-      if (!operationalVisible || dialog.open) return;
+      if (!operationalVisible || button.disabled || dialog.open) return;
       mainMenu.open = false;
-      dialog.showModal(); button.setAttribute("aria-expanded", "true");
+      closeWorkspaceSheets(dialog);
+      // Non-modal, dock-aware workspace sheet: the actual composer and bottom
+      // navigation remain usable at all times, including while typing.
+      dialog.show();
+      button.setAttribute("aria-expanded", "true");
+      field("#field-view-label").textContent=dialog===itemsDialog?"ITEMS":"PLACES";
+      dialog.querySelector(".notification-heading button")?.focus({preventScroll:true});
     }
     function closeFieldDialog(button, dialog) {
       if (dialog.open) dialog.close();
       button.setAttribute("aria-expanded", "false");
       if (operationalVisible && !button.disabled) button.focus({preventScroll:true});
+      if (!peopleDialog.open&&!itemsDialog.open&&!placesDialog.open&&contextPanel.hidden)
+        field("#field-view-label").textContent=workspaceSection.toUpperCase();
+    }
+    contextButton.addEventListener("click",()=>{
+      if(!operationalVisible||contextButton.disabled)return;
+      const opening=contextPanel.hidden;
+      closeWorkspaceSheets(opening?contextPanel:null);
+      if(opening){
+        contextPanel.hidden=false;contextButton.setAttribute("aria-expanded","true");
+        contextPanel.querySelector("#close-context-tools")?.focus({preventScroll:true});
+        mainMenu.open=false;
+      } else contextButton.focus({preventScroll:true});
+    });
+    contextClose.addEventListener("click",()=>{
+      contextPanel.hidden=true;contextButton.setAttribute("aria-expanded","false");
+      if(operationalVisible&&!contextButton.disabled) contextButton.focus({preventScroll:true});
+    });
+    contextPanel.addEventListener("keydown",event=>{
+      if(event.key==="Escape"){
+        event.preventDefault();contextClose.click();
+      }
+    });
+    for(const [name,selector] of [["contours",".range-contour, .range-height-cell"],
+      ["routes",".range-route"],["labels",".synthetic-range svg text"]]){
+      const control=field("#context-"+name);
+      control.addEventListener("change",()=> {
+        operationsMap.classList.toggle("hide-context-"+name,!control.checked);
+      });
     }
     navItems.addEventListener("click", () => openFieldDialog(navItems, itemsDialog));
     navPlaces.addEventListener("click", () => openFieldDialog(navPlaces, placesDialog));
@@ -1608,12 +1743,6 @@
         revealWorkspaceTarget(inspector);
       }
     });
-    navPeople.addEventListener("click", () => {
-      if (!peopleButton.disabled && operationalVisible) {
-        peopleReturnFocus=navPeople;
-        peopleButton.click();
-      }
-    });
     const peopleInspect = field("#people-inspect"), peopleWrite = field("#people-write");
     const peopleReports = field("#people-reports"), peopleViewReports = field("#people-view-reports");
     let returnPeopleFocus = false;
@@ -1626,17 +1755,18 @@
       navItems.setAttribute("aria-expanded", "false");
       navPlaces.setAttribute("aria-expanded", "false");
       if (peopleDialog.open) peopleDialog.close();
+      contextPanel.hidden=true;contextButton.setAttribute("aria-expanded","false");contextButton.disabled=true;
       peopleButton.setAttribute("aria-expanded", "false");
       for (const id of ["name", "status", "assignment", "location", "order-reason"]) field(`#people-${id}`).textContent = "";
       peopleInspect.disabled = true; peopleWrite.disabled = true;
       peopleReports.replaceChildren(); field("#people-reports-empty").textContent = "";
       peopleReports.tabIndex = -1;
       peopleViewReports.disabled = true;
-      if (hadFocus && !platform.document.hidden) refreshButton.focus({ preventScroll: true });
+      focusPublicRecovery(hadFocus);
     }
     function renderPeople() {
       if (!peopleActive()) { scrubPeople(); return; }
-      peopleButton.disabled = false; navPeople.disabled = false;
+      peopleButton.disabled = false; navPeople.disabled = false;contextButton.disabled=false;
       const person = personnelPresentation(mercenary, knowledge, [...observedOrders.values()], picture);
       for (const id of ["name", "status", "assignment", "location"]) field(`#people-${id}`).textContent = person[id];
       const reports = peopleReportPreview(picture);
@@ -1664,10 +1794,21 @@
     peopleButton.addEventListener("click", () => {
       if (!peopleActive()) return;
       renderPeople(); returnPeopleFocus = true;
-      peopleDialog.showModal(); peopleButton.setAttribute("aria-expanded", "true");
+      closeWorkspaceSheets(peopleDialog);
+      if (!peopleDialog.open) peopleDialog.show();
+      peopleButton.setAttribute("aria-expanded", "true");
       navPeople.setAttribute("aria-expanded", "true");
+      field("#field-view-label").textContent="PEOPLE";
+      field("#close-people").focus({preventScroll:true});
     });
     field("#close-people").addEventListener("click", () => peopleDialog.close());
+    for (const [trigger,dialog] of [[navPeople,peopleDialog],[navItems,itemsDialog],[navPlaces,placesDialog]]) {
+      dialog.addEventListener("keydown",event=>{
+        if(event.key!=="Escape")return;
+        event.preventDefault();
+        closeFieldDialog(trigger,dialog);
+      });
+    }
     peopleViewReports.addEventListener("click", () => {
       if (!peopleActive() || !picture?.reports.length || peopleViewReports.disabled) return;
       returnPeopleFocus = false; peopleDialog.close(); selectWorkspaceSection("history");
@@ -1680,11 +1821,13 @@
       peopleButton.setAttribute("aria-expanded", "false");
       navPeople.setAttribute("aria-expanded", "false");
       if (returnPeopleFocus && peopleActive()) peopleReturnFocus.focus({ preventScroll: true });
+      if (!itemsDialog.open&&!placesDialog.open&&contextPanel.hidden)
+        field("#field-view-label").textContent=workspaceSection.toUpperCase();
       peopleReturnFocus=peopleButton;
       returnPeopleFocus = false;
     });
     peopleDialog.addEventListener("keydown", event => {
-      if (event.key !== "Tab") return;
+      if (event.key !== "Tab" || !peopleDialog.matches(":modal")) return;
       const controls = [...peopleDialog.querySelectorAll("button:not(:disabled), [tabindex]")]
         .filter(node => node.tabIndex >= 0);
       const first = controls[0], last = controls[controls.length - 1];
@@ -1774,7 +1917,7 @@
       dockMinimized=false;ordersPanel.dataset.minimized="false";miniTray.hidden=true;
       platform.clearTimeout(alertHoldTimer);alertGesture=undefined;
       clearToasts(); platform.clearTimeout(pollTimer);
-      if (hadFocus && !platform.document.hidden) refreshButton.focus({ preventScroll: true });
+      focusPublicRecovery(hadFocus);
     }
     function scheduleReportPoll() {
       platform.clearTimeout(pollTimer);
@@ -2353,6 +2496,7 @@
         ? "Command control is available. Claim control to send orders."
         : projection ? "Connected. Control required to view operations." : controlMessage;
       if (!active) {
+        closeViaChoices();
         const draftNotice = pending ? "An unconfirmed order is preserved on this device."
           : localDraft ? "A local draft is preserved on this device." : "";
         field("#local-draft-status").textContent = [localOutcome, draftNotice].filter(Boolean).join(" ");
@@ -2398,6 +2542,7 @@
       composer.disabled = busy || Boolean(pending);
       if (pending) methodSelect.value = pending.request.via;
       methodSelect.disabled = busy || Boolean(pending);
+      syncViaChoices();
       if (older) { older.hidden = beforeVersion === null; older.disabled = busy || historyLoading || !historyLoaded || !historyEntries.length; }
       if (newer) { newer.hidden = pageIndex === 0; newer.disabled = busy || historyLoading || !historyLoaded; }
       if (latest) { latest.hidden = pageIndex === 0 && pageCursors[0] === null; latest.disabled = busy || historyLoading || !historyLoaded; }
@@ -2447,6 +2592,7 @@
       if (!busy && latestAttempt && latestAttempt !== pending) latestAttempt = undefined;
       if (pending) delete pending.result;
       composer.value = ""; composer.disabled = true; methodSelect.value = "in-person"; methodSelect.disabled = true;
+      syncViaChoices();
       for (const id of ["older-history", "newer-history", "latest-history", "prepare-clear-trunk",
         "prepare-observe-held", "prepare-return-base", "prepare-scout-ridge", "status-attribution", "delivered-status-brief"]) field(`#${id}`).hidden = true;
       commandButton.disabled = true; labelCommandButton("Send order");
