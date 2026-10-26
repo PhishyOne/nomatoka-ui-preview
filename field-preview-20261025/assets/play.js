@@ -1959,6 +1959,11 @@
       ghost.style.top=box.top+"px";
       ghost.style.width=box.width+"px";
       ghost.style.height=box.height+"px";
+      // Detached suggestion buttons otherwise recover the generic
+      // .quiet-button 44px minimum instead of the dock's 26px chip rule.
+      // Freeze all intrinsic size constraints to the actual source geometry.
+      ghost.style.minWidth=ghost.style.maxWidth=box.width+"px";
+      ghost.style.minHeight=ghost.style.maxHeight=box.height+"px";
       platform.document.body.append(ghost);
       drag.ghost=ghost;
       drag.origin=origin;
