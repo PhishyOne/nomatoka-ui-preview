@@ -2231,3 +2231,34 @@ body[data-play-state="authenticated"] .workspace-header .field-top-icon.ico.big 
   :root:has(#orders-panel[data-dock="compact"] .order-outcome:not(:empty)) { --field-dock:236px; }
   :root:has(#orders-panel[data-dock="compact"][data-minimized="true"]) { --field-dock:56px!important; }
 }
+
+
+/* Android-launcher-style chip movement: the original chip keeps its logical
+   identity until drop, siblings preview the destination, and a lifted copy
+   follows the pointer without stealing hits from the composer. */
+#draft-tokens.chip-reorder-active > .draft-chip:not(.chip-drag-origin) {
+  transition:transform 145ms cubic-bezier(.2,.85,.2,1);
+  will-change:transform;
+}
+#draft-tokens > .draft-chip.chip-drag-origin {
+  opacity:0;
+}
+.chip-drag-ghost {
+  position:fixed!important;z-index:110;
+  pointer-events:none!important;user-select:none!important;
+  box-sizing:border-box;
+  margin:0!important;
+  opacity:.96;
+  box-shadow:0 9px 20px #000b,0 0 0 2px #e4b86a;
+  filter:brightness(1.1);
+  cursor:grabbing;
+  transform-origin:center center;
+}
+.chip-drag-ghost :is(button,span) { pointer-events:none!important }
+#orders-panel .composer-tokens.chip-drop-preview {
+  outline:2px dashed #e4b86a;
+  outline-offset:-2px;
+}
+@media (prefers-reduced-motion:reduce) {
+  #draft-tokens.chip-reorder-active > .draft-chip {transition:none!important}
+}

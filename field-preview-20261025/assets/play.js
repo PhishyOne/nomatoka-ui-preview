@@ -1917,9 +1917,100 @@
     function canEditDraft() {
       return !terminal && projection?.control.status === "active" && !busy && !claiming && !pending && !composer.disabled;
     }
+    // The active chip is a floating, noninteractive copy. Original DOM nodes
+    // stay mounted until release so pointer capture, retry identity, focus and
+    // keyboard reorder keep their established meaning. Neighbors use a
+    // lightweight animated displacement rather than rewriting the draft
+    // mid-gesture (the actual order changes only on pointerup).
+    function clearDraftDragPreview(drag) {
+      // Nothing was lifted during normal render, poll or authority scrubs.
+      // Avoid touching presentation APIs on every ordinary cancellation.
+      if (!drag) return;
+      drag.ghost?.remove?.();
+      drag.origin?.classList?.remove?.("chip-drag-origin");
+      draftList.classList?.remove?.("chip-reorder-active");
+      for (const chip of draftList.querySelectorAll?.(".draft-chip") ?? [])
+        chip.style?.removeProperty?.("transform");
+      field(".composer-tokens")?.classList?.remove?.("chip-drop-preview");
+    }
+    function showDraftDragPreview(drag, x = drag.x, y = drag.y) {
+      if (drag.ghost || !canEditDraft() || drag.identity !== draftIdentity) return;
+      const origin=drag.source === "draft" ? draftList.children[drag.edit]
+        : drag.target;
+      if (!origin || !origin.isConnected) return;
+      const box=origin.getBoundingClientRect();
+      if (!box.width || !box.height) return;
+      const ghost=origin.cloneNode(true);
+      ghost.removeAttribute("id");
+      ghost.setAttribute("aria-hidden","true");
+      // Suggestions inherit most of their visual styling from a dock-scoped
+      // selector. The floating copy lives on body to avoid clipping, so
+      // transfer only safe, read-only computed presentation properties.
+      const style=platform.getComputedStyle(origin);
+      for(const property of ["background","border","borderRadius","color",
+        "font","letterSpacing","lineHeight","padding","display","alignItems"])
+        ghost.style[property]=style[property];
+      ghost.classList.add("chip-drag-ghost");
+      for (const control of ghost.querySelectorAll("button,[tabindex]")) {
+        control.removeAttribute("id");
+        control.tabIndex=-1;
+      }
+      ghost.style.left=box.left+"px";
+      ghost.style.top=box.top+"px";
+      ghost.style.width=box.width+"px";
+      ghost.style.height=box.height+"px";
+      platform.document.body.append(ghost);
+      drag.ghost=ghost;
+      drag.origin=origin;
+      drag.sourceWidth=box.width;
+      drag.gap=Number.parseFloat(platform.getComputedStyle(draftList).columnGap)||3;
+      if (drag.source === "draft") {
+        drag.originalRects=[...draftList.children].map(node=>{
+          // Use the center of the actual draggable word, not the X/remove
+          // portion of the chip. Dropping onto the word's center must work.
+          const r=(node.querySelector(".draft-word")??node).getBoundingClientRect();
+          return {center:(r.left+r.right)/2};
+        });
+        drag.originalScroll=draftList.scrollLeft;
+        draftList.classList.add("chip-reorder-active");
+        origin.classList.add("chip-drag-origin");
+      }
+      updateDraftDragPreview(drag,x,y);
+    }
+    function updateDraftDragPreview(drag, x, y) {
+      if (!drag.ghost) return;
+      drag.ghost.style.transform=`translate3d(${x-drag.x}px,${y-drag.y}px,0) scale(1.05)`;
+      const row=draftList.getBoundingClientRect();
+      const inRow=x>=row.left-20 && x<=row.right+20
+        && y>=row.top-18 && y<=row.bottom+18;
+      field(".composer-tokens")?.classList.toggle("chip-drop-preview",inRow);
+      if (drag.source!=="draft") return;
+      // Horizontal scrolling remains supported even during a long drag.
+      if (inRow && x>=row.right-19 && draftList.scrollLeft<draftList.scrollWidth-draftList.clientWidth)
+        draftList.scrollLeft=Math.min(draftList.scrollWidth-draftList.clientWidth,draftList.scrollLeft+9);
+      else if (inRow && x<=row.left+19 && draftList.scrollLeft>0)
+        draftList.scrollLeft=Math.max(0,draftList.scrollLeft-9);
+      const siblings=[...draftList.children];
+      const shift=drag.sourceWidth+drag.gap;
+      let proposed=drag.edit;
+      if (inRow) {
+        const scrollDelta=draftList.scrollLeft-drag.originalScroll;
+        for(let i=drag.edit+1;i<siblings.length;i++)
+          if (x>=drag.originalRects[i].center-scrollDelta) proposed=i;
+        for(let i=drag.edit-1;i>=0;i--)
+          if (x<=drag.originalRects[i].center-scrollDelta) proposed=i;
+      }
+      drag.hoverIndex=inRow?proposed:undefined;
+      for(let i=0;i<siblings.length;i++) {
+        const delta=inRow && proposed>drag.edit && i>drag.edit && i<=proposed?-shift
+          :inRow && proposed<drag.edit && i>=proposed && i<drag.edit?shift:0;
+        siblings[i].style.transform=delta?`translate3d(${delta}px,0,0)`:"";
+      }
+    }
     function cancelDraftDrag() {
       const drag = draftDrag; draftDrag = undefined;
       if (drag) platform.clearTimeout(drag.holdTimer);
+      clearDraftDragPreview(drag);
       delete orderForm.dataset.chipDragging;
       if (drag && orderForm.hasPointerCapture?.(drag.pointerId)) orderForm.releasePointerCapture(drag.pointerId);
     }
@@ -1927,7 +2018,7 @@
       if (!canEditDraft() || event.button !== 0 || event.isPrimary === false) return;
       cancelDraftDrag(); suppressPointerClick = false;
       draftDrag = { pointerId: event.pointerId, x: event.clientX, y: event.clientY,
-        identity: draftIdentity, source, edit, moved: false,
+        identity: draftIdentity, source, edit, target:event.currentTarget, moved: false,
         mode: event.pointerType === "touch" ? "pending" : "drag",
         host: source === "draft" ? draftList : field("#contextual-actions") };
       const drag = draftDrag;
@@ -1940,6 +2031,7 @@
         drag.mode = "drag"; suppressPointerClick = true;
         orderForm.setPointerCapture?.(drag.pointerId);
         orderForm.dataset.chipDragging = drag.source;
+        showDraftDragPreview(drag);
       }, 400);
     }
     orderForm.addEventListener("pointermove", event => {
@@ -1958,12 +2050,15 @@
         return;
       }
       orderForm.dataset.chipDragging = draftDrag.source;
+      if (!draftDrag.ghost) showDraftDragPreview(draftDrag,event.clientX,event.clientY);
+      else updateDraftDragPreview(draftDrag,event.clientX,event.clientY);
       event.preventDefault();
     });
     orderForm.addEventListener("pointerup", event => {
       const drag = draftDrag;
       if (!drag || drag.pointerId !== event.pointerId) return;
       const valid = canEditDraft() && drag.identity === draftIdentity;
+      const hoverIndex=drag.hoverIndex;
       cancelDraftDrag();
       if (!drag.moved || !valid || drag.mode !== "drag") return;
       event.preventDefault();
@@ -1975,7 +2070,8 @@
         mutateDraft(editDraftTokens(composer.value, drag.edit));
       } else if (inDraft) {
         const chip = target?.closest?.("[data-draft-index]");
-        const to = chip ? Number(chip.dataset.draftIndex) : draftTokens(composer.value).length - 1;
+        const to = Number.isInteger(hoverIndex) ? hoverIndex
+          : chip ? Number(chip.dataset.draftIndex) : draftTokens(composer.value).length - 1;
         if (mutateDraft(editDraftTokens(composer.value, drag.edit, to))) focusDraftToken(to);
       }
     });
