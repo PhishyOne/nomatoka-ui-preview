@@ -1072,7 +1072,7 @@
         }
         const phrase=`local X ${localCoordinate.x}m Y ${localCoordinate.y}m`;
         const proposed=[composer.value.trim(),phrase].filter(Boolean).join(" ");
-        if(proposed.length>280){
+        if([...proposed].length>280){
           showLocalCoordinateOutcome("Too long",
             "Existing draft kept: coordinate text exceeds the 280-character order limit.");
           return;
@@ -1275,9 +1275,24 @@
       updatePreview();
     }
     function revealWorkspaceTarget(target) {
-      if (!target || mobileWorkspace?.matches === true || !operationalVisible
-        || typeof target.getBoundingClientRect !== "function"
-        || typeof target.scrollIntoView !== "function") return;
+      if (!target || !operationalVisible
+        || typeof target.getBoundingClientRect !== "function") return;
+      if (mobileWorkspace?.matches === true) {
+        if (!operationalWorkspace.contains(target)) return;
+        // Reveal inside each owning scroller, innermost first (readback,
+        // history, or a sheet). Never pan the document or fixed shell.
+        for (let owner=target.parentElement; owner && owner!==operationalWorkspace;
+          owner=owner.parentElement) {
+          if (!/^(auto|scroll)$/.test(platform.getComputedStyle(owner).overflowY)
+            || owner.scrollHeight<=owner.clientHeight) continue;
+          const rect=target.getBoundingClientRect(), bounds=owner.getBoundingClientRect();
+          const top=bounds.top+owner.clientTop, bottom=top+owner.clientHeight;
+          if (rect.top<top) owner.scrollTop+=rect.top-top;
+          else if (rect.bottom>bottom) owner.scrollTop+=rect.bottom-bottom;
+        }
+        return;
+      }
+      if (typeof target.scrollIntoView !== "function") return;
       const rect=target.getBoundingClientRect();
       const nav=field(".workspace-nav")?.getBoundingClientRect();
       const safeTop=(nav?.bottom && nav.top <= platform.innerHeight && nav.bottom>0
