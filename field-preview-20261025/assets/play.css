@@ -2784,3 +2784,21 @@ body[data-play-state="authenticated"] .workspace-header .field-top-icon.ico.big 
     max-width:calc(100vw - 88px);
   }
 }
+
+
+/* Short expanded Orders / IME: the mic has no implemented input path. It may
+   not consume the only 44px needed to expose the ONE real VIA + Send controls.
+   Keep the delivery selector in the same column as Send and inside the actual
+   form; never float it over the Ortega/Reports tabs. */
+@media (max-width:64rem), (max-height:44rem) {
+  #operational-workspace[data-visual-constrained="true"][data-section="orders"]
+    #orders-panel[data-dock="expanded"] #field-microphone {
+    display:none!important;
+  }
+  #operational-workspace[data-visual-constrained="true"][data-section="orders"]
+    #orders-panel[data-dock="expanded"] .field-action-stack {
+    justify-content:flex-end;
+    gap:3px;
+    overflow:visible;
+  }
+}
