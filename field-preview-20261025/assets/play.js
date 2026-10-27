@@ -1891,6 +1891,7 @@
     function closeFieldDialog(button, dialog) {
       if (dialog.open) dialog.close();
       button.setAttribute("aria-expanded", "false");
+      retireStaleContextualDrawer();
       syncBottomNavSelection();
       if (operationalVisible && !button.disabled) button.focus({preventScroll:true});
       if (!peopleDialog.open&&!itemsDialog.open&&!placesDialog.open&&contextPanel.hidden)
@@ -1902,8 +1903,17 @@
       if(placesDialog.open)return "places";
       return workspaceSection;
     }
+    function retireStaleContextualDrawer(){
+      if(contextPanel.hidden || contextPanel.dataset.contextOwner===contextualDestination())return;
+      const focusWasInside=contextPanel.contains(platform.document.activeElement);
+      contextPanel.hidden=true;
+      contextButton.setAttribute("aria-expanded","false");
+      if(focusWasInside && operationalVisible && !contextButton.disabled)
+        contextButton.focus({preventScroll:true});
+    }
     function renderContextualDrawer(){
       const section=contextualDestination();
+      contextPanel.dataset.contextOwner=section;
       field("#context-tools-title").textContent=section[0].toUpperCase()+section.slice(1)+" / Tools";
       for(const node of contextPanel.querySelectorAll("[data-context-for]"))
         node.hidden=node.dataset.contextFor!==section;
@@ -1975,7 +1985,10 @@
     for (const [trigger,dialog] of [[navItems,itemsDialog],[navPlaces,placesDialog]]) {
       dialog.addEventListener("close", () => {
         trigger.setAttribute("aria-expanded","false");
+        retireStaleContextualDrawer();
         syncBottomNavSelection();
+        if(!peopleDialog.open&&!itemsDialog.open&&!placesDialog.open&&contextPanel.hidden)
+          field("#field-view-label").textContent=workspaceSection.toUpperCase();
       });
     }
     placesDialog.addEventListener("click", event => {
@@ -2088,6 +2101,7 @@
     peopleDialog.addEventListener("close", () => {
       peopleButton.setAttribute("aria-expanded", "false");
       navPeople.setAttribute("aria-expanded", "false");
+      retireStaleContextualDrawer();
       syncBottomNavSelection();
       if (returnPeopleFocus && peopleActive()) peopleReturnFocus.focus({ preventScroll: true });
       if (!itemsDialog.open&&!placesDialog.open&&contextPanel.hidden)

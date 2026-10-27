@@ -1,7 +1,7 @@
 # Nomatoka interactive UI-only test — October 26 controls update
 
 This GitHub Pages UI build is derived from canonical game Draft PR #697
-at exact commit 2bd45ee66c47257bfd365cce5902717fec12d651.
+at exact commit e743e6e74b347ee69933c776df4667d412c4643a.
 The frontend JavaScript and CSS are byte-identical to that game tree.
 This nested static page uses synthetic mock-api.js as its only API layer.
 It blocks Send, Sign out and outside API calls; there is no game database,
@@ -26,3 +26,8 @@ October 27 focused review repair: with keyboard-constrained expanded Orders, the
 
 
 October 27 coordinate quick-action consolidation: Add failures (locked or 280-character overflow) are visible in the live anchored popup. A successful coordinate text insertion restores a minimized real composer and leaves a visible Added result; coordinate text is local planning only, not a validated waypoint. No real order send, persistence or source-knowledge change.
+
+October 27 contextual drawer reconciliation: when a People, Items or Places
+sheet closes by Escape, its close button, or native dialog close, its Tools
+drawer closes as well. The next deliberate Tools opening follows the current
+workspace, never a hidden sheet. This changes no mock API or Send behavior.
