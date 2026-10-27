@@ -1143,6 +1143,9 @@
       return {kilometres:chosen.km,label:chosen.km+" km",pixels:chosen.pixels};
     }
     let mapZoom = 0;
+    // Camera centre is local to the immutable 10 x 10 km synthetic range.
+    // It is view state only: no coordinates, reports or orders are changed.
+    let mapCenterX=500, mapCenterY=500;
     function renderMapScale(viewBoxSize=1000/Math.pow(1.35,mapZoom)) {
       const svg=operationsMap.querySelector(".synthetic-range svg");
       const hud=operationsMap.querySelector("#map-scale-hud");
@@ -1160,9 +1163,12 @@
       const mapSvg = operationsMap.querySelector(".synthetic-range svg");
       if (!mapSvg) return;
       // The PUBLIC synthetic test range is the only cartographic source.
-      const size = 1000 / Math.pow(1.35, mapZoom);
-      const origin = (1000 - size) / 2;
-      mapSvg.setAttribute("viewBox", [origin, origin, size, size].join(" "));
+      const size = 1000 / Math.pow(1.35, mapZoom), half=size/2;
+      // Never reveal blank or invented geography beyond the authored square,
+      // including when zooming back out after the camera was panned.
+      mapCenterX=Math.max(half,Math.min(1000-half,mapCenterX));
+      mapCenterY=Math.max(half,Math.min(1000-half,mapCenterY));
+      mapSvg.setAttribute("viewBox", [mapCenterX-half,mapCenterY-half,size,size].join(" "));
       const zoomLabel = field("#field-map-zoom-readout");
       if (zoomLabel) zoomLabel.textContent =
         `ZOOM ${Math.round(Math.pow(1.35, mapZoom)*100)}% · TAP TO SELECT`;
@@ -1184,7 +1190,7 @@
     // buttons. Gestures change only the bounded SVG viewBox; no order or
     // gameplay mutation occurs. Keyboard +/- and Home remain available.
     const mapTouches=new Map();
-    let pinchBase;
+    let pinchBase, panGesture;
     // Android long press should never invoke browser text selection, drag
     // preview, search or a native copy-callout over the map surface. This
     // does not affect selectable evidence/report text outside the map.
@@ -1197,13 +1203,30 @@
       const points=[...mapTouches.values()];
       return points.length<2?0:Math.hypot(points[0].x-points[1].x,points[0].y-points[1].y);
     };
+    function panMapCamera(from,to){
+      const svg=operationsMap.querySelector(".synthetic-range svg");
+      const matrix=svg?.getScreenCTM?.();
+      if(!matrix||typeof svg.createSVGPoint!=="function")return;
+      // Transform both screen samples with the SAME matrix. This includes the
+      // SVG meet/letterboxing geometry on portrait and landscape screens.
+      const a=svg.createSVGPoint(), b=svg.createSVGPoint();
+      a.x=from.x;a.y=from.y;b.x=to.x;b.y=to.y;
+      const inverse=matrix.inverse(),previous=a.matrixTransform(inverse),
+        current=b.matrixTransform(inverse);
+      mapCenterX+=previous.x-current.x;
+      mapCenterY+=previous.y-current.y;
+      renderMapZoom();
+    }
     operationsMap.addEventListener("pointerdown",event=>{
       if(event.pointerType!=="touch" || !event.target.closest?.(".synthetic-range svg"))return;
       mapTouches.set(event.pointerId,{x:event.clientX,y:event.clientY});
-      // A fresh single-finger contact after a pinch is a NEW tap, not the
-      // compatibility click from the finished two-finger gesture.
-      if(mapTouches.size===1 && !pinchBase)mapPinchSuppressUntil=0;
+      // A fresh contact after a completed gesture is a new selectable tap.
+      if(mapTouches.size===1 && !pinchBase){
+        mapPinchSuppressUntil=0;
+        panGesture={id:event.pointerId,startX:event.clientX,startY:event.clientY,active:false};
+      }
       if(mapTouches.size===2){
+        panGesture=undefined;
         const distance=pinchDistance();
         pinchBase=distance>4?{distance,zoom:mapZoom}:undefined;
         mapPinchSuppressUntil=Date.now()+750;
@@ -1211,8 +1234,28 @@
       }
     });
     operationsMap.addEventListener("pointermove",event=>{
-      if(!mapTouches.has(event.pointerId))return;
-      mapTouches.set(event.pointerId,{x:event.clientX,y:event.clientY});
+      const previous=mapTouches.get(event.pointerId);
+      if(!previous)return;
+      const current={x:event.clientX,y:event.clientY};
+      mapTouches.set(event.pointerId,current);
+      if(mapTouches.size===1&&panGesture?.id===event.pointerId&&!pinchBase){
+        if(!panGesture.active&&Math.hypot(current.x-panGesture.startX,
+          current.y-panGesture.startY)>=8){
+          panGesture.active=true;
+          hideMapQuickActions();
+          // Touch already has implicit capture on its starting SVG target.
+          // Transferring capture to the parent would fire a bubbled
+          // lostpointercapture and prematurely retire this same pan gesture.
+        }
+        if(panGesture.active){
+          event.preventDefault();
+          panMapCamera(previous,current);
+          // A drag must not turn into a synthetic coordinate selection or an
+          // implicit map-feature click when Android releases the finger.
+          mapPinchSuppressUntil=Date.now()+750;
+        }
+        return;
+      }
       if(!pinchBase || mapTouches.size!==2)return;
       const distance=pinchDistance();
       if(distance<=3)return;
@@ -1224,9 +1267,12 @@
     });
     const endMapTouch=event=>{
       if(!mapTouches.has(event.pointerId))return;
+      if(pinchBase||panGesture?.active)mapPinchSuppressUntil=Date.now()+750;
       mapTouches.delete(event.pointerId);
-      if(pinchBase)mapPinchSuppressUntil=Date.now()+750;
       if(mapTouches.size<2)pinchBase=undefined;
+      if(panGesture?.id===event.pointerId||mapTouches.size===0)panGesture=undefined;
+      if(operationsMap.hasPointerCapture?.(event.pointerId))
+        operationsMap.releasePointerCapture(event.pointerId);
     };
     for(const eventName of ["pointerup","pointercancel","lostpointercapture"])
       operationsMap.addEventListener(eventName,endMapTouch);
@@ -2907,7 +2953,8 @@
         node.removeAttribute("title"); node.removeAttribute("aria-label");
       }
       hideMapQuickActions();localCoordinate=undefined;
-      mapTouches.clear();pinchBase=undefined;mapZoom=0;
+      mapTouches.clear();pinchBase=undefined;panGesture=undefined;
+      mapZoom=0;mapCenterX=500;mapCenterY=500;
       historyList.replaceChildren(); reportedMapItems.replaceChildren(); operationsMap.replaceChildren();
       field("#received-report-history").replaceChildren(); field("#delivered-status-reports").replaceChildren();
       selectedMapId = "staging-area";

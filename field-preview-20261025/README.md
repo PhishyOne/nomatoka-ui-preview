@@ -1,7 +1,7 @@
 # Nomatoka interactive UI-only test — October 26 controls update
 
 This GitHub Pages UI build is derived from canonical game Draft PR #697
-at exact commit d546587cf40d630fd9f14fbc265c257aeca672b1.
+at exact commit b73debb669bd945ce0f8692074d0d501f44ed673.
 The frontend JavaScript and CSS are byte-identical to that game tree.
 This nested static page uses synthetic mock-api.js as its only API layer.
 It blocks Send, Sign out and outside API calls; there is no game database,
@@ -36,3 +36,11 @@ Extreme Android IME geometry: the constrained expanded Orders workspace retains
 a real scroll range and a 73px minimum VIA+Send form while the fixed navigation
 and document remain stationary. This uses the same native VIA and Send controls;
 it does not enable real requests or change the mock API.
+
+October 27 mobile owner playtest: expanded Orders now anchors the existing
+single real composer immediately above bottom navigation and removes the
+redundant text below it. The source-backed readback remains available above.
+The synthetic map now supports a bounded one-finger drag to pan after zoom,
+without changing the authored map coordinates, real order authority, pinch
+zoom, tap selection, or the truthful distance ruler. This preview still uses
+only the synthetic no-write mock API and blocks Send.
