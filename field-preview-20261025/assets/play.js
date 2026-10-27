@@ -2706,11 +2706,15 @@
       // popup can falsely say Staging Area while inserting unrelated X/Y.
       const isPlanningCoordinate=localCoordinate && !quickPanel()?.hidden
         && quickPanel()?.dataset.selected==="local-coordinate";
-      const selectionText=isPlanningCoordinate
-        ? `X ${localCoordinate.x} · Y ${localCoordinate.y} m` : selected.title;
-      if (selectionLabel.textContent !== selectionText) selectionLabel.textContent = selectionText;
-      if(isPlanningCoordinate) selectionLabel.setAttribute("aria-label",
-        `Synthetic local coordinates east ${localCoordinate.x} metres, north ${localCoordinate.y} metres`);
+      // Add feedback owns both readbacks for this visible selection. Keep
+      // refreshing received facts below without replacing its outcome.
+      if(!isPlanningCoordinate || !quickPanel()?.hasAttribute("data-feedback")){
+        const selectionText=isPlanningCoordinate
+          ? `X ${localCoordinate.x} · Y ${localCoordinate.y} m` : selected.title;
+        if (selectionLabel.textContent !== selectionText) selectionLabel.textContent = selectionText;
+        if(isPlanningCoordinate) selectionLabel.setAttribute("aria-label",
+          `Synthetic local coordinates east ${localCoordinate.x} metres, north ${localCoordinate.y} metres`);
+      }
       field("#map-known").textContent = selected.known;
       field("#map-source").textContent = selected.source;
       field("#map-received").textContent = selected.received;
