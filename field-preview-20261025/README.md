@@ -1,7 +1,7 @@
 # Nomatoka interactive UI-only test — October 26 controls update
 
 This GitHub Pages UI build is derived from canonical game Draft PR #697
-at exact commit 05b9456a61e3c1226dbd77ea773fba3acdf9a7f0.
+at exact commit fdca4ac8cbbc1fc870547c54a9bc89701e34ec52.
 The frontend HTML/CSS/JS are copied from that game tree. The existing
 synthetic mock-api.js remains the only API layer.
 It blocks Send, Sign out and outside API calls; there is no game database,
@@ -23,3 +23,6 @@ The Orders drawer is bounded by actual navigation rather than the expanded Order
 
 
 October 27 focused review repair: with keyboard-constrained expanded Orders, the unavailable microphone no longer occupies the VIA+Send column; both remain inside the real form at short visual heights. The existing Items heading is programmatically focusable so contextual Items navigation lands on actual visible content. These are UI-only changes and do not add any executable order, account or network behavior.
+
+
+October 27 coordinate quick-action consolidation: Add failures (locked or 280-character overflow) are visible in the live anchored popup. A successful coordinate text insertion restores a minimized real composer and leaves a visible Added result; coordinate text is local planning only, not a validated waypoint. No real order send, persistence or source-knowledge change.

@@ -2802,3 +2802,14 @@ body[data-play-state="authenticated"] .workspace-header .field-top-icon.ico.big 
     overflow:visible;
   }
 }
+
+
+/* A coordinate-add result must be visible on the same small anchored map
+   popup, not solely within the hidden source-evidence inspector. The X stays
+   accessible and Add disappears after a successful local draft insertion. */
+#operations-map .map-selection-bar[data-selected="local-coordinate"][data-feedback="error"] #map-selection-label {
+  color:#ffc09a;
+}
+#operations-map .map-selection-bar[data-selected="local-coordinate"][data-feedback="success"] #map-selection-label {
+  color:#b9efb5;
+}

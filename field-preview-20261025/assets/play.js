@@ -949,6 +949,8 @@
       const panel=quickPanel();
       if(!panel)return;
       panel.dataset.selected="local-coordinate";
+      delete panel.dataset.feedback;
+      mapActionStatus.textContent="";
       const label=field("#map-selection-label");
       label.textContent=`X ${x} · Y ${y} m`;
       label.setAttribute("aria-label",`Synthetic local coordinates east ${x} metres, north ${y} metres`);
@@ -966,6 +968,7 @@
       if (!panel)return;
       const ownedFocus=panel.contains(platform.document.activeElement);
       panel.hidden=true;panel.removeAttribute("data-selected");
+      delete panel.dataset.feedback;
       if (ownedFocus) {
         const marker=operationsMap.querySelector('[data-map-id="'+selectedMapId+'"]');
         const target=marker?.getAttribute("aria-disabled")==="false"
@@ -1016,11 +1019,31 @@
       const x=Number.isFinite(anchor?.x)?anchor.x:r.left+r.width/2;
       const y=Number.isFinite(anchor?.y)?anchor.y:r.top+r.height/2;
       mapQuickAnchor={x,y};panel.hidden=false;panel.dataset.selected=id;
+      delete panel.dataset.feedback;
       field("#map-quick-inspect").hidden=false;
       field("#map-quick-prepare").hidden=false;
       field("#map-quick-add-point").hidden=true;
       field("#map-selection-label").removeAttribute("aria-label");
       panel.setAttribute("aria-label","Selected map point quick actions");
+      positionMapQuickActions();
+    }
+    function showLocalCoordinateOutcome(shortLabel,message,success=false){
+      // #map-action-status is source/audit readback inside the inspector,
+      // which is deliberately hidden on mobile. Also show the result on the
+      // SAME small anchored popup the player just used. Its label is already
+      // an aria-live status; preserve full coordinate and outcome for AT.
+      mapActionStatus.textContent=message;
+      const panel=quickPanel();
+      if(!panel || panel.hidden || panel.dataset.selected!=="local-coordinate")return;
+      const label=field("#map-selection-label");
+      const location=localCoordinate
+        ? `local X ${localCoordinate.x}m Y ${localCoordinate.y}m`
+        : "selected local planning coordinate";
+      label.textContent=shortLabel;
+      label.setAttribute("aria-label",location+". "+message);
+      panel.dataset.feedback=success?"success":"error";
+      panel.setAttribute("aria-label","Local planning coordinate. "+message);
+      if(success)field("#map-quick-add-point").hidden=true;
       positionMapQuickActions();
     }
     const mapEvidenceClose = field("#close-map-evidence");
@@ -1043,18 +1066,25 @@
       if(add && !quickPanel()?.hidden && quickPanel()?.dataset.selected==="local-coordinate"){
         event.preventDefault();
         if(!localCoordinate || !canEditDraft()){
-          field("#map-action-status").textContent="Draft editing is unavailable while control or an order attempt is pending.";
+          showLocalCoordinateOutcome("Unavailable",
+            "Draft editing is unavailable while control or an order attempt is pending.");
           return;
         }
         const phrase=`local X ${localCoordinate.x}m Y ${localCoordinate.y}m`;
         const proposed=[composer.value.trim(),phrase].filter(Boolean).join(" ");
         if(proposed.length>280){
-          field("#map-action-status").textContent="Existing draft kept: coordinate text exceeds the 280-character order limit.";
+          showLocalCoordinateOutcome("Too long",
+            "Existing draft kept: coordinate text exceeds the 280-character order limit.");
           return;
         }
         if(mutateDraft(proposed)){
-          field("#map-action-status").textContent="Planning coordinates inserted as text only; not a validated waypoint or executable route.";
-          hideMapQuickActions();
+          // A minimized dock has display:none. Updating its hidden textarea
+          // and focusing it strands the player without visible draft or Send.
+          // Restore using the EXISTING vetted handler; do not synthesize a
+          // second editor, issue an order or navigate away from Map.
+          if(dockMinimized)field("#field-restore-dock").click();
+          showLocalCoordinateOutcome("Added",
+            "Planning coordinates inserted as text only; not a validated waypoint or executable route.",true);
           composer.focus({preventScroll:true});
         }
         return;
