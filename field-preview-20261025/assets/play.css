@@ -2771,3 +2771,16 @@ body[data-play-state="authenticated"] .workspace-header .field-top-icon.ico.big 
 #orders-panel .dock-top .field-conversation-tab {
   flex-shrink:0;white-space:nowrap;
 }
+
+
+/* In expanded Orders the contextual drawer overlays only the readback/form
+   left side instead of taking the entire viewport or the bottom Send target.
+   The bottom nav and right-side actual Send stay independently operable. */
+@media (max-width:64rem), (max-height:44rem) {
+  #operational-workspace[data-section="orders"] > #field-context-tools:not([hidden]) {
+    left:max(6px,env(safe-area-inset-left,0px));
+    right:auto;
+    width:min(230px,calc(100vw - 88px));
+    max-width:calc(100vw - 88px);
+  }
+}

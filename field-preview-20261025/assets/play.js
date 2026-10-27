@@ -1429,7 +1429,11 @@
       // display:none minimized dock has a zero rect at (0,0). It MUST NOT
       // collapse sheets above it; the separate Restore tray is the actual
       // live control to keep uncovered.
-      if (dock.height>0 && !ordersPanel.hidden)blockers.push(dock.top);
+      // Only Map's compact composer is a bottom obstruction. Expanded
+      // Orders is a full page whose top is just beneath the header; treating
+      // it as a bottom dock collapses the Orders contextual drawer to zero.
+      if (workspaceSection==="map" && ordersPanel.dataset.dock==="compact"
+        && dock.height>0 && !ordersPanel.hidden)blockers.push(dock.top);
       const tray=field("#field-mini-tray");
       if (tray && !tray.hidden) {
         const rect=tray.getBoundingClientRect();
@@ -2666,8 +2670,17 @@
       const selected = items.get(selectedMapId);
       field("#map-selection-title").textContent = selected.title;
       const selectionLabel = field("#map-selection-label");
-      const selectionText = selected.title;
+      // A report poll updates received knowledge, not the device's planning
+      // cursor. Keep its X/Y label and action aligned until another feature
+      // is selected or the cursor is explicitly dismissed; otherwise the
+      // popup can falsely say Staging Area while inserting unrelated X/Y.
+      const isPlanningCoordinate=localCoordinate && !quickPanel()?.hidden
+        && quickPanel()?.dataset.selected==="local-coordinate";
+      const selectionText=isPlanningCoordinate
+        ? `X ${localCoordinate.x} · Y ${localCoordinate.y} m` : selected.title;
       if (selectionLabel.textContent !== selectionText) selectionLabel.textContent = selectionText;
+      if(isPlanningCoordinate) selectionLabel.setAttribute("aria-label",
+        `Synthetic local coordinates east ${localCoordinate.x} metres, north ${localCoordinate.y} metres`);
       field("#map-known").textContent = selected.known;
       field("#map-source").textContent = selected.source;
       field("#map-received").textContent = selected.received;

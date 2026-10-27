@@ -1,7 +1,7 @@
 # Nomatoka interactive UI-only test — October 26 controls update
 
 This GitHub Pages UI build is derived from canonical game Draft PR #697
-at exact commit 16b191717704f788568948d7ce9b3094c4538e4d.
+at exact commit 4d9b7c6b71885cb0ffa6165970f6c8d36fd68746.
 The frontend HTML/CSS/JS are copied from that game tree. The existing
 synthetic mock-api.js remains the only API layer.
 It blocks Send, Sign out and outside API calls; there is no game database,
@@ -18,3 +18,5 @@ text, not an executable route or verified waypoint.
 Real Android keyboard and touch feel still require owner's device testing.
 Production game and the current public site are not affected by this Draft
 until separately qualified and released.
+
+The Orders drawer is bounded by actual navigation rather than the expanded Orders page; the real Send target remains hittable. Selected local X/Y coordinates keep their original label through automatic received-picture polls. Explicit authority rechecks still scrub local planning state.
