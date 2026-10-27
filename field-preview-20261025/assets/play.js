@@ -1164,10 +1164,20 @@
       if (!mapSvg) return;
       // The PUBLIC synthetic test range is the only cartographic source.
       const size = 1000 / Math.pow(1.35, mapZoom), half=size/2;
-      // Never reveal blank or invented geography beyond the authored square,
-      // including when zooming back out after the camera was panned.
-      mapCenterX=Math.max(half,Math.min(1000-half,mapCenterX));
-      mapCenterY=Math.max(half,Math.min(1000-half,mapCenterY));
+      // The viewBox is square, but xMidYMid meet renders into the full
+      // rectangular SVG viewport. Its longer axis can show terrain beyond
+      // the square viewBox. Clamp the actual visible world extent on BOTH
+      // axes, not half the nominal square, or panning exposes blank edges.
+      const bounds=mapSvg.getBoundingClientRect();
+      const short=Math.min(bounds.width,bounds.height);
+      const halfX=short>0?size*bounds.width/(2*short):half;
+      const halfY=short>0?size*bounds.height/(2*short):half;
+      const clamp=(center,extent)=>extent>=500?500:
+        Math.max(extent,Math.min(1000-extent,center));
+      // At zoom levels too low to fill one axis, keep that axis centered:
+      // avoid making the unavoidable outside margins asymmetric.
+      mapCenterX=clamp(mapCenterX,halfX);
+      mapCenterY=clamp(mapCenterY,halfY);
       mapSvg.setAttribute("viewBox", [mapCenterX-half,mapCenterY-half,size,size].join(" "));
       const zoomLabel = field("#field-map-zoom-readout");
       if (zoomLabel) zoomLabel.textContent =
@@ -1175,15 +1185,17 @@
       sizeMapTargets();
       renderMapScale(size);
     }
-    platform.addEventListener("resize",()=>renderMapScale());
-    platform.visualViewport?.addEventListener?.("resize",()=>renderMapScale());
+    // Rotating/resizing changes the *visible world extent*, so recalculate
+    // camera bounds as well as the physical ruler on the same SVG source.
+    platform.addEventListener("resize",()=>renderMapZoom());
+    platform.visualViewport?.addEventListener?.("resize",()=>renderMapZoom());
     // The fixed command dock can change the map element's size WITHOUT a
     // window/visualViewport event (minimize/restore, readback, etc.).
     // Observe the stable map container, not the transient SVG child which
     // is rebuilt during authority scrubs. The HUD is absolute, so adjusting
     // its bar cannot feed back into the observed map dimensions.
     if (platform.ResizeObserver) {
-      const mapScaleObserver = new platform.ResizeObserver(()=>renderMapScale());
+      const mapScaleObserver = new platform.ResizeObserver(()=>renderMapZoom());
       mapScaleObserver.observe(operationsMap);
     }
     // A real two-pointer pinch replaces the removed +, minus and reset

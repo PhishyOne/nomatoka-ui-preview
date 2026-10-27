@@ -1,7 +1,7 @@
 # Nomatoka interactive UI-only test — October 26 controls update
 
 This GitHub Pages UI build is derived from canonical game Draft PR #697
-at exact commit b73debb669bd945ce0f8692074d0d501f44ed673.
+at exact commit ca114ba80716f419ad39ccc91ee2b58fe8cf43b7.
 The frontend JavaScript and CSS are byte-identical to that game tree.
 This nested static page uses synthetic mock-api.js as its only API layer.
 It blocks Send, Sign out and outside API calls; there is no game database,
@@ -44,3 +44,9 @@ The synthetic map now supports a bounded one-finger drag to pan after zoom,
 without changing the authored map coordinates, real order authority, pinch
 zoom, tap selection, or the truthful distance ruler. This preview still uses
 only the synthetic no-write mock API and blocks Send.
+
+Independent review P2 repair: pan camera now clamps using the full rendered
+rectangular SVG viewport under xMidYMid meet, not only the square viewBox.
+When the viewport is wider than the authored 10 km range on either axis,
+that axis stays centered instead of revealing extra unauthored geography.
+Scale and genuine tap/zoom behavior remain unchanged.
