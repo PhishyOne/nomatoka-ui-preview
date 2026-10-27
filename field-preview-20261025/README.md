@@ -1,9 +1,9 @@
 # Nomatoka interactive UI-only test — October 26 controls update
 
 This GitHub Pages UI build is derived from canonical game Draft PR #697
-at exact commit fdca4ac8cbbc1fc870547c54a9bc89701e34ec52.
-The frontend HTML/CSS/JS are copied from that game tree. The existing
-synthetic mock-api.js remains the only API layer.
+at exact commit 80aeee4cc4279a40c8e9d21fff9f23aebd99cec0.
+The frontend JavaScript and CSS are byte-identical to that game tree.
+This nested static page uses synthetic mock-api.js as its only API layer.
 It blocks Send, Sign out and outside API calls; there is no game database,
 real account, multiplayer, or persistent gameplay in this preview.
 
