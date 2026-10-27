@@ -2817,3 +2817,47 @@ body[data-play-state="authenticated"] .workspace-header .field-top-icon.ico.big 
 #operations-map .map-selection-bar[data-selected="local-coordinate"][data-feedback="success"] #map-selection-label {
   color:#b9efb5;
 }
+
+
+/* Orders is a workspace above a bottom-anchored REAL composer, not a page
+   with instruction text hanging below the input. Source-backed readback and
+   durable outcomes remain above the composer and scroll on their own.
+   The Map compact dock and the extreme-IME scroll recovery are unchanged. */
+@media (max-width:64rem), (max-height:44rem) {
+  #operational-workspace[data-section="orders"]:not([data-visual-constrained="true"])
+    #orders-panel[data-dock="expanded"] {
+      display:flex;
+      flex-direction:column;
+      overflow-y:auto;
+    }
+  #operational-workspace[data-section="orders"]:not([data-visual-constrained="true"])
+    #orders-panel[data-dock="expanded"] > .dock-top {
+      flex:0 0 auto;
+    }
+  #operational-workspace[data-section="orders"]:not([data-visual-constrained="true"])
+    #orders-panel[data-dock="expanded"] #order-readback {
+      flex:1 1 auto;
+      min-height:0;
+      max-height:none;
+      overflow-y:auto;
+      overscroll-behavior-y:contain;
+    }
+  #operational-workspace[data-section="orders"]:not([data-visual-constrained="true"])
+    #orders-panel[data-dock="expanded"] #order-form {
+      display:flex;
+      flex:0 0 auto;
+      flex-direction:column;
+      gap:4px;
+      margin-top:auto;
+    }
+  #operational-workspace[data-section="orders"] #orders-panel[data-dock="expanded"]
+    :is(#contextual-action-status,.order-wording) {
+      display:none!important;
+    }
+  #operational-workspace[data-section="orders"] #orders-panel[data-dock="expanded"]
+    .order-outcome:not(:empty) {
+      flex:0 0 auto;
+      overflow-y:auto;
+      max-height:3rem;
+    }
+}
