@@ -2674,7 +2674,8 @@ body[data-play-state="authenticated"] .workspace-header .field-top-icon.ico.big 
   #operational-workspace[data-visual-constrained="true"][data-section="orders"]
     #orders-panel[data-dock="expanded"] {
       display:flex!important;flex-direction:column!important;
-      padding:4px!important;min-height:0!important;overflow:hidden!important;
+      padding:4px!important;min-height:0!important;
+      overflow-y:auto!important;overscroll-behavior-y:contain;
   }
   #operational-workspace[data-visual-constrained="true"][data-section="orders"]
     #orders-panel[data-dock="expanded"] > :is(#order-readback,.field-live-thread,.order-outcome) {
@@ -2688,7 +2689,10 @@ body[data-play-state="authenticated"] .workspace-header .field-top-icon.ico.big 
   #operational-workspace[data-visual-constrained="true"][data-section="orders"]
     #orders-panel[data-dock="expanded"] #order-form {
       display:flex;flex-direction:column;flex:1 1 auto;
-      min-height:0!important;overflow:hidden;margin:0;gap:0;
+      /* The 26px native VIA + gap + 44px Send cannot fit in less than 73px.
+         Preserve one real form and let the enclosing Orders pane scroll when
+         visualViewport height is smaller than the minimum usable layout. */
+      min-height:73px!important;overflow:visible;margin:0;gap:0;
   }
   #operational-workspace[data-visual-constrained="true"][data-section="orders"]
     #orders-panel[data-dock="expanded"] :is(.contextual-action-strip,.order-wording,#contextual-action-status) {

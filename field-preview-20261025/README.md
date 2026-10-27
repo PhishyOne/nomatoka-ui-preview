@@ -1,7 +1,7 @@
 # Nomatoka interactive UI-only test — October 26 controls update
 
 This GitHub Pages UI build is derived from canonical game Draft PR #697
-at exact commit e743e6e74b347ee69933c776df4667d412c4643a.
+at exact commit d546587cf40d630fd9f14fbc265c257aeca672b1.
 The frontend JavaScript and CSS are byte-identical to that game tree.
 This nested static page uses synthetic mock-api.js as its only API layer.
 It blocks Send, Sign out and outside API calls; there is no game database,
@@ -31,3 +31,8 @@ October 27 contextual drawer reconciliation: when a People, Items or Places
 sheet closes by Escape, its close button, or native dialog close, its Tools
 drawer closes as well. The next deliberate Tools opening follows the current
 workspace, never a hidden sheet. This changes no mock API or Send behavior.
+
+Extreme Android IME geometry: the constrained expanded Orders workspace retains
+a real scroll range and a 73px minimum VIA+Send form while the fixed navigation
+and document remain stationary. This uses the same native VIA and Send controls;
+it does not enable real requests or change the mock API.
