@@ -1,17 +1,20 @@
-# Nomatoka — October 25 isolated UI demo
+# Nomatoka interactive UI-only test — October 26 controls update
 
-**Synthetic UI only.** Generated from exact canonical game Draft PR #697
-head `051b94934ad3827f36090dc54428460387947c01`, retaining the actual
-play DOM, CSS, JS, map evidence and touch handlers.
+This GitHub Pages UI build is derived from canonical game Draft PR #697
+at exact commit 16b191717704f788568948d7ce9b3094c4538e4d.
+The frontend HTML/CSS/JS are copied from that game tree. The existing
+synthetic mock-api.js remains the only API layer.
+It blocks Send, Sign out and outside API calls; there is no game database,
+real account, multiplayer, or persistent gameplay in this preview.
 
-An interception shim serves only bounded synthetic HTTP fixture responses and
-blocks all order submissions. It cannot access production accounts, private
-information or live game state. It is not shared-world play, server persistence,
-physical Android acceptance or a qualified deployment. The test host is
-GitHub Pages in the separate `nomatoka-ui-preview` repository.
+Includes: icon-only Send, equal-height Ortega/Reports tabs, a small X to
+close Orders instead of a Back-to-map banner, a restrained panel icon for
+opening Orders instead of the caret, one active bottom destination, contextual
+drawer content for Map/People/Items/Places, touch VIA options, nonmodal
+workspace sheets, local synthetic X/Y map selection by one tap, and disabled
+map text selection on long touch. Coordinate Add-to-draft is only planning
+text, not an executable route or verified waypoint.
 
-
-October 26 shell update: People, Items and Places are non-modal scrolling workspace sheets; the live draft composer and nav stay accessible. The top-right control opens synthetic map-layer display tools, not People. Touch VIA options open in-place while preserving the one real native delivery selector for keyboard and form identity. The prominent manual report refresh moves behind Connection recovery; automatic report polling remains. These are UI-only behaviors, not confirmed persistence/multiplayer.
-
-
-October 26 touch feedback: bottom navigation now has precisely one visually active and aria-current destination. Opening People, Items or Places transfers the highlight from the underlying Map, and closing the sheet restores Map. Native sheet/return handling and the blocked-Send synthetic demo remain unchanged.
+Real Android keyboard and touch feel still require owner's device testing.
+Production game and the current public site are not affected by this Draft
+until separately qualified and released.

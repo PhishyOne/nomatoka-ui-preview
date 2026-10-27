@@ -57,14 +57,41 @@
           <h2 id="context-tools-title">Map / Tools</h2>
           <button id="close-context-tools" type="button" class="quiet-button">× Close</button>
         </div>
-        <section aria-label="Map presentation layers">
+        <section id="context-tools-map" data-context-for="map" aria-label="Map presentation layers">
           <h3>Map layers</h3>
           <label><input id="context-contours" type="checkbox" checked> Elevation contours</label>
           <label><input id="context-routes" type="checkbox" checked> Route lines</label>
           <label><input id="context-labels" type="checkbox" checked> Feature labels</label>
           <p class="panel-copy">These controls change only the presentation of the authored test-range map. Hidden layers do not change what the commander actually knows.</p>
         </section>
-        <p id="context-section-note" class="panel-copy">Tap a known map feature to see quick actions; only received observations count as reports.</p>
+        <p id="context-section-note" data-context-for="map" class="panel-copy">Tap any map point to prepare a local coordinate; reported positions are not implied.</p>
+        <section data-context-for="people" hidden>
+          <h3>People / actions</h3>
+          <button type="button" data-context-action="inspect-contact">Inspect contact</button>
+          <button type="button" data-context-action="write-order">Write order</button>
+          <button type="button" data-context-action="people-reports">Received reports</button>
+          <p class="panel-copy">These operate on the real People records and permissions, not invented personnel.</p>
+        </section>
+        <section data-context-for="items" hidden>
+          <h3>Items / context</h3>
+          <button type="button" data-context-action="items-focus">View available item records</button>
+          <p class="panel-copy">No equipment ownership or inventory is inferred before observations exist.</p>
+        </section>
+        <section data-context-for="places" hidden>
+          <h3>Places / context</h3>
+          <button type="button" data-context-action="places-focus">View known locations</button>
+          <p class="panel-copy">These are authored briefing places and routes, not confirmed current conditions.</p>
+        </section>
+        <section data-context-for="orders" hidden>
+          <h3>Orders / context</h3>
+          <button type="button" data-context-action="orders-focus">Continue draft</button>
+          <p class="panel-copy">Review delivery and draft wording before the explicit Send action.</p>
+        </section>
+        <section data-context-for="history" hidden>
+          <h3>History / context</h3>
+          <button type="button" data-context-action="history-reports">Received reports</button>
+          <p class="panel-copy">Only delivered records can confirm knowledge or order outcomes.</p>
+        </section>
       </aside>
       <dialog id="people" aria-labelledby="people-title" aria-describedby="people-scope">
         <div class="notification-heading">
@@ -149,7 +176,7 @@
         </button>
       </aside>
       <div id="field-mini-tray" class="field-mini-tray" hidden>
-        <button id="field-restore-dock" type="button" aria-label="Restore command bar">⌃ Command</button>
+        <button id="field-restore-dock" type="button" aria-label="Restore command bar">Command</button>
         <button class="field-mini-mic" type="button" disabled title="Voice input coming later" aria-label="Microphone unavailable until voice input is enabled"><svg class="field-send-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg></button>
       </div>
 
@@ -189,6 +216,10 @@
         <circle cx="800" cy="250" r="16" class="range-place"/>
         <text x="800" y="215" text-anchor="middle">Ridge</text>
       </g>
+      <g id="map-picked-coordinate-marker" aria-hidden="true" hidden>
+        <circle r="12" fill="#283c32" fill-opacity=".8" stroke="#f9d485" stroke-width="3"/>
+        <path d="M-20 0H20M0 -20V20" stroke="#f9d485" stroke-width="2" stroke-linecap="round"/>
+      </g>
       <text x="45" y="70">N ↑</text><text x="620" y="80">High ridge</text>
       <path d="M40 950H290M40 935V965M290 935V965" class="range-scale"/><text x="45" y="915">2.5 km</text>
     </svg>
@@ -201,8 +232,9 @@
             <p id="route-knowledge" class="route-knowledge" role="status" aria-live="polite" aria-atomic="true">Short path: passage unconfirmed. Lower path: passage unconfirmed.</p>
             <div class="map-selection-bar" hidden role="group" aria-label="Selected map point quick actions">
               <p id="map-selection-label" role="status" aria-live="polite" aria-atomic="true">Staging Area</p>
-              <a href="#map-selection-title" aria-label="Inspect selected location">Inspect</a>
+              <a id="map-quick-inspect" href="#map-selection-title" aria-label="Inspect selected location">Inspect</a>
               <button id="map-quick-prepare" type="button" aria-label="Prepare an order for this location">Prepare</button>
+              <button id="map-quick-add-point" type="button" aria-label="Add selected local coordinates to draft" hidden>Add to draft</button>
               <button id="map-quick-close" type="button" aria-label="Dismiss map quick actions">×</button>
             </div>
             <details id="map-report-layer" class="map-report-layer" hidden>
@@ -211,7 +243,7 @@
             </details>
           </div>
           <section id="map-evidence" class="map-evidence" aria-labelledby="map-selection-title">
-            <button id="close-map-evidence" type="button" hidden>Back to map</button>
+            <button id="close-map-evidence" type="button" aria-label="Close map inspection" title="Close inspection" hidden>×</button>
             <p class="panel-label">Selected evidence</p>
             <h3 id="map-selection-title" tabindex="-1">Staging Area</h3>
             <p id="map-known" class="map-known">Local command reference supplied by the briefing.</p>
@@ -246,7 +278,10 @@
           </div>
           <button id="field-minimize-dock" class="quiet-button dock-icon" type="button"
             title="Minimize command bar" aria-label="Minimize command bar">−</button>
-          <button id="toggle-orders" class="quiet-button dock-icon" type="button" aria-expanded="true" aria-controls="order-readback" title="Expand command readback" aria-label="Expand command readback">⌃</button>
+          <button id="toggle-orders" class="quiet-button dock-icon" type="button" aria-expanded="false" aria-controls="order-readback" title="Open order details" aria-label="Open order details">
+            <svg class="field-dock-expand-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M3.5 9h17M8 14h8M12 12v4"/></svg>
+            <svg class="field-dock-close-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+          </button>
         </div>
         <div class="field-live-thread dock-chat" role="region" aria-label="Recent recorded orders and received reports">
           <p class="message-row"><span class="direction" aria-hidden="true">↗</span><span id="field-command-preview" class="field-command-preview line" aria-live="polite">No recorded order. Your draft stays local until Send.</span></p>
@@ -304,7 +339,7 @@
                 disabled title="Voice dictation coming later" aria-label="Microphone unavailable until voice input is enabled">
                 <svg class="field-send-icon ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg>
               </button>
-              <button id="submit-command" class="small-action send" type="submit" disabled aria-label="Send real order to Ortega"><svg class="field-send-icon ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 3-8 18-3-8-8-3zM21 3 10 13"/></svg><span>Send</span></button>
+              <button id="submit-command" class="small-action send" type="submit" disabled aria-label="Send real order to Ortega" title="Send order"><svg class="field-send-icon ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 3-8 18-3-8-8-3zM21 3 10 13"/></svg><span class="field-send-text" hidden aria-hidden="true">Send order</span></button>
             </div>
           </div>
           <p id="contextual-action-status" tabindex="0" role="status" aria-live="polite" aria-atomic="true"></p>
