@@ -1,7 +1,7 @@
 # Nomatoka interactive UI-only test — October 26 controls update
 
 This GitHub Pages UI build is derived from canonical game Draft PR #697
-at exact commit aee44fe013be3e1053d5aedac0216a37b3e9e8ec.
+at exact commit 29ae19b1b88b9292c4a4114d0a4e55758b9a129f.
 The frontend JavaScript and CSS are byte-identical to that game tree.
 This nested static page uses synthetic mock-api.js as its only API layer.
 It blocks Send, Sign out and outside API calls; there is no game database,
@@ -144,3 +144,8 @@ far, even when implicit pointer capture delivers pointerup and a synthetic
 compatibility click. An accepted short tap retains the original one-copy
 behavior. Clearing selected people restores keyboard focus to the visible
 map when the focused Clear button becomes hidden. No order is sent.
+
+October 28 viewport action repair: deleting a selected waypoint is
+only available while the waypoint itself is visible in the actual
+map viewport. The clamped red X is disabled/hidden on clipping, focus
+returns to the visible map, and the action restores on return.

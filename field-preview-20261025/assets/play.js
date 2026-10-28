@@ -1691,17 +1691,32 @@
       // camera/keyboard visibility constraint as source-backed map features.
       // An invisible point must not remain in the Tab order after zoom,
       // resize, IME shrink, or a background picture refresh.
+      const visibleWaypointHit=marker=>{
+        const rect=marker?.getBoundingClientRect();
+        const cx=rect?(rect.left+rect.right)/2:NaN;
+        const cy=rect?(rect.top+rect.bottom)/2:NaN;
+        return !compact&&Number.isFinite(cx)&&Number.isFinite(cy)
+          &&cx>=box.left+22&&cx<=box.right-22
+          &&cy>=box.top+22&&cy<=box.bottom-22;
+      };
       for(const target of svg.querySelectorAll(
         "[data-draft-waypoint-index], [data-delete-draft-waypoint]")){
         const marker=target.querySelector(
-          ".map-waypoint-hit, .map-waypoint-delete-hit")?.getBoundingClientRect();
-        const cx=marker?(marker.left+marker.right)/2:NaN;
-        const cy=marker?(marker.top+marker.bottom)/2:NaN;
-        const disabled=compact||!Number.isFinite(cx)||!Number.isFinite(cy)
-          ||cx<box.left+22||cx>box.right-22
-          ||cy<box.top+22||cy>box.bottom-22;
+          ".map-waypoint-hit, .map-waypoint-delete-hit");
+        const ownerIndex=target.dataset.deleteDraftWaypoint;
+        // A clamped red X can be onscreen while the waypoint it would
+        // destroy is OFFSCREEN. Both the action and its actual owner must
+        // remain visible; otherwise hide/disable the detached action.
+        const ownerMarker=ownerIndex===undefined?null:svg.querySelector(
+          '[data-draft-waypoint-index="'+ownerIndex+'"] .map-waypoint-hit');
+        const disabled=!visibleWaypointHit(marker)
+          ||(ownerIndex!==undefined&&!visibleWaypointHit(ownerMarker));
         target.setAttribute("tabindex",disabled?"-1":"0");
         target.setAttribute("aria-disabled",String(disabled));
+        if(ownerIndex!==undefined){
+          target.style.visibility=disabled?"hidden":"";
+          target.style.pointerEvents=disabled?"none":"";
+        }
         if(disabled && target.contains(platform.document.activeElement))
           operationsMap.focus({preventScroll:true});
       }
