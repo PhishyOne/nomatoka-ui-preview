@@ -1057,6 +1057,10 @@
             });
           }
         };
+        // Track only the exact suffix inserted by this local UI action.
+        // Never infer route ownership from a matching substring in arbitrary
+        // player-authored command text.
+        let lastCopiedRouteText=null;
         const copyRouteText=()=>{
           if(!mapRouteDraft||!canEditDraft())return;
           if(selectedMapPeople.length>1){
@@ -1065,15 +1069,41 @@
           }
           const routeText=`Ortega, move via ${mapRouteDraft.points.map(p=>
             p.snapped?p.name:"local "+p.name.replace(" · "," ")).join(" then ")}`;
-          if(composer.value.includes(routeText)){
-            revealCopiedRouteText();
-            label.textContent="Route text is already in this draft. Nothing sent.";
-            return;
+          const draft=composer.value;
+          const oldCopy=lastCopiedRouteText;
+          const hasCompleteSuffix=oldCopy!==null &&
+            (draft===oldCopy||draft.endsWith(" "+oldCopy));
+          let proposed;
+          if(hasCompleteSuffix){
+            if(routeText===oldCopy){
+              revealCopiedRouteText();
+              label.textContent="Route text is already in this draft. Nothing sent.";
+              return;
+            }
+            // Replace the COMPLETE previously copied route, not its prefix.
+            // E.g. dropping waypoint 2 must remove "then Staging Area".
+            // Preserve every preceding word exactly, including user edits.
+            proposed=draft.slice(0,-oldCopy.length)+routeText;
+          }else{
+            if(draft===routeText||draft.endsWith(" "+routeText)){
+              revealCopiedRouteText();
+              label.textContent="Route text is already in this draft. Nothing sent.";
+              return;
+            }
+            if(draft.includes("Ortega, move via")){
+              // The previous route was edited or came from another source.
+              // Refuse to replace ambiguous user text or append a second
+              // conflicting route. Leave the entire command draft intact.
+              revealCopiedRouteText();
+              label.textContent="Draft route was changed. Review or remove the old route text manually; nothing sent.";
+              return;
+            }
+            proposed=[draft.trim(),routeText].filter(Boolean).join(" ");
           }
-          const proposed=[composer.value.trim(),routeText].filter(Boolean).join(" ");
           if([...proposed].length>280){
             label.textContent="Route text exceeds 280 characters. Existing draft unchanged.";
           }else if(mutateDraft(proposed)){
+            lastCopiedRouteText=routeText;
             revealCopiedRouteText();
             label.textContent="Route copied as planning TEXT only; not an executable waypoint. Nothing sent.";
           }

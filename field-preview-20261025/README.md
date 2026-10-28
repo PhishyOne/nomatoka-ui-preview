@@ -1,7 +1,7 @@
 # Nomatoka interactive UI-only test — October 26 controls update
 
 This GitHub Pages UI build is derived from canonical game Draft PR #697
-at exact commit 5d503427880174f0ee4b306c028bb5198b04c6d7.
+at exact commit aa1edf026217e332f89bab21403130a2fa9a63f0.
 The frontend JavaScript and CSS are byte-identical to that game tree.
 This nested static page uses synthetic mock-api.js as its only API layer.
 It blocks Send, Sign out and outside API calls; there is no game database,
@@ -131,3 +131,9 @@ points. The screen-space delete position also avoids nearby waypoint hit
 regions to preserve both delete and ordinary waypoint taps. The exact
 (500,500) -> (620,380) 300px map collision is covered by real Chromium.
 No structured route execution or persistent game movement is claimed.
+
+October 28 exact-copy reviewer repair: when a locally copied multi-point
+route is shortened, explicit Use text replaces the COMPLETE previously
+inserted route suffix and removes obsolete destinations. Existing player
+text before that suffix is preserved; manually edited route text is never
+overwritten or duplicated. No automatic command Send or external API calls.
