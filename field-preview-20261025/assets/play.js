@@ -1004,6 +1004,11 @@
       return {x:p.x,y:p.y,name:localWaypointName(p),snapped:false};
     }
     function ensureMapDraftUi(){
+      // The standalone command adapter unit harness does not model SVG.
+      // Do not initialize visual-only overlays in an environment without
+      // real SVG DOM capability; all source/authority logic remains active.
+      // A real Chromium document supports createElementNS unconditionally.
+      if(typeof platform.document.createElementNS!=="function")return null;
       const svg=operationsMap.querySelector(".synthetic-range svg");
       if(!svg)return null;
       let routeLayer=svg.querySelector("#map-draft-route-layer");
@@ -1096,8 +1101,10 @@
     function renderPeopleSelection(){
       const ui=ensureMapDraftUi();if(!ui)return;
       const known=operationsMap.querySelector("#map-contact-badge");
-      if(known)known.setAttribute("aria-pressed",
-        String(selectedMapPeople.includes(known.dataset.personId)));
+      if(known)known.setAttribute("aria-pressed",String(
+        selectedMapPeople.includes(known.dataset.personId) ||
+        (mapPeekSelection?.kind==="object" && mapPeekSelection.id===known.dataset.personId)
+      ));
       ui.peopleStatus.hidden=!selectedMapPeople.length;
       if(selectedMapPeople.length){
         field("#map-selected-people-caption").textContent=
@@ -1141,11 +1148,67 @@
     function positionDraftRouteStatus(){
       positionMapHudStatus(operationsMap.querySelector("#map-route-draft-status"));
     }
+    let drawnRouteLayer=null,drawnRouteSignature=null;
+    function positionDraftDeleteControl(){
+      const svg=operationsMap.querySelector(".synthetic-range svg");
+      const control=svg?.querySelector("[data-delete-draft-waypoint]");
+      if(!control||!mapRouteDraft || routeSelectedIndex===null)return;
+      const point=mapRouteDraft.points[routeSelectedIndex],matrix=svg.getScreenCTM?.();
+      const region=svg.getBoundingClientRect();
+      if(!point||!matrix||region.width<=0||region.height<=0)return;
+      const base=svg.createSVGPoint();base.x=point.x;base.y=point.y;
+      const screen=base.matrixTransform(matrix),margin=27;
+      const lowX=region.left+Math.min(margin,region.width/2),
+        highX=region.right-Math.min(margin,region.width/2),
+        lowY=region.top+Math.min(margin,region.height/2),
+        highY=region.bottom-Math.min(margin,region.height/2);
+      const clamp=(value,lo,hi)=>Math.max(lo,Math.min(hi,value));
+      // The former fixed 77/-60 world offset fell outside the SVG on
+      // right/top-edge waypoints. Rank screen-space choices, keeping the
+      // entire 44px touch region within the visible map wherever possible.
+      const offsets=[[36,-36],[-36,-36],[36,36],[-36,36],
+        [44,0],[-44,0],[0,44],[0,-44]];
+      const candidate=offsets.map(([dx,dy],i)=>{
+        const requestedX=screen.x+dx,requestedY=screen.y+dy;
+        const x=clamp(requestedX,lowX,highX),
+          y=clamp(requestedY,lowY,highY);
+        const lost=(x-requestedX)**2+(y-requestedY)**2;
+        const near=Math.max(0,32-Math.hypot(x-screen.x,y-screen.y));
+        return {x,y,score:lost*5+near*near*30+i};
+      }).sort((a,b)=>a.score-b.score)[0];
+      const out=svg.createSVGPoint();out.x=candidate.x;out.y=candidate.y;
+      const world=out.matrixTransform(matrix.inverse());
+      for(const circle of control.querySelectorAll("circle")){
+        circle.setAttribute("cx",world.x);circle.setAttribute("cy",world.y);
+      }
+      const path=control.querySelector("path");
+      path?.setAttribute("d",
+        `M${world.x-5} ${world.y-5}L${world.x+5} ${world.y+5}M${world.x+5} ${world.y-5}L${world.x-5} ${world.y+5}`);
+    }
+    function routeDrawSignature(){
+      return JSON.stringify(mapRouteDraft?[
+        mapRouteDraft.source,mapRouteDraft.origin?.x,mapRouteDraft.origin?.y,
+        routeSelectedIndex,mapRouteDraft.points.map(p=>
+          [p.x,p.y,p.name,p.snapped,p.id??null])
+      ]:["empty"]);
+    }
     function renderDraftRoute(){
       const ui=ensureMapDraftUi();if(!ui)return;
       const {routeLayer,wpLayer,routeStatus}=ui;
+      const signature=routeDrawSignature();
+      if(drawnRouteLayer===wpLayer && drawnRouteSignature===signature){
+        positionDraftDeleteControl();return;
+      }
+      // Do not tear away a pointer capture target during the pending 410ms
+      // hold; a changed authority source has already cancelled the gesture.
+      if(panGesture?.candidate==="extend" && mapTouches.has(panGesture.id)
+        && drawnRouteLayer===wpLayer)return;
       const focused=platform.document.activeElement;
-      const focusIndex=focused?.closest?.("[data-draft-waypoint-index]")?.dataset.draftWaypointIndex;
+      const focusIndex=focused?.closest?.("[data-draft-waypoint-index]")
+        ?.dataset.draftWaypointIndex;
+      const focusDeleteIndex=focused?.closest?.("[data-delete-draft-waypoint]")
+        ?.dataset.deleteDraftWaypoint;
+      drawnRouteLayer=wpLayer;drawnRouteSignature=signature;
       routeLayer.replaceChildren();wpLayer.replaceChildren();
       if(!mapRouteDraft||!mapRouteDraft.points.length){
         routeStatus.hidden=true;return;
@@ -1166,20 +1229,23 @@
         if(active){
           const deleteNode=mapSvgNode("g",{"data-delete-draft-waypoint":index,
             role:"button",tabindex:"0","aria-label":`Delete waypoint ${index+1}`},wpLayer);
-          const dx=p.x+77,dy=p.y-60;
-          mapSvgNode("circle",{cx:dx,cy:dy,r:"15",class:"map-waypoint-delete"},deleteNode);
-          mapSvgNode("circle",{cx:dx,cy:dy,r:"12",class:"map-waypoint-delete-hit"},deleteNode);
-          mapSvgNode("path",{d:`M${dx-5} ${dy-5}L${dx+5} ${dy+5}M${dx+5} ${dy-5}L${dx-5} ${dy+5}`,
+          mapSvgNode("circle",{cx:p.x,cy:p.y,r:"15",class:"map-waypoint-delete"},deleteNode);
+          mapSvgNode("circle",{cx:p.x,cy:p.y,r:"12",class:"map-waypoint-delete-hit"},deleteNode);
+          mapSvgNode("path",{d:"",
             class:"map-waypoint-delete-x"},deleteNode);
         }
       }
       routeStatus.hidden=false;
       field("#map-route-draft-caption").textContent=
         `Ortega · ${mapRouteDraft.points.length} waypoint${mapRouteDraft.points.length===1?"":"s"} · Area-origin draft only, not sent`;
-      if(focusIndex!==undefined){
+      if(focusDeleteIndex!==undefined){
+        wpLayer.querySelector('[data-delete-draft-waypoint="'+focusDeleteIndex+'"]')
+          ?.focus({preventScroll:true});
+      }else if(focusIndex!==undefined){
         wpLayer.querySelector('[data-draft-waypoint-index="'+focusIndex+'"]')
           ?.focus({preventScroll:true});
       }
+      positionDraftDeleteControl();
       positionDraftRouteStatus();
     }
     function renderRouteDragPreview(mode,start,end){
@@ -1508,6 +1574,7 @@
         `ZOOM ${Math.round(Math.pow(1.35, mapZoom)*100)}% · TAP TO SELECT`;
       sizeMapTargets();
       renderMapScale(size);
+      positionDraftDeleteControl();
     }
     // Rotating/resizing changes the *visible world extent*, so recalculate
     // camera bounds as well as the physical ruler on the same SVG source.
@@ -1668,6 +1735,9 @@
       if(g||mapTouches.size===0)panGesture=undefined;
       if(operationsMap.hasPointerCapture?.(event.pointerId))
         operationsMap.releasePointerCapture(event.pointerId);
+      // Extension changes the point list during pointerup, but only redraw
+      // after touch capture is released to keep its target stable.
+      if(g?.mode==="extend" && event.type==="pointerup")renderDraftRoute();
     };
     for(const eventName of ["pointerup","pointercancel","lostpointercapture"])
       operationsMap.addEventListener(eventName,endMapTouch);
@@ -3323,8 +3393,15 @@
         if (report.id === focusedReport) restoreFocus = button;
       }
       restoreFocus?.focus({ preventScroll: true });
-      for (const button of operationsMap.querySelectorAll("[data-map-id]"))
-        button.setAttribute("aria-pressed", String(button.dataset.mapId === selectedMapId));
+      for(const button of operationsMap.querySelectorAll("[data-map-id]")){
+        const person=button.dataset.mapPerson==="true";
+        const selected=person?(
+          selectedMapPeople.includes(button.dataset.personId) ||
+          (mapPeekSelection?.kind==="object" &&
+            mapPeekSelection.id===button.dataset.personId)
+        ):button.dataset.mapId===selectedMapId;
+        button.setAttribute("aria-pressed",String(selected));
+      }
       const reportHistory = field("#received-report-history");
       reportHistory.replaceChildren();
       for (const report of [...(picture?.reports ?? [])].sort((a, b) => a.delivery.receivedAt.localeCompare(b.delivery.receivedAt))) {
@@ -3815,7 +3892,7 @@
     operationsMap.addEventListener("click", event => {
       if(Date.now()<mapPinchSuppressUntil)return;
       const deletion=event.target.closest?.("[data-delete-draft-waypoint]");
-      if(deletion){
+      if(deletion?.dataset.deleteDraftWaypoint!==undefined){
         const index=Number(deletion.dataset.deleteDraftWaypoint);
         if(mapRouteDraft&&Number.isSafeInteger(index)&&index>=0
           &&index<mapRouteDraft.points.length){
@@ -3826,7 +3903,7 @@
         return;
       }
       const wp=event.target.closest?.("[data-draft-waypoint-index]");
-      if(wp){
+      if(wp?.dataset.draftWaypointIndex!==undefined){
         const index=Number(wp.dataset.draftWaypointIndex);
         if(mapRouteDraft&&index>=0&&index<mapRouteDraft.points.length){
           routeSelectedIndex=index;renderDraftRoute();
@@ -3848,9 +3925,10 @@
       if(["Enter"," "].includes(event.key)){
         const deletion=event.target.closest?.("[data-delete-draft-waypoint]");
         const wp=event.target.closest?.("[data-draft-waypoint-index]");
-        if(deletion||wp){
+        if(deletion?.dataset.deleteDraftWaypoint!==undefined
+          || wp?.dataset.draftWaypointIndex!==undefined){
           event.preventDefault();
-          if(deletion){
+          if(deletion?.dataset.deleteDraftWaypoint!==undefined){
             const idx=Number(deletion.dataset.deleteDraftWaypoint);
             if(mapRouteDraft&&idx>=0&&idx<mapRouteDraft.points.length){
               mapRouteDraft.points.splice(idx,1);
