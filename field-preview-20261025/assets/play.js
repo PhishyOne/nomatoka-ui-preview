@@ -1112,17 +1112,50 @@
         // click on Android, even when the player's finger genuinely releases
         // on this control. Honor the button's touch pointerup directly while
         // still supporting ordinary keyboard/mouse click, once per touch.
-        let lastRouteTouchCopyAt=0;
+        // Touch pointer capture can deliver pointerup to the original
+        // control even after a finger moved off it. Treat a moved/cancelled
+        // press as ABANDONED and suppress any compatibility click; it must
+        // never modify an order draft. Keep mouse and keyboard click normal.
+        const ROUTE_TAP_SLOP=12;
+        let routeTouch=null,lastRouteTouchRelease=0,lastRouteTouchAccepted=false;
+        const releasedInsideUse=event=>{
+          const b=use.getBoundingClientRect();
+          return b.width>0&&b.height>0
+            &&event.clientX>=b.left&&event.clientX<=b.right
+            &&event.clientY>=b.top&&event.clientY<=b.bottom;
+        };
+        use.addEventListener("pointerdown",event=>{
+          if(event.pointerType!=="touch")return;
+          routeTouch={id:event.pointerId,x:event.clientX,
+            y:event.clientY,valid:true};
+        });
+        use.addEventListener("pointermove",event=>{
+          if(event.pointerType!=="touch"||routeTouch?.id!==event.pointerId)return;
+          if(Math.hypot(event.clientX-routeTouch.x,
+            event.clientY-routeTouch.y)>ROUTE_TAP_SLOP)routeTouch.valid=false;
+        });
+        use.addEventListener("pointercancel",event=>{
+          if(routeTouch?.id!==event.pointerId)return;
+          routeTouch=null;lastRouteTouchRelease=Date.now();
+          lastRouteTouchAccepted=false;
+        });
         use.addEventListener("pointerup",event=>{
           if(event.pointerType!=="touch")return;
-          lastRouteTouchCopyAt=Date.now();
+          const touch=routeTouch;
+          routeTouch=null;
+          lastRouteTouchRelease=Date.now();lastRouteTouchAccepted=false;
+          if(!touch||touch.id!==event.pointerId||!touch.valid
+            ||Math.hypot(event.clientX-touch.x,
+              event.clientY-touch.y)>ROUTE_TAP_SLOP
+            ||!releasedInsideUse(event))return;
+          lastRouteTouchAccepted=true;
           copyRouteText();
         });
         use.addEventListener("click",event=>{
-          if(event.detail!==0 && Date.now()-lastRouteTouchCopyAt<450){
-            // Do not copy twice; the touch compatibility click may still
-            // alter focus after pointerup restored the composer.
-            revealCopiedRouteText();
+          if(event.detail!==0 && Date.now()-lastRouteTouchRelease<450){
+            // Ignore BOTH accepted and rejected touch compatibility clicks.
+            // Only an accepted tap may restore focus; a rejected one is inert.
+            if(lastRouteTouchAccepted)revealCopiedRouteText();
             return;
           }
           copyRouteText();
@@ -1143,8 +1176,12 @@
         clear.setAttribute("aria-label","Clear selected map people");
         peopleStatus.append(label,clear);operationsMap.append(peopleStatus);
         const clearPeople=()=>{
+          const focusedInside=peopleStatus.contains(platform.document.activeElement);
           selectedMapPeople=[];mapPeekSelection=undefined;
           renderPeopleSelection();refreshSelectedSheetPeek();
+          // Clear hides the focused button; transfer keyboard focus to a
+          // stable visible map control, never to body or a hidden status.
+          if(focusedInside)operationsMap.focus({preventScroll:true});
         };
         // After a long-touch marquee some Chromium paths dispatch pointerup
         // but suppress its compatibility click. Honor the touch release,

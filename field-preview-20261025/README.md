@@ -1,7 +1,7 @@
 # Nomatoka interactive UI-only test — October 26 controls update
 
 This GitHub Pages UI build is derived from canonical game Draft PR #697
-at exact commit aa1edf026217e332f89bab21403130a2fa9a63f0.
+at exact commit aafd0246647ca61dee59cd48bca862ef877772a6.
 The frontend JavaScript and CSS are byte-identical to that game tree.
 This nested static page uses synthetic mock-api.js as its only API layer.
 It blocks Send, Sign out and outside API calls; there is no game database,
@@ -137,3 +137,10 @@ route is shortened, explicit Use text replaces the COMPLETE previously
 inserted route suffix and removes obsolete destinations. Existing player
 text before that suffix is preserved; manually edited route text is never
 overwritten or duplicated. No automatic command Send or external API calls.
+
+October 28 touch/focus independent review repair: an abandoned Use text
+press cannot modify the unsent draft if a finger slides off or moves too
+far, even when implicit pointer capture delivers pointerup and a synthetic
+compatibility click. An accepted short tap retains the original one-copy
+behavior. Clearing selected people restores keyboard focus to the visible
+map when the focused Clear button becomes hidden. No order is sent.
