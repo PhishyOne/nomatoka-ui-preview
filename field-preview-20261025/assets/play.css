@@ -2880,8 +2880,16 @@ body[data-play-state="authenticated"] .workspace-header .field-top-icon.ico.big 
 }
 #map-contact-badge .range-contact-backdrop {
   fill:#263329;stroke:#d1a75c;stroke-width:5px;rx:12px;
+  pointer-events:none;
 }
-#map-contact-badge .range-place-hit {fill:transparent;stroke:transparent}
+#map-contact-badge .range-place-hit {
+  fill:transparent;stroke:transparent;stroke-width:0;
+  pointer-events:all;
+}
+#map-panel #map-contact-badge:focus-visible .range-contact-backdrop {
+  fill:#496038;stroke:#fff2c7;stroke-width:9px;
+  vector-effect:non-scaling-stroke;
+}
 #map-panel #map-contact-badge .range-contact-label {
   font-size:24px;stroke:none;stroke-width:0;fill:#f2ddb1;font-weight:700;
 }

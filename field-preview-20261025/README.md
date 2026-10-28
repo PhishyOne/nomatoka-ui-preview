@@ -1,7 +1,7 @@
 # Nomatoka interactive UI-only test — October 26 controls update
 
 This GitHub Pages UI build is derived from canonical game Draft PR #697
-at exact commit 71f088e9fd60598f4782885c26e853d52c01215a.
+at exact commit c0d00ddc48a284408437fc04b7ee0f37cb0e49a3.
 The frontend JavaScript and CSS are byte-identical to that game tree.
 This nested static page uses synthetic mock-api.js as its only API layer.
 It blocks Send, Sign out and outside API calls; there is no game database,
@@ -65,3 +65,8 @@ expands a contextual Places peek before focusing the actual location list.
 Place-specific People peeks now use admitted contact.area and contact.state:
 Ortega recorded present at Staging Area or last-known at Ridge is qualified
 precisely without claiming exact position or inventing other people.
+
+October 27 keyboard/touch review P2: Ortega area-contact badge now renders
+its keyboard focus ring on a separate visible backdrop, preserves a
+finger-sized invisible hit target, and no longer intercepts Staging Area or
+Ridge marker taps. Exact reported contact qualification is unchanged.

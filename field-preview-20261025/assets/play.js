@@ -2856,17 +2856,24 @@
           role:"button",tabindex:"0","data-map-id":"ortega",
           "aria-pressed":"false"});
         const outline=make("rect",{x:"-100",y:"-39",width:"200",height:"77",
-          rx:"12",class:"range-contact-backdrop range-place-hit"});
+          rx:"12",class:"range-contact-backdrop"});
+        // Keep the invisible enlarged touch target separate from the
+        // visible badge: the latter must retain its focus ring.
+        // The 160-unit height gives a finger-sized target at 390x640 and
+        // 844x390. Its offset is deliberately below the authored feature,
+        // not covering the Staging Area/Ridge source markers.
+        const hit=make("rect",{x:"-100",y:"-75",width:"200",height:"160",
+          rx:"12",class:"range-place-hit"});
         const title=make("text",{x:"0",y:"-3","text-anchor":"middle",
           class:"range-contact-label"});
         const qualifier=make("text",{x:"0",y:"22","text-anchor":"middle",
           class:"range-contact-subline"});
-        badge.append(outline,title,qualifier);
+        badge.append(outline,hit,title,qualifier);
         svg.append(badge);
       }
       // Offset is badge *layout*, not a claimed contact coordinate.
       badge.setAttribute("transform",
-        `translate(${Math.max(106,Math.min(894,cx+88))} ${Math.max(48,Math.min(948,cy+85))})`);
+        `translate(${Math.max(106,Math.min(894,cx+88))} ${Math.max(85,Math.min(865,cy+115))})`);
       const label=contact.state==="present"?"AREA CONTACT":"LAST-KNOWN AREA";
       badge.querySelector(".range-contact-label").textContent="Ortega";
       badge.querySelector(".range-contact-subline").textContent=label;
