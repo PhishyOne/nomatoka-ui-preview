@@ -1,7 +1,7 @@
 # Nomatoka interactive UI-only test — October 26 controls update
 
 This GitHub Pages UI build is derived from canonical game Draft PR #697
-at exact commit 92da640cf58b36125624acce56cf1ed523ab2424.
+at exact commit 5d503427880174f0ee4b306c028bb5198b04c6d7.
 The frontend JavaScript and CSS are byte-identical to that game tree.
 This nested static page uses synthetic mock-api.js as its only API layer.
 It blocks Send, Sign out and outside API calls; there is no game database,
@@ -124,3 +124,10 @@ visibility, and deleting a route point focuses only a visible surviving
 waypoint (otherwise the map). All waypoints remain local planning drafts,
 not real issued commands. No canonical game merge, production write or
 external API mutation is authorized by this preview slice.
+
+October 28 validated waypoint hit-overlap repair: selected red-X delete
+controls paint ABOVE every numbered waypoint marker, including later
+points. The screen-space delete position also avoids nearby waypoint hit
+regions to preserve both delete and ordinary waypoint taps. The exact
+(500,500) -> (620,380) 300px map collision is covered by real Chromium.
+No structured route execution or persistent game movement is claimed.

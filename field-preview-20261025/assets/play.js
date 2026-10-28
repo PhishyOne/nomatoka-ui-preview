@@ -1200,13 +1200,26 @@
       // entire 44px touch region within the visible map wherever possible.
       const offsets=[[36,-36],[-36,-36],[36,36],[-36,36],
         [44,0],[-44,0],[0,44],[0,-44]];
+      // A later route point can lie exactly under the preferred red-X
+      // position. Reserve finger-sized clearance from every OTHER waypoint
+      // before choosing a screen-space position; never steal its marker tap.
+      const otherPoints=mapRouteDraft.points
+        .filter((_,i)=>i!==routeSelectedIndex)
+        .map(p=>{
+          const q=svg.createSVGPoint();q.x=p.x;q.y=p.y;
+          return q.matrixTransform(matrix);
+        });
       const candidate=offsets.map(([dx,dy],i)=>{
         const requestedX=screen.x+dx,requestedY=screen.y+dy;
         const x=clamp(requestedX,lowX,highX),
           y=clamp(requestedY,lowY,highY);
         const lost=(x-requestedX)**2+(y-requestedY)**2;
         const near=Math.max(0,32-Math.hypot(x-screen.x,y-screen.y));
-        return {x,y,score:lost*5+near*near*30+i};
+        const collision=otherPoints.reduce((sum,p)=>{
+          const clear=Math.max(0,58-Math.hypot(x-p.x,y-p.y));
+          return sum+clear*clear*25;
+        },0);
+        return {x,y,score:lost*5+near*near*30+collision+i};
       }).sort((a,b)=>a.score-b.score)[0];
       const out=svg.createSVGPoint();out.x=candidate.x;out.y=candidate.y;
       const world=out.matrixTransform(matrix.inverse());
@@ -1249,6 +1262,7 @@
       }
       const origin=mapRouteDraft.origin;
       const points=[origin,...mapRouteDraft.points];
+      let deleteNode=null;
       mapSvgNode("path",{id:"map-draft-route-line",class:"map-draft-route-line",
         d:points.map((p,i)=>`${i?"L":"M"}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ")},routeLayer);
       for(const [index,p] of mapRouteDraft.points.entries()){
@@ -1261,7 +1275,7 @@
           class:"map-waypoint-number"},marker);
         text.textContent=String(index+1);
         if(active){
-          const deleteNode=mapSvgNode("g",{"data-delete-draft-waypoint":index,
+          deleteNode=mapSvgNode("g",{"data-delete-draft-waypoint":index,
             role:"button",tabindex:"0","aria-label":`Delete waypoint ${index+1}`},wpLayer);
           mapSvgNode("circle",{cx:p.x,cy:p.y,r:"15",class:"map-waypoint-delete"},deleteNode);
           mapSvgNode("circle",{cx:p.x,cy:p.y,r:"12",class:"map-waypoint-delete-hit"},deleteNode);
@@ -1269,6 +1283,9 @@
             class:"map-waypoint-delete-x"},deleteNode);
         }
       }
+      // All waypoint hit circles must be below the selected delete action
+      // in SVG paint/hit-test order, including waypoints added afterward.
+      if(deleteNode)wpLayer.append(deleteNode);
       routeStatus.hidden=false;
       field("#map-route-draft-caption").textContent=
         `Ortega · ${mapRouteDraft.points.length} waypoint${mapRouteDraft.points.length===1?"":"s"} · Area-origin draft only, not sent`;
