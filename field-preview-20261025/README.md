@@ -1,7 +1,7 @@
 # Nomatoka interactive UI-only test — October 26 controls update
 
 This GitHub Pages UI build is derived from canonical game Draft PR #697
-at exact commit b849b1ee19d15001e915e5ea74b00d91d4dad913.
+at exact commit 9d411ade0a00b9b3a0036c9eda6bc1a2d7ec87df.
 The frontend JavaScript and CSS are byte-identical to that game tree.
 This nested static page uses synthetic mock-api.js as its only API layer.
 It blocks Send, Sign out and outside API calls; there is no game database,
@@ -75,3 +75,8 @@ October 27 disabled contact P2: use the existing range-feature enabled/
 disabled pointer-event rules for the Ortega badge, with keyboard focus and
 44px touch hit retained on normal phone geometry. A short/zoom-clipped
 disabled badge cannot consume map taps or create a dead region.
+
+October 28 Lower path overlap P2: the invisible contact hit target uses
+an authored shape that preserves 44px mobile touch coverage while avoiding
+the existing Lower-route line below the badge. Area/contact evidence,
+keyboard focus, disabled-state and mock no-write behavior are unchanged.

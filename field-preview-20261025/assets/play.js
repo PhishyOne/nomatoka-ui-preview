@@ -2859,11 +2859,13 @@
           rx:"12",class:"range-contact-backdrop"});
         // Keep the invisible enlarged touch target separate from the
         // visible badge: the latter must retain its focus ring.
-        // The 160-unit height gives a finger-sized target at 390x640 and
-        // 844x390. Its offset is deliberately below the authored feature,
-        // not covering the Staging Area/Ridge source markers.
-        const hit=make("rect",{x:"-100",y:"-75",width:"200",height:"160",
-          rx:"12",class:"range-place-hit"});
+        // Preserve the 200x160 unit touch envelope on phone/landscape
+        // viewports, but cut away the upper-right corner traversed by the
+        // authored Lower route. A rectangular invisible hit target would
+        // steal legitimate Lower-path taps even though the visible badge
+        // sits below that route. The full visible badge remains tappable.
+        const hit=make("path",{d:"M-100 -75H0L100 -40V85H-100Z",
+          class:"range-place-hit"});
         const title=make("text",{x:"0",y:"-3","text-anchor":"middle",
           class:"range-contact-label"});
         const qualifier=make("text",{x:"0",y:"22","text-anchor":"middle",
