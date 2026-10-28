@@ -1183,16 +1183,47 @@
           // stable visible map control, never to body or a hidden status.
           if(focusedInside)operationsMap.focus({preventScroll:true});
         };
-        // After a long-touch marquee some Chromium paths dispatch pointerup
-        // but suppress its compatibility click. Honor the touch release,
-        // with normal mouse/keyboard click support retained.
-        let lastTouchClear=0;
+        // A touch release may be delivered to the Clear button by implicit
+        // pointer capture even after the finger slides off it. Abandoned or
+        // cancelled presses must not clear a local selection.
+        const CLEAR_PEOPLE_TAP_SLOP=12;
+        let clearPeopleTouch=null,lastTouchClearRelease=0;
+        const releasedInsideClearPeople=event=>{
+          const b=clear.getBoundingClientRect();
+          return b.width>0&&b.height>0
+            &&event.clientX>=b.left&&event.clientX<=b.right
+            &&event.clientY>=b.top&&event.clientY<=b.bottom;
+        };
+        clear.addEventListener("pointerdown",event=>{
+          if(event.pointerType!=="touch")return;
+          clearPeopleTouch={id:event.pointerId,x:event.clientX,
+            y:event.clientY,valid:true};
+        });
+        clear.addEventListener("pointermove",event=>{
+          if(event.pointerType!=="touch"||clearPeopleTouch?.id!==event.pointerId)return;
+          if(Math.hypot(event.clientX-clearPeopleTouch.x,
+            event.clientY-clearPeopleTouch.y)>CLEAR_PEOPLE_TAP_SLOP)
+            clearPeopleTouch.valid=false;
+        });
+        clear.addEventListener("pointercancel",event=>{
+          if(clearPeopleTouch?.id!==event.pointerId)return;
+          clearPeopleTouch=null;lastTouchClearRelease=Date.now();
+        });
         clear.addEventListener("pointerup",event=>{
           if(event.pointerType!=="touch")return;
-          lastTouchClear=Date.now();clearPeople();
+          const touch=clearPeopleTouch;
+          clearPeopleTouch=null;lastTouchClearRelease=Date.now();
+          if(!touch||touch.id!==event.pointerId||!touch.valid
+            ||Math.hypot(event.clientX-touch.x,
+              event.clientY-touch.y)>CLEAR_PEOPLE_TAP_SLOP
+            ||!releasedInsideClearPeople(event))return;
+          clearPeople();
         });
-        clear.addEventListener("click",()=>{
-          if(Date.now()-lastTouchClear>=450)clearPeople();
+        clear.addEventListener("click",event=>{
+          // Suppress both valid and abandoned touch compatibility clicks.
+          // Keyboard and ordinary mouse activation stay available.
+          if(event.detail!==0&&Date.now()-lastTouchClearRelease<450)return;
+          clearPeople();
         });
       }
       return {svg,routeLayer,wpLayer,dragLayer,marquee,routeStatus,peopleStatus};
@@ -1882,12 +1913,17 @@
         mapPinchSuppressUntil=Date.now()+750;
       if(g&&event.type==="pointerup"&&mapTouches.size===1){
         const distance=Math.hypot(event.clientX-g.startX,event.clientY-g.startY);
-        if(distance>=MAP_DROP_DISTANCE&&g.mode==="route"&&g.destination){
-          addWaypoint(g.destination,false);
+        // The last pointermove is NOT necessarily the release location.
+        // Recompute against the actual pointerup screen coordinates and
+        // reject a release outside the SVG instead of using a stale preview.
+        const releaseDestination=(g.mode==="route"||g.mode==="extend")
+          ?dragDestination(event.clientX,event.clientY,g):null;
+        if(distance>=MAP_DROP_DISTANCE&&g.mode==="route"&&releaseDestination){
+          addWaypoint(releaseDestination,false);
           mapPeekSelection={kind:"object",id:"ortega"};
           refreshSelectedSheetPeek();
-        }else if(distance>=MAP_DROP_DISTANCE&&g.mode==="extend"&&g.destination){
-          addWaypoint(g.destination,true);
+        }else if(distance>=MAP_DROP_DISTANCE&&g.mode==="extend"&&releaseDestination){
+          addWaypoint(releaseDestination,true);
         }else if(distance>=MAP_DROP_DISTANCE&&g.mode==="marquee"){
           const start=mapPointFromScreen(g.startX,g.startY),
             end=mapPointFromScreen(event.clientX,event.clientY);
