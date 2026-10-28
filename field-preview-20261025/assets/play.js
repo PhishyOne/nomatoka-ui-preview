@@ -1980,6 +1980,18 @@
           return {title:person.name,detail:`${person.status}. ${person.assignment}. ${person.location}.`,
             note:record.unknown};
         }
+        // A selected authored area may have admitted area-level contact.
+        // Match the exact source label and preserve present vs last-known;
+        // neither status supplies exact GPS coordinates or other people.
+        if(selected.kind==="object" && ["staging-area","ridge"].includes(selected.id)
+          && reported?.id==="ortega" && reported.area===name
+          && ["present","last-known"].includes(reported.state)){
+          const presence=reported.state==="present"
+            ? "Ortega is recorded present" : "Ortega was last known";
+          return {title:`${name} / People`,
+            detail:`${presence} at ${name} from ${reported.source}. This is an area-level contact, not a live exact location.`,
+            note:"Other personnel in this area are unconfirmed without their own received evidence."};
+        }
         return {title:`${name} / People`,
           detail:"Personnel present at this selected place or object are unconfirmed; received reports do not establish who is there.",
           note:record?.known ?? "This local coordinate is a planning point, not a personnel sighting."};
@@ -2097,6 +2109,12 @@
       };
       const destination=targets[action];
       if(!destination)return;
+      // Contextual peek hides the general list. A Tools navigation request
+      // must reveal the real owning destination before assigning focus.
+      if(action==="places-focus" && placesDialog.open)
+        setSheetSize(placesDialog,"full");
+      if(action==="items-focus" && itemsDialog.open)
+        setSheetSize(itemsDialog,"full");
       contextClose.click();
       if(["inspect-contact","write-order","people-reports"].includes(action)){
         destination.click();return;

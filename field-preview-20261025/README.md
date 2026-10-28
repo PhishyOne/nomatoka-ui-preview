@@ -1,7 +1,7 @@
 # Nomatoka interactive UI-only test — October 26 controls update
 
 This GitHub Pages UI build is derived from canonical game Draft PR #697
-at exact commit f36fd1953a02938c455509cff09270fde28d4541.
+at exact commit 71f088e9fd60598f4782885c26e853d52c01215a.
 The frontend JavaScript and CSS are byte-identical to that game tree.
 This nested static page uses synthetic mock-api.js as its only API layer.
 It blocks Send, Sign out and outside API calls; there is no game database,
@@ -59,3 +59,9 @@ the contextual/general peek. Repeated taps alternate. The non-modal sheet
 leaves the map above, the command dock and nav below; private content clears
 on authority turnover. Ortega is a truthful area-contact label, not a live GPS
 coordinate. Items without received ownership evidence remain unknown.
+
+October 27 independent P2 corrections: Tools -> View known locations
+expands a contextual Places peek before focusing the actual location list.
+Place-specific People peeks now use admitted contact.area and contact.state:
+Ortega recorded present at Staging Area or last-known at Ridge is qualified
+precisely without claiming exact position or inventing other people.
