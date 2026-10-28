@@ -1,7 +1,7 @@
 # Nomatoka interactive UI-only test — October 26 controls update
 
 This GitHub Pages UI build is derived from canonical game Draft PR #697
-at exact commit 3352588a3dc4b868d7e1e4ff8f9ffe2f26b8c162.
+at exact commit ff5890f66dd43a1d0df570f516e8db290ecb6787.
 The frontend JavaScript and CSS are byte-identical to that game tree.
 This nested static page uses synthetic mock-api.js as its only API layer.
 It blocks Send, Sign out and outside API calls; there is no game database,
@@ -98,3 +98,10 @@ action; no structured waypoint command, implicit Send, durable route
 persistence, server mutation or group-order capability is claimed.
 Auth-control changes scrub local routes/selections. Existing pinch, pan,
 map sources, command authority, privacy and fixed dock are retained.
+
+October 28 final bounded reviewer repairs: route actions recalculate their
+HUD position during geometry changes, keeping Use text / Clear in the map
+after rotation or keyboard resize; explicit route text copying also restores
+the existing minimized command composer and focuses its REAL textarea.
+The waypoint red-X after extension is covered by full Chromium regression.
+No server command is submitted by any gesture or text-copy action.

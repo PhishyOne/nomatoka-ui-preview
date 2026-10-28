@@ -1062,6 +1062,12 @@
           if([...proposed].length>280){
             label.textContent="Route text exceeds 280 characters. Existing draft unchanged.";
           }else if(mutateDraft(proposed)){
+            // Keep the ONE real editor visible after explicit route-text
+            // insertion, matching the existing coordinate Add behavior.
+            if(dockMinimized){
+              field("#field-restore-dock")?.click();
+              composer.focus({preventScroll:true});
+            }
             label.textContent="Route copied as planning TEXT only; not an executable waypoint. Nothing sent.";
           }
         });
@@ -1197,7 +1203,9 @@
       const {routeLayer,wpLayer,routeStatus}=ui;
       const signature=routeDrawSignature();
       if(drawnRouteLayer===wpLayer && drawnRouteSignature===signature){
-        positionDraftDeleteControl();return;
+        positionDraftDeleteControl();
+        positionDraftRouteStatus();
+        return;
       }
       // Do not tear away a pointer capture target during the pending 410ms
       // hold; a changed authority source has already cancelled the gesture.
@@ -1575,6 +1583,11 @@
       sizeMapTargets();
       renderMapScale(size);
       positionDraftDeleteControl();
+      // Camera and window geometry change independently of route source.
+      // Keep the local route / people HUD buttons inside the map after
+      // rotation, visual keyboard resize, or dock restoration.
+      positionDraftRouteStatus();
+      positionMapHudStatus(operationsMap.querySelector("#map-people-selection-status"));
     }
     // Rotating/resizing changes the *visible world extent*, so recalculate
     // camera bounds as well as the physical ruler on the same SVG source.
