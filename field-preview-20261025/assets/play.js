@@ -1046,6 +1046,17 @@
           renderDraftRoute();
           operationsMap.focus({preventScroll:true});
         });
+        const revealCopiedRouteText=()=>{
+          // The same ONE real editor should be visible and focused whether
+          // it was already open or must first be restored from the mini tray.
+          if(dockMinimized)field("#field-restore-dock")?.click();
+          if(!dockMinimized && canEditDraft()){
+            composer.focus({preventScroll:true});
+            platform.requestAnimationFrame?.(()=>{
+              if(!dockMinimized && canEditDraft())composer.focus({preventScroll:true});
+            });
+          }
+        };
         const copyRouteText=()=>{
           if(!mapRouteDraft||!canEditDraft())return;
           if(selectedMapPeople.length>1){
@@ -1055,6 +1066,7 @@
           const routeText=`Ortega, move via ${mapRouteDraft.points.map(p=>
             p.snapped?p.name:"local "+p.name.replace(" · "," ")).join(" then ")}`;
           if(composer.value.includes(routeText)){
+            revealCopiedRouteText();
             label.textContent="Route text is already in this draft. Nothing sent.";
             return;
           }
@@ -1062,18 +1074,7 @@
           if([...proposed].length>280){
             label.textContent="Route text exceeds 280 characters. Existing draft unchanged.";
           }else if(mutateDraft(proposed)){
-            // Keep the ONE real editor visible after explicit route-text
-            // insertion, matching the existing coordinate Add behavior.
-            if(dockMinimized){
-              field("#field-restore-dock")?.click();
-              composer.focus({preventScroll:true});
-              // A touch pointerup copy runs before Chromium's compatibility
-              // click/focus default. Reassert focus on the next paint, but
-              // only while this same authenticated draft is still editable.
-              platform.requestAnimationFrame?.(()=>{
-                if(!dockMinimized && canEditDraft())composer.focus({preventScroll:true});
-              });
-            }
+            revealCopiedRouteText();
             label.textContent="Route copied as planning TEXT only; not an executable waypoint. Nothing sent.";
           }
         };
@@ -1089,14 +1090,9 @@
         });
         use.addEventListener("click",event=>{
           if(event.detail!==0 && Date.now()-lastRouteTouchCopyAt<450){
-            // Do not copy twice; the compatibility click can still alter
-            // focus after the pointerup restored the one real composer.
-            if(!dockMinimized && canEditDraft()){
-              composer.focus({preventScroll:true});
-              platform.requestAnimationFrame?.(()=>{
-                if(!dockMinimized && canEditDraft())composer.focus({preventScroll:true});
-              });
-            }
+            // Do not copy twice; the touch compatibility click may still
+            // alter focus after pointerup restored the composer.
+            revealCopiedRouteText();
             return;
           }
           copyRouteText();
@@ -1284,6 +1280,7 @@
           ?.focus({preventScroll:true});
       }
       positionDraftDeleteControl();
+      sizeMapTargets();
       positionDraftRouteStatus();
     }
     function renderRouteDragPreview(mode,start,end){
@@ -1571,6 +1568,24 @@
         target.setAttribute("tabindex", disabled ? "-1" : "0");
         target.setAttribute("aria-disabled", String(disabled));
         if (disabled && target.contains(platform.document.activeElement)) focusVisibleMapAction();
+      }
+      // Draft waypoints and their red delete actions share the same real
+      // camera/keyboard visibility constraint as source-backed map features.
+      // An invisible point must not remain in the Tab order after zoom,
+      // resize, IME shrink, or a background picture refresh.
+      for(const target of svg.querySelectorAll(
+        "[data-draft-waypoint-index], [data-delete-draft-waypoint]")){
+        const marker=target.querySelector(
+          ".map-waypoint-hit, .map-waypoint-delete-hit")?.getBoundingClientRect();
+        const cx=marker?(marker.left+marker.right)/2:NaN;
+        const cy=marker?(marker.top+marker.bottom)/2:NaN;
+        const disabled=compact||!Number.isFinite(cx)||!Number.isFinite(cy)
+          ||cx<box.left+22||cx>box.right-22
+          ||cy<box.top+22||cy>box.bottom-22;
+        target.setAttribute("tabindex",disabled?"-1":"0");
+        target.setAttribute("aria-disabled",String(disabled));
+        if(disabled && target.contains(platform.document.activeElement))
+          operationsMap.focus({preventScroll:true});
       }
     }
     // 100 SVG units = one kilometre on the authored 1000-unit square map.
@@ -3953,11 +3968,13 @@
       if(Date.now()<mapPinchSuppressUntil)return;
       const deletion=event.target.closest?.("[data-delete-draft-waypoint]");
       if(deletion?.dataset.deleteDraftWaypoint!==undefined){
-        removeDraftWaypoint(Number(deletion.dataset.deleteDraftWaypoint));
+        if(deletion.getAttribute("aria-disabled")!=="true")
+          removeDraftWaypoint(Number(deletion.dataset.deleteDraftWaypoint));
         return;
       }
       const wp=event.target.closest?.("[data-draft-waypoint-index]");
       if(wp?.dataset.draftWaypointIndex!==undefined){
+        if(wp.getAttribute("aria-disabled")==="true")return;
         const index=Number(wp.dataset.draftWaypointIndex);
         if(mapRouteDraft&&index>=0&&index<mapRouteDraft.points.length){
           routeSelectedIndex=index;renderDraftRoute();
@@ -3983,6 +4000,8 @@
           || wp?.dataset.draftWaypointIndex!==undefined){
           event.preventDefault();
           if(event.repeat)return; // One keypress cannot delete several nodes.
+          if(deletion?.getAttribute("aria-disabled")==="true"
+            || wp?.getAttribute("aria-disabled")==="true")return;
           if(deletion?.dataset.deleteDraftWaypoint!==undefined){
             removeDraftWaypoint(Number(deletion.dataset.deleteDraftWaypoint));
           }else{

@@ -1,7 +1,7 @@
 # Nomatoka interactive UI-only test — October 26 controls update
 
 This GitHub Pages UI build is derived from canonical game Draft PR #697
-at exact commit a762849ad131ef263fc7057bfad6b5e4e56419a8.
+at exact commit dafceff9ade247223d84d8197cfb7d4f30c3ccb2.
 The frontend JavaScript and CSS are byte-identical to that game tree.
 This nested static page uses synthetic mock-api.js as its only API layer.
 It blocks Send, Sign out and outside API calls; there is no game database,
@@ -111,3 +111,9 @@ waypoint deletion focuses the next surviving point, or the map after
 the final deletion. Immediate touch release on Use text works even if
 Chromium suppresses its compatibility click. The one real composer is
 visible and focused after text-copy, with no duplicate insertion or Send.
+
+October 28 keyboard focus review repair: offscreen route waypoints and
+red deletion controls are excluded from Tab navigation and focus returns
+to the visible map when they become clipped by zoom/rotation/IME. An
+already-open command dock now focuses the one real composer when Use text
+is clicked or keyboard activated; minimized/touch behavior remains intact.
