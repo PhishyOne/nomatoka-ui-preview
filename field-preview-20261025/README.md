@@ -2,7 +2,9 @@
 
 This GitHub Pages UI build is derived from canonical game Draft PR #697
 at exact commit 29ae19b1b88b9292c4a4114d0a4e55758b9a129f.
-The frontend JavaScript and CSS are byte-identical to that game tree.
+The frontend JavaScript is byte-identical to that game tree.
+The preview CSS adds one isolated phone tap-highlight fix for Ortega, pending
+sync into the canonical game Draft when its writer lock is available.
 This nested static page uses synthetic mock-api.js as its only API layer.
 It blocks Send, Sign out and outside API calls; there is no game database,
 real account, multiplayer, or persistent gameplay in this preview.
@@ -149,3 +151,9 @@ October 28 viewport action repair: deleting a selected waypoint is
 only available while the waypoint itself is visible in the actual
 map viewport. The clamped red X is disabled/hidden on clipping, focus
 returns to the visible map, and the action restores on return.
+
+October 28 preview-only Android touch polish: remove native cyan/blue
+-webkit tap highlight from the source-admitted Ortega SVG marker and its
+oversized invisible hit circle. Preserve 44px+ contact hit area, normal
+pointer gestures, authored map, and gold :focus-visible keyboard cues.
+The change does not issue an order, change source truth or call production.

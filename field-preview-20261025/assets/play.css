@@ -2882,6 +2882,14 @@ body[data-play-state="authenticated"] .workspace-header .field-top-icon.ico.big 
    person = compact ring + diamond, authored place = circular dot.
    Hit testing is a separate invisible target and disabled state retains
    the ordinary .range-feature contract. Text cannot steal route taps. */
+/* Android Chromium otherwise flashes its cyan native tap highlight over
+   the 91-unit invisible person hit circle. Keep the generous tap/drag area,
+   but never paint a giant box on top of the compact visible Ortega marker.
+   Keyboard :focus-visible gold styling is deliberately unchanged. */
+#map-panel #map-contact-badge,
+#map-panel #map-contact-badge * {
+  -webkit-tap-highlight-color: transparent;
+}
 #map-panel #map-contact-badge .range-contact-backdrop {
   fill:#263329;stroke:#d1a75c;stroke-width:4px;
   vector-effect:non-scaling-stroke;pointer-events:none;
