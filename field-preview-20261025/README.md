@@ -1,7 +1,7 @@
 # Nomatoka interactive UI-only test — October 26 controls update
 
 This GitHub Pages UI build is derived from canonical game Draft PR #697
-at exact commit 9d411ade0a00b9b3a0036c9eda6bc1a2d7ec87df.
+at exact commit 2b1c346ab09cb06143fa1aae0e0ff8340c8939d6.
 The frontend JavaScript and CSS are byte-identical to that game tree.
 This nested static page uses synthetic mock-api.js as its only API layer.
 It blocks Send, Sign out and outside API calls; there is no game database,
@@ -80,3 +80,21 @@ October 28 Lower path overlap P2: the invisible contact hit target uses
 an authored shape that preserves 44px mobile touch coverage while avoiding
 the existing Lower-route line below the badge. Area/contact evidence,
 keyboard focus, disabled-state and mock no-write behavior are unchanged.
+
+
+October 28 original-map gesture integration: preserve the present source-backed
+map, contextual peeks and single authenticated order composer. Replace the
+large Ortega label card with a compact person marker (ring/diamond) and
+adjacent area-qualified text; authored place dots and routes retain their
+existing geometry. Adapt the preserved root prototype's hold-to-draft
+movement gestures into local numbered route waypoints, last-waypoint
+extension, selected-point red-X deletion and a clear/use-text control.
+Holding empty map ground and dragging selects source-admitted displayed
+people by a rectangular marquee, with Shift+Enter keyboard selection.
+The current admitted game picture shows only Ortega, not fictitious squad
+members. The drawn route starts at a reported AREA reference, never an
+asserted exact person coordinate. Text-copy requires a separate explicit
+action; no structured waypoint command, implicit Send, durable route
+persistence, server mutation or group-order capability is claimed.
+Auth-control changes scrub local routes/selections. Existing pinch, pan,
+map sources, command authority, privacy and fixed dock are retained.

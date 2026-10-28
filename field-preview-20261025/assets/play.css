@@ -2878,23 +2878,110 @@ body[data-play-state="authenticated"] .workspace-header .field-top-icon.ico.big 
     top:var(--workspace-sheet-peek-top,var(--workspace-sheet-top))!important;
   }
 }
-#map-contact-badge .range-contact-backdrop {
-  fill:#263329;stroke:#d1a75c;stroke-width:5px;rx:12px;
+/* The v0.7 shape language in the current source-backed map:
+   person = compact ring + diamond, authored place = circular dot.
+   Hit testing is a separate invisible target and disabled state retains
+   the ordinary .range-feature contract. Text cannot steal route taps. */
+#map-panel #map-contact-badge .range-contact-backdrop {
+  fill:#263329;stroke:#d1a75c;stroke-width:4px;
+  vector-effect:non-scaling-stroke;pointer-events:none;
+}
+#map-panel #map-contact-badge .range-person-core {
+  fill:#e6bc6d;stroke:none;pointer-events:none;
+}
+#map-panel #map-contact-badge .range-person-hit {
+  fill:transparent;stroke:transparent;stroke-width:0;pointer-events:all;
+}
+#map-panel #map-contact-badge[aria-disabled="true"] .range-person-hit {
   pointer-events:none;
 }
-#map-contact-badge .range-place-hit {
-  /* Do not override the native .range-feature[aria-disabled] contract.
-     The base .range-place-hit owns enabled touch events; the base disabled
-     selector owns suppression when a contact is clipped or the map tiny. */
-  fill:transparent;stroke:transparent;stroke-width:0;
-}
-#map-panel #map-contact-badge:focus-visible .range-contact-backdrop {
-  fill:#496038;stroke:#fff2c7;stroke-width:9px;
-  vector-effect:non-scaling-stroke;
+#map-panel #map-contact-badge:focus-visible .range-contact-backdrop,
+#map-panel #map-contact-badge[aria-pressed="true"] .range-contact-backdrop {
+  fill:#496038;stroke:#fff2c7;stroke-width:7px;
 }
 #map-panel #map-contact-badge .range-contact-label {
-  font-size:24px;stroke:none;stroke-width:0;fill:#f2ddb1;font-weight:700;
+  font-size:23px;stroke:none;stroke-width:0;fill:#f2ddb1;font-weight:700;
+  pointer-events:none;
 }
 #map-panel #map-contact-badge .range-contact-subline {
-  font-size:16px;stroke:none;stroke-width:0;fill:#c3d0b4;font-weight:400;
+  font-size:14px;stroke:none;stroke-width:0;fill:#c3d0b4;font-weight:400;
+  pointer-events:none;
+}
+
+/* The older map prototype's drag route and marquee, adapted to the current
+   source-backed SVG. No layer is authoritative or dispatches an order. */
+#map-panel #map-draft-route-layer,
+#map-panel #map-draft-drag-layer,
+#map-panel #map-people-marquee {pointer-events:none}
+#map-panel .map-draft-route-line,
+#map-panel .map-draft-drag-line {
+  fill:none;stroke:#efc36c;stroke-width:3px;stroke-dasharray:8 5;
+  vector-effect:non-scaling-stroke;pointer-events:none;
+}
+#map-panel .map-draft-drag-line {stroke:#fbe0a1;opacity:.84}
+#map-panel .map-draft-drag-destination {
+  fill:#4b351d;stroke:#ffe2a1;stroke-width:3px;
+  vector-effect:non-scaling-stroke;pointer-events:none;
+}
+#map-panel #map-draft-waypoint-layer [data-draft-waypoint-index] {
+  cursor:pointer;outline:none;
+}
+#map-panel .map-waypoint-mark {
+  fill:#302819;stroke:#f2c675;stroke-width:3px;
+  vector-effect:non-scaling-stroke;pointer-events:none;
+}
+#map-panel .map-waypoint-hit,
+#map-panel .map-waypoint-delete-hit {
+  fill:transparent;stroke:transparent;stroke-width:44px;
+  vector-effect:non-scaling-stroke;pointer-events:all;
+}
+#map-panel .map-waypoint-number {
+  fill:#ffebaf;stroke:none;stroke-width:0;
+  font-size:15px;font-weight:900;pointer-events:none;
+}
+#map-panel .map-waypoint-delete {
+  fill:#792a22;stroke:#ffad92;stroke-width:2px;
+  vector-effect:non-scaling-stroke;pointer-events:none;
+}
+#map-panel .map-waypoint-delete-x {
+  fill:none;stroke:#fff0e2;stroke-width:3px;
+  stroke-linecap:round;vector-effect:non-scaling-stroke;pointer-events:none;
+}
+#map-panel #map-draft-waypoint-layer [data-draft-waypoint-index]:focus-visible .map-waypoint-mark,
+#map-panel #map-draft-waypoint-layer [data-delete-draft-waypoint]:focus-visible .map-waypoint-delete {
+  stroke:#fff4b7;stroke-width:6px;vector-effect:non-scaling-stroke;
+}
+#map-panel #map-people-marquee {
+  fill:#e6c16f24;stroke:#f5cf78;stroke-width:2px;
+  stroke-dasharray:7 4;vector-effect:non-scaling-stroke;
+}
+#map-panel #map-people-marquee[hidden] {display:none!important}
+#map-panel .map-draft-status {
+  position:absolute;right:7px;bottom:7px;z-index:7;
+  width:max-content;max-width:min(255px,calc(100% - 14px));
+  padding:3px 5px;display:flex;align-items:center;gap:5px;
+  border:1px solid #b89d64;border-radius:6px;
+  color:#e8d5aa;background:#172218ec;box-shadow:0 4px 10px #0009;
+  font:10px/1.25 system-ui,sans-serif;
+}
+#map-panel .map-draft-status[hidden],
+#operational-workspace:not([data-section="map"]) .map-draft-status {display:none!important}
+#map-panel .map-draft-status > span {flex:1;min-width:0;overflow-wrap:anywhere}
+#map-panel .map-draft-status button {
+  width:auto;flex:0 0 auto;min-height:30px;min-width:30px;padding:3px 6px;
+  border:1px solid #977b4c;border-radius:5px;
+  background:#2d3528;color:#ffe1a2;font-weight:700;
+}
+#map-panel .map-draft-status button:focus-visible {
+  outline:2px solid #fff4b7;outline-offset:1px;
+}
+#map-panel #map-people-selection-status {left:7px;right:auto;bottom:7px}
+#map-panel:has(#map-route-draft-status:not([hidden])) #map-people-selection-status:not([hidden]) {
+  bottom:51px;
+}
+@media (max-height:450px) {
+  #map-panel .map-draft-status {
+    max-width:min(195px,calc(100% - 14px));font-size:9px;max-height:35px;overflow:auto;
+  }
+  #map-panel #map-people-selection-status {left:7px}
 }

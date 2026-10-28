@@ -934,6 +934,318 @@
           `translate(${localCoordinate.svgX} ${localCoordinate.svgY})`);
       }else marker.setAttribute("hidden","");
     }
+    // Adapted from the original UI's commandContext/addWaypoint/drawTarget
+    // mechanics. Never treat a local route drawing as an executable server
+    // waypoint or a verified mercenary location.
+    const MAX_DRAFT_WAYPOINTS=12;
+    let mapRouteDraft=null, routeSelectedIndex=null, selectedMapPeople=[];
+    let mapGestureHoldTimer=null;
+    const MAP_HOLD_MS=410, MAP_HOLD_SLOP=9, MAP_DROP_DISTANCE=20;
+    const routeSourceIdentity=()=>{
+      const c=picture?.contact;
+      return c?.id==="ortega" && ["present","last-known"].includes(c.state)
+        && ["Staging Area","Ridge"].includes(c.area)
+        ? [c.id,c.state,c.area,c.source].join("|") : null;
+    };
+    function clearMapHoldTimer(){
+      if(mapGestureHoldTimer!==null){
+        platform.clearTimeout(mapGestureHoldTimer);
+        mapGestureHoldTimer=null;
+      }
+    }
+    function mapSvgNode(tag,attrs={},owner){
+      const n=platform.document.createElementNS("http://www.w3.org/2000/svg",tag);
+      for(const [key,value] of Object.entries(attrs))n.setAttribute(key,String(value));
+      if(owner)owner.append(n);
+      return n;
+    }
+    function mapPointFromScreen(x,y,clamp=false){
+      const svg=operationsMap.querySelector(".synthetic-range svg");
+      const bounds=svg?.getBoundingClientRect(),matrix=svg?.getScreenCTM?.();
+      if(!matrix||!bounds||x<bounds.left||x>bounds.right||
+        y<bounds.top||y>bounds.bottom)return null;
+      const p=svg.createSVGPoint();p.x=x;p.y=y;
+      const world=p.matrixTransform(matrix.inverse());
+      if(![world.x,world.y].every(Number.isFinite))return null;
+      if(!clamp&&(world.x<0||world.x>1000||world.y<0||world.y>1000))return null;
+      return {x:Math.max(0,Math.min(1000,world.x)),
+        y:Math.max(0,Math.min(1000,world.y))};
+    }
+    const localWaypointName=point=>
+      `X ${Math.round(point.x)*10}m · Y ${Math.round(1000-point.y)*10}m`;
+    function dragDestination(clientX,clientY,held){
+      const p=mapPointFromScreen(clientX,clientY);
+      if(!p)return null;
+      const svg=operationsMap.querySelector(".synthetic-range svg");
+      // Snap only to source-authored places. Reported contacts do NOT have
+      // precise positions and must never become fabricated snap destinations.
+      let nearest=null,dist=Infinity;
+      for(const id of ["staging-area","ridge"]){
+        const circle=svg.querySelector('g[data-map-id="'+id+'"] circle.range-place');
+        if(!circle)continue;
+        const center=svg.createSVGPoint();
+        center.x=Number(circle.getAttribute("cx"));
+        center.y=Number(circle.getAttribute("cy"));
+        const screen=center.matrixTransform(svg.getScreenCTM());
+        const d=Math.hypot(screen.x-clientX,screen.y-clientY);
+        if(held?.snapId===id&&d<=43){
+          return {x:center.x,y:center.y,name:id==="ridge"?"Ridge":"Staging Area",
+            snapped:true,id};
+        }
+        if(d<dist){dist=d;nearest={id,x:center.x,y:center.y};}
+      }
+      if(nearest&&dist<=27){
+        if(held)held.snapId=nearest.id;
+        return {x:nearest.x,y:nearest.y,
+          name:nearest.id==="ridge"?"Ridge":"Staging Area",
+          snapped:true,id:nearest.id};
+      }
+      if(held)held.snapId=null;
+      return {x:p.x,y:p.y,name:localWaypointName(p),snapped:false};
+    }
+    function ensureMapDraftUi(){
+      const svg=operationsMap.querySelector(".synthetic-range svg");
+      if(!svg)return null;
+      let routeLayer=svg.querySelector("#map-draft-route-layer");
+      if(!routeLayer)routeLayer=mapSvgNode("g",{id:"map-draft-route-layer"},svg);
+      let wpLayer=svg.querySelector("#map-draft-waypoint-layer");
+      if(!wpLayer)wpLayer=mapSvgNode("g",{id:"map-draft-waypoint-layer"},svg);
+      let dragLayer=svg.querySelector("#map-draft-drag-layer");
+      if(!dragLayer)dragLayer=mapSvgNode("g",{id:"map-draft-drag-layer",
+        "aria-hidden":"true"},svg);
+      let marquee=svg.querySelector("#map-people-marquee");
+      if(!marquee){
+        marquee=mapSvgNode("rect",{id:"map-people-marquee",hidden:"",
+          class:"map-people-marquee","aria-hidden":"true"},svg);
+      }
+      let routeStatus=operationsMap.querySelector("#map-route-draft-status");
+      if(!routeStatus){
+        routeStatus=platform.document.createElement("div");
+        routeStatus.id="map-route-draft-status";
+        routeStatus.className="map-draft-status";
+        routeStatus.hidden=true;
+        routeStatus.setAttribute("role","status");
+        routeStatus.setAttribute("aria-live","polite");
+        const label=platform.document.createElement("span");
+        label.id="map-route-draft-caption";
+        const use=platform.document.createElement("button");
+        use.type="button";use.id="map-route-use";use.textContent="Use text";
+        use.setAttribute("aria-label","Copy planned route to existing order draft as text only");
+        const clear=platform.document.createElement("button");
+        clear.type="button";clear.id="map-route-clear";clear.textContent="×";
+        clear.setAttribute("aria-label","Clear local waypoint route");
+        routeStatus.append(label,use,clear);
+        operationsMap.append(routeStatus);
+        clear.addEventListener("click",()=>{
+          mapRouteDraft=null;routeSelectedIndex=null;
+          renderDraftRoute();
+          operationsMap.focus({preventScroll:true});
+        });
+        use.addEventListener("click",()=>{
+          if(!mapRouteDraft||!canEditDraft())return;
+          if(selectedMapPeople.length>1){
+            label.textContent="Group movement commands are not supported yet; no order sent.";
+            return;
+          }
+          const routeText=`Ortega, move via ${mapRouteDraft.points.map(p=>
+            p.snapped?p.name:"local "+p.name.replace(" · "," ")).join(" then ")}`;
+          if(composer.value.includes(routeText)){
+            label.textContent="Route text is already in this draft. Nothing sent.";
+            return;
+          }
+          const proposed=[composer.value.trim(),routeText].filter(Boolean).join(" ");
+          if([...proposed].length>280){
+            label.textContent="Route text exceeds 280 characters. Existing draft unchanged.";
+          }else if(mutateDraft(proposed)){
+            label.textContent="Route copied as planning TEXT only; not an executable waypoint. Nothing sent.";
+          }
+        });
+      }
+      let peopleStatus=operationsMap.querySelector("#map-people-selection-status");
+      if(!peopleStatus){
+        peopleStatus=platform.document.createElement("div");
+        peopleStatus.id="map-people-selection-status";
+        peopleStatus.className="map-draft-status map-people-status";
+        peopleStatus.hidden=true;
+        peopleStatus.setAttribute("role","status");
+        peopleStatus.setAttribute("aria-live","polite");
+        const label=platform.document.createElement("span");
+        label.id="map-selected-people-caption";
+        const clear=platform.document.createElement("button");
+        clear.type="button";clear.id="map-selection-clear-people";clear.textContent="×";
+        clear.setAttribute("aria-label","Clear selected map people");
+        peopleStatus.append(label,clear);operationsMap.append(peopleStatus);
+        const clearPeople=()=>{
+          selectedMapPeople=[];mapPeekSelection=undefined;
+          renderPeopleSelection();refreshSelectedSheetPeek();
+        };
+        // After a long-touch marquee some Chromium paths dispatch pointerup
+        // but suppress its compatibility click. Honor the touch release,
+        // with normal mouse/keyboard click support retained.
+        let lastTouchClear=0;
+        clear.addEventListener("pointerup",event=>{
+          if(event.pointerType!=="touch")return;
+          lastTouchClear=Date.now();clearPeople();
+        });
+        clear.addEventListener("click",()=>{
+          if(Date.now()-lastTouchClear>=450)clearPeople();
+        });
+      }
+      return {svg,routeLayer,wpLayer,dragLayer,marquee,routeStatus,peopleStatus};
+    }
+    function renderPeopleSelection(){
+      const ui=ensureMapDraftUi();if(!ui)return;
+      const known=operationsMap.querySelector("#map-contact-badge");
+      if(known)known.setAttribute("aria-pressed",
+        String(selectedMapPeople.includes(known.dataset.personId)));
+      ui.peopleStatus.hidden=!selectedMapPeople.length;
+      if(selectedMapPeople.length){
+        field("#map-selected-people-caption").textContent=
+          `${selectedMapPeople.length} reported person selected · Area evidence only · No group order sent`;
+        positionMapHudStatus(ui.peopleStatus);
+      }
+    }
+    function positionMapHudStatus(status){
+      if(!status||status.hidden)return;
+      const map=operationsMap.getBoundingClientRect(),box=status.getBoundingClientRect();
+      if(!(map.width>0&&map.height>0&&box.width>0&&box.height>0))return;
+      const blockers=[
+        ...operationsMap.querySelectorAll(
+          "[data-draft-waypoint-index], [data-delete-draft-waypoint], #map-contact-badge, #map-scale-hud, #map-route-draft-status:not([hidden]), #map-people-selection-status:not([hidden]), .map-selection-bar:not([hidden])"),
+        field("#field-alert-box")
+      ].filter(n=>n&&n!==status&&n.hidden!==true)
+       .map(n=>n.getBoundingClientRect()).filter(r=>r.width>0&&r.height>0);
+      const places=[
+        {x:7,y:map.height-box.height-7,bias:0},
+        {x:map.width-box.width-7,y:map.height-box.height-7,bias:1},
+        {x:7,y:7,bias:40},
+        {x:map.width-box.width-7,y:7,bias:41}
+      ];
+      const best=places.map(item=>{
+        const x=Math.max(7,Math.min(map.width-box.width-7,item.x));
+        const y=Math.max(7,Math.min(map.height-box.height-7,item.y));
+        const left=map.left+x,top=map.top+y;
+        const overlap=blockers.reduce((sum,r)=>{
+          const padding=17;
+          return sum+Math.max(0,Math.min(left+box.width,r.right+padding)
+            -Math.max(left,r.left-padding))
+            *Math.max(0,Math.min(top+box.height,r.bottom+padding)
+            -Math.max(top,r.top-padding));
+        },0);
+        return {x,y,penalty:overlap*10+item.bias};
+      }).sort((a,b)=>a.penalty-b.penalty)[0];
+      status.style.left=Math.round(best.x)+"px";
+      status.style.top=Math.round(best.y)+"px";
+      status.style.right="auto";status.style.bottom="auto";
+    }
+    function positionDraftRouteStatus(){
+      positionMapHudStatus(operationsMap.querySelector("#map-route-draft-status"));
+    }
+    function renderDraftRoute(){
+      const ui=ensureMapDraftUi();if(!ui)return;
+      const {routeLayer,wpLayer,routeStatus}=ui;
+      const focused=platform.document.activeElement;
+      const focusIndex=focused?.closest?.("[data-draft-waypoint-index]")?.dataset.draftWaypointIndex;
+      routeLayer.replaceChildren();wpLayer.replaceChildren();
+      if(!mapRouteDraft||!mapRouteDraft.points.length){
+        routeStatus.hidden=true;return;
+      }
+      const origin=mapRouteDraft.origin;
+      const points=[origin,...mapRouteDraft.points];
+      mapSvgNode("path",{id:"map-draft-route-line",class:"map-draft-route-line",
+        d:points.map((p,i)=>`${i?"L":"M"}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ")},routeLayer);
+      for(const [index,p] of mapRouteDraft.points.entries()){
+        const active=index===routeSelectedIndex;
+        const marker=mapSvgNode("g",{"data-draft-waypoint-index":index,role:"button",
+          tabindex:"0","aria-label":`Draft waypoint ${index+1}, ${p.name}. ${index===mapRouteDraft.points.length-1?"Hold and drag to extend route.":"Tap to select."}`},wpLayer);
+        mapSvgNode("circle",{cx:p.x,cy:p.y,r:"14",class:"map-waypoint-mark"},marker);
+        mapSvgNode("circle",{cx:p.x,cy:p.y,r:"11",class:"map-waypoint-hit"},marker);
+        const text=mapSvgNode("text",{x:p.x,y:p.y+4,"text-anchor":"middle",
+          class:"map-waypoint-number"},marker);
+        text.textContent=String(index+1);
+        if(active){
+          const deleteNode=mapSvgNode("g",{"data-delete-draft-waypoint":index,
+            role:"button",tabindex:"0","aria-label":`Delete waypoint ${index+1}`},wpLayer);
+          const dx=p.x+77,dy=p.y-60;
+          mapSvgNode("circle",{cx:dx,cy:dy,r:"15",class:"map-waypoint-delete"},deleteNode);
+          mapSvgNode("circle",{cx:dx,cy:dy,r:"12",class:"map-waypoint-delete-hit"},deleteNode);
+          mapSvgNode("path",{d:`M${dx-5} ${dy-5}L${dx+5} ${dy+5}M${dx+5} ${dy-5}L${dx-5} ${dy+5}`,
+            class:"map-waypoint-delete-x"},deleteNode);
+        }
+      }
+      routeStatus.hidden=false;
+      field("#map-route-draft-caption").textContent=
+        `Ortega · ${mapRouteDraft.points.length} waypoint${mapRouteDraft.points.length===1?"":"s"} · Area-origin draft only, not sent`;
+      if(focusIndex!==undefined){
+        wpLayer.querySelector('[data-draft-waypoint-index="'+focusIndex+'"]')
+          ?.focus({preventScroll:true});
+      }
+      positionDraftRouteStatus();
+    }
+    function renderRouteDragPreview(mode,start,end){
+      const ui=ensureMapDraftUi();if(!ui)return;
+      ui.dragLayer.replaceChildren();
+      if(mode==="marquee"){
+        ui.marquee.removeAttribute("hidden");
+        Object.entries({x:Math.min(start.x,end.x),y:Math.min(start.y,end.y),
+          width:Math.abs(end.x-start.x),height:Math.abs(end.y-start.y)})
+          .forEach(([key,value])=>ui.marquee.setAttribute(key,String(value)));
+        return;
+      }
+      ui.marquee.setAttribute("hidden","");
+      if(!end)return;
+      const route=mapRouteDraft?.points??[];
+      const all=mode==="extend"&&mapRouteDraft
+        ? [mapRouteDraft.origin,...route,end] : [start,end];
+      mapSvgNode("path",{class:"map-draft-drag-line",
+        d:all.map((p,i)=>`${i?"L":"M"}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ")},
+      ui.dragLayer);
+      mapSvgNode("circle",{cx:end.x,cy:end.y,r:"12",
+        class:"map-draft-drag-destination"},ui.dragLayer);
+    }
+    function clearRouteGestureVisuals(){
+      const ui=ensureMapDraftUi();if(!ui)return;
+      ui.dragLayer.replaceChildren();
+      ui.marquee.setAttribute("hidden","");
+    }
+    function addWaypoint(p,extend=false){
+      if(!p||!routeSourceIdentity())return;
+      const source=routeSourceIdentity();
+      if(extend && (!mapRouteDraft || mapRouteDraft.source!==source))return;
+      if(!extend){
+        const badge=operationsMap.querySelector("#map-contact-badge");
+        if(!badge || badge.getAttribute("aria-disabled")==="true")return;
+        mapRouteDraft={source,personIds:["ortega"],
+          origin:{x:Number(badge.dataset.originX),y:Number(badge.dataset.originY)},
+          points:[]};
+      }
+      if(mapRouteDraft.points.length>=MAX_DRAFT_WAYPOINTS)return;
+      mapRouteDraft.points.push(p);
+      routeSelectedIndex=null;
+      renderDraftRoute();
+    }
+    function selectMapPeopleInRect(a,b){
+      const svg=operationsMap.querySelector(".synthetic-range svg");
+      const r={left:Math.min(a.x,b.x),right:Math.max(a.x,b.x),
+        top:Math.min(a.y,b.y),bottom:Math.max(a.y,b.y)};
+      // Only admitted markers qualify; never create unobserved characters.
+      const matches=[];
+      for(const n of svg.querySelectorAll("[data-map-person]")){
+        if(n.getAttribute("aria-disabled")==="true")continue;
+        const contact=picture?.contact;
+        if(!contact||n.dataset.personId!==contact.id||
+          !["present","last-known"].includes(contact.state))continue;
+        const x=Number(n.dataset.displayX),y=Number(n.dataset.displayY);
+        if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom)
+          matches.push(n.dataset.personId);
+      }
+      selectedMapPeople=[...new Set(matches)];
+      if(selectedMapPeople.length===1)mapPeekSelection={kind:"object",id:selectedMapPeople[0]};
+      else if(selectedMapPeople.length>1)
+        mapPeekSelection={kind:"people-group",ids:[...selectedMapPeople]};
+      else mapPeekSelection=undefined;
+      renderPeopleSelection();refreshSelectedSheetPeek();
+    }
     function selectLocalCoordinate(event){
       if(!Number.isFinite(event.clientX)||!Number.isFinite(event.clientY)
         || terminal || projection?.control.status!=="active" || workspaceSection!=="map")return;
@@ -1244,12 +1556,43 @@
     operationsMap.addEventListener("pointerdown",event=>{
       if(event.pointerType!=="touch" || !event.target.closest?.(".synthetic-range svg"))return;
       mapTouches.set(event.pointerId,{x:event.clientX,y:event.clientY});
-      // A fresh contact after a completed gesture is a new selectable tap.
+      // A quick drag remains pan. Only a STATIONARY hold arms the older
+      // prototype's explicit route/waypoint/marquee gesture.
       if(mapTouches.size===1 && !pinchBase){
         mapPinchSuppressUntil=0;
-        panGesture={id:event.pointerId,startX:event.clientX,startY:event.clientY,active:false};
+        const object=event.target.closest?.("[data-map-id]");
+        const waypoint=event.target.closest?.("[data-draft-waypoint-index]");
+        const person=object?.dataset.mapPerson==="true" &&
+          object.getAttribute("aria-disabled")!=="true";
+        const index=waypoint?Number(waypoint.dataset.draftWaypointIndex):null;
+        const candidate=person?"route":
+          index!==null && index===mapRouteDraft?.points.length-1?"extend":
+          !object && !waypoint?"marquee":null;
+        const gesture=panGesture={id:event.pointerId,
+          startX:event.clientX,startY:event.clientY,active:false,
+          mode:"pending",candidate,index,snapId:null,destination:null};
+        clearMapHoldTimer();
+        if(candidate){
+          mapGestureHoldTimer=platform.setTimeout(()=>{
+            mapGestureHoldTimer=null;
+            if(panGesture!==gesture||gesture.active||mapTouches.size!==1||
+              !mapTouches.has(gesture.id)||!routeSourceIdentity())return;
+            const start=mapPointFromScreen(gesture.startX,gesture.startY);
+            if(!start)return;
+            gesture.mode=candidate;
+            gesture.origin=candidate==="route"
+              ? {x:Number(object.dataset.originX),y:Number(object.dataset.originY)}
+              : candidate==="extend"?mapRouteDraft.points.at(-1):start;
+            hideMapQuickActions();
+            mapPinchSuppressUntil=Date.now()+750;
+            if(candidate==="marquee")
+              renderRouteDragPreview("marquee",start,start);
+            else renderRouteDragPreview(candidate,gesture.origin,gesture.origin);
+          },MAP_HOLD_MS);
+        }
       }
       if(mapTouches.size===2){
+        clearMapHoldTimer();clearRouteGestureVisuals();
         panGesture=undefined;
         const distance=pinchDistance();
         pinchBase=distance>4?{distance,zoom:mapZoom}:undefined;
@@ -1263,19 +1606,29 @@
       const current={x:event.clientX,y:event.clientY};
       mapTouches.set(event.pointerId,current);
       if(mapTouches.size===1&&panGesture?.id===event.pointerId&&!pinchBase){
-        if(!panGesture.active&&Math.hypot(current.x-panGesture.startX,
-          current.y-panGesture.startY)>=8){
-          panGesture.active=true;
-          hideMapQuickActions();
-          // Touch already has implicit capture on its starting SVG target.
-          // Transferring capture to the parent would fire a bubbled
-          // lostpointercapture and prematurely retire this same pan gesture.
+        const gesture=panGesture;
+        if(["route","extend","marquee"].includes(gesture.mode)){
+          event.preventDefault();
+          const from=mapPointFromScreen(gesture.startX,gesture.startY);
+          const to=mapPointFromScreen(current.x,current.y);
+          if(gesture.mode==="marquee"){
+            if(from&&to)renderRouteDragPreview("marquee",from,to);
+          }else{
+            gesture.destination=dragDestination(current.x,current.y,gesture);
+            renderRouteDragPreview(gesture.mode,gesture.origin,gesture.destination);
+          }
+          mapPinchSuppressUntil=Date.now()+750;
+          return;
         }
-        if(panGesture.active){
+        if(!gesture.active&&Math.hypot(current.x-gesture.startX,
+          current.y-gesture.startY)>=8){
+          gesture.active=true;clearMapHoldTimer();
+          hideMapQuickActions();
+          // Android already captures the touched SVG target implicitly.
+        }
+        if(gesture.active){
           event.preventDefault();
           panMapCamera(previous,current);
-          // A drag must not turn into a synthetic coordinate selection or an
-          // implicit map-feature click when Android releases the finger.
           mapPinchSuppressUntil=Date.now()+750;
         }
         return;
@@ -1291,10 +1644,28 @@
     });
     const endMapTouch=event=>{
       if(!mapTouches.has(event.pointerId))return;
-      if(pinchBase||panGesture?.active)mapPinchSuppressUntil=Date.now()+750;
+      const g=panGesture?.id===event.pointerId?panGesture:null;
+      clearMapHoldTimer();
+      if(pinchBase||g?.active||g?.mode!=="pending")
+        mapPinchSuppressUntil=Date.now()+750;
+      if(g&&event.type==="pointerup"&&mapTouches.size===1){
+        const distance=Math.hypot(event.clientX-g.startX,event.clientY-g.startY);
+        if(distance>=MAP_DROP_DISTANCE&&g.mode==="route"&&g.destination){
+          addWaypoint(g.destination,false);
+          mapPeekSelection={kind:"object",id:"ortega"};
+          refreshSelectedSheetPeek();
+        }else if(distance>=MAP_DROP_DISTANCE&&g.mode==="extend"&&g.destination){
+          addWaypoint(g.destination,true);
+        }else if(distance>=MAP_DROP_DISTANCE&&g.mode==="marquee"){
+          const start=mapPointFromScreen(g.startX,g.startY),
+            end=mapPointFromScreen(event.clientX,event.clientY);
+          if(start&&end)selectMapPeopleInRect(start,end);
+        }
+      }
+      clearRouteGestureVisuals();
       mapTouches.delete(event.pointerId);
       if(mapTouches.size<2)pinchBase=undefined;
-      if(panGesture?.id===event.pointerId||mapTouches.size===0)panGesture=undefined;
+      if(g||mapTouches.size===0)panGesture=undefined;
       if(operationsMap.hasPointerCapture?.(event.pointerId))
         operationsMap.releasePointerCapture(event.pointerId);
     };
@@ -1953,6 +2324,17 @@
     function selectedPeekData(dialog) {
       if (!mapPeekSelection || !picture || projection?.control.status!=="active") return null;
       const selected=mapPeekSelection;
+      if(selected.kind==="people-group" && Array.isArray(selected.ids)){
+        const count=selected.ids.length;
+        const names=selected.ids.filter(id=>id==="ortega" &&
+          picture?.contact?.id===id && ["present","last-known"].includes(picture.contact.state))
+          .map(()=>"Ortega");
+        const title=`${count} selected reported people`;
+        return {title:dialog===itemsDialog?title+" / Items":
+          dialog===placesDialog?title+" / Places":title,
+          detail:names.length?names.join(" + "):"Selected personnel are not established by received reports.",
+          note:"Selection is local planning only. No combined inventory, precise locations or executable group order are confirmed."};
+      }
       const record=selected.kind==="object" ? mapItems().get(selected.id) : null;
       if(selected.kind==="object" && !record)return null;
       const name=record?.title ?? `Local X ${selected.x}m · Y ${selected.y}m`;
@@ -2855,32 +3237,39 @@
         badge=make("g",{id:"map-contact-badge",class:"range-feature",
           role:"button",tabindex:"0","data-map-id":"ortega",
           "aria-pressed":"false"});
-        const outline=make("rect",{x:"-100",y:"-39",width:"200",height:"77",
-          rx:"12",class:"range-contact-backdrop"});
-        // Keep the invisible enlarged touch target separate from the
-        // visible badge: the latter must retain its focus ring.
-        // Preserve the 200x160 unit touch envelope on phone/landscape
-        // viewports, but cut away the upper-right corner traversed by the
-        // authored Lower route. A rectangular invisible hit target would
-        // steal legitimate Lower-path taps even though the visible badge
-        // sits below that route. The full visible badge remains tappable.
-        const hit=make("path",{d:"M-100 -75H0L100 -40V85H-100Z",
-          class:"range-place-hit"});
-        const title=make("text",{x:"0",y:"-3","text-anchor":"middle",
+        // The original v0.7 uses different marker silhouettes for people
+        // and places. Reuse that distinction without its large prototype UI.
+        const outline=make("circle",{cx:"0",cy:"0",r:"11",
+          class:"range-contact-backdrop"});
+        const hit=make("circle",{cx:"0",cy:"0",r:"91",
+          class:"range-place-hit range-person-hit"});
+        const diamond=make("path",{d:"M0 -7L7 0L0 7L-7 0Z",
+          class:"range-person-core","aria-hidden":"true"});
+        const title=make("text",{x:"24",y:"-5","text-anchor":"start",
           class:"range-contact-label"});
-        const qualifier=make("text",{x:"0",y:"22","text-anchor":"middle",
+        const qualifier=make("text",{x:"24",y:"16","text-anchor":"start",
           class:"range-contact-subline"});
-        badge.append(outline,hit,title,qualifier);
+        badge.append(hit,outline,diamond,title,qualifier);
+        badge.dataset.mapPerson="true";
+        badge.dataset.personId="ortega";
         svg.append(badge);
       }
-      // Offset is badge *layout*, not a claimed contact coordinate.
-      badge.setAttribute("transform",
-        `translate(${Math.max(106,Math.min(894,cx+88))} ${Math.max(85,Math.min(865,cy+115))})`);
-      const label=contact.state==="present"?"AREA CONTACT":"LAST-KNOWN AREA";
+      // Layout anchor sits to the northwest of the reported AREA marker,
+      // away from both authored routes. It is NOT an actual GPS observation.
+      // Deliberately separated from Staging Area's genuine known-place dot.
+      const mx=Math.max(110,Math.min(890,cx-40));
+      const my=Math.max(115,Math.min(885,cy-225));
+      badge.setAttribute("transform",`translate(${mx} ${my})`);
+      badge.dataset.displayX=String(mx);
+      badge.dataset.displayY=String(my);
+      badge.dataset.originX=String(cx);
+      badge.dataset.originY=String(cy);
+      badge.dataset.reportArea=contact.area;
+      const qualifier=contact.state==="present"?"AREA CONTACT":"LAST-KNOWN AREA";
       badge.querySelector(".range-contact-label").textContent="Ortega";
-      badge.querySelector(".range-contact-subline").textContent=label;
+      badge.querySelector(".range-contact-subline").textContent=qualifier;
       badge.setAttribute("aria-label",
-        `Ortega · ${label.toLowerCase()} at ${contact.area}; exact position not reported`);
+        `Ortega · ${qualifier.toLowerCase()} at ${contact.area}; exact position not reported`);
     }
     function renderOperations() {
       if (terminal || projection?.control.status !== "active") return;
@@ -2897,6 +3286,20 @@
       reportLayer.hidden = !hasReports;
       const items = mapItems();
       renderContactMapBadge();
+      const source=routeSourceIdentity();
+      if(mapRouteDraft && mapRouteDraft.source!==source){
+        mapRouteDraft=null;routeSelectedIndex=null;
+        clearMapHoldTimer();panGesture=undefined;
+        clearRouteGestureVisuals();
+      }
+      if(selectedMapPeople.length && !source){
+        selectedMapPeople=[];mapPeekSelection=undefined;
+      }
+      // Polling must not replace the DOM node holding implicit Android
+      // pointer capture while the player is dragging the last waypoint.
+      if(!["route","extend","marquee"].includes(panGesture?.mode))
+        renderDraftRoute();
+      renderPeopleSelection();
       const routeReport = routeKnowledge(picture);
       const routeStatus = field("#route-knowledge");
       if (routeStatus.textContent !== routeReport.text) routeStatus.textContent = routeReport.text;
@@ -3123,7 +3526,8 @@
         node.removeAttribute("title"); node.removeAttribute("aria-label");
       }
       hideMapQuickActions();localCoordinate=undefined;mapPeekSelection=undefined;
-      mapTouches.clear();pinchBase=undefined;panGesture=undefined;
+      clearMapHoldTimer();mapRouteDraft=null;routeSelectedIndex=null;selectedMapPeople=[];
+      mapTouches.clear();pinchBase=undefined;panGesture=undefined;clearRouteGestureVisuals();
       mapZoom=0;mapCenterX=500;mapCenterY=500;
       historyList.replaceChildren(); reportedMapItems.replaceChildren(); operationsMap.replaceChildren();
       field("#received-report-history").replaceChildren(); field("#delivered-status-reports").replaceChildren();
@@ -3144,6 +3548,7 @@
       pageCursors = [null]; pageIndex = 0; beforeVersion = null; newItems = false; knownNewest = 1;
       knowledge = undefined; knowledgeFloor = 0; picture = undefined; pictureFloor = 0;
       selectedMapId = "staging-area"; localCoordinate=undefined;mapPeekSelection=undefined;
+      clearMapHoldTimer();mapRouteDraft=null;routeSelectedIndex=null;selectedMapPeople=[];
       composer.value = ""; fenceObservations(); renderHistory();
     }
     function invalidateControl() {
@@ -3409,6 +3814,25 @@
     }
     operationsMap.addEventListener("click", event => {
       if(Date.now()<mapPinchSuppressUntil)return;
+      const deletion=event.target.closest?.("[data-delete-draft-waypoint]");
+      if(deletion){
+        const index=Number(deletion.dataset.deleteDraftWaypoint);
+        if(mapRouteDraft&&Number.isSafeInteger(index)&&index>=0
+          &&index<mapRouteDraft.points.length){
+          mapRouteDraft.points.splice(index,1);
+          if(!mapRouteDraft.points.length)mapRouteDraft=null;
+          routeSelectedIndex=null;renderDraftRoute();
+        }
+        return;
+      }
+      const wp=event.target.closest?.("[data-draft-waypoint-index]");
+      if(wp){
+        const index=Number(wp.dataset.draftWaypointIndex);
+        if(mapRouteDraft&&index>=0&&index<mapRouteDraft.points.length){
+          routeSelectedIndex=index;renderDraftRoute();
+        }
+        return;
+      }
       const target = event.target.closest?.("[data-map-id]");
       if(target){
         if(!operationsMap.contains(target)||target.getAttribute("aria-disabled")==="true")return;
@@ -3421,10 +3845,43 @@
         selectLocalCoordinate(event);
     });
     operationsMap.addEventListener("keydown", event => {
+      if(["Enter"," "].includes(event.key)){
+        const deletion=event.target.closest?.("[data-delete-draft-waypoint]");
+        const wp=event.target.closest?.("[data-draft-waypoint-index]");
+        if(deletion||wp){
+          event.preventDefault();
+          if(deletion){
+            const idx=Number(deletion.dataset.deleteDraftWaypoint);
+            if(mapRouteDraft&&idx>=0&&idx<mapRouteDraft.points.length){
+              mapRouteDraft.points.splice(idx,1);
+              if(!mapRouteDraft.points.length)mapRouteDraft=null;
+              routeSelectedIndex=null;renderDraftRoute();
+            }
+          }else{
+            routeSelectedIndex=Number(wp.dataset.draftWaypointIndex);
+            renderDraftRoute();
+          }
+          return;
+        }
+      }
       const target = event.target.closest?.('g[data-map-id]');
       if (!target || !operationsMap.contains(target) || target.getAttribute("aria-disabled") === "true"
         || !["Enter", " "].includes(event.key)) return;
       event.preventDefault();
+      if(event.shiftKey && target.dataset.mapPerson==="true" && !event.repeat){
+        const id=target.dataset.personId;
+        const contact=picture?.contact;
+        if(contact?.id===id && ["present","last-known"].includes(contact.state)){
+          selectedMapPeople=selectedMapPeople.includes(id)
+            ?selectedMapPeople.filter(item=>item!==id):[...selectedMapPeople,id];
+          mapPeekSelection=selectedMapPeople.length===1
+            ?{kind:"object",id}
+            :selectedMapPeople.length>1
+              ?{kind:"people-group",ids:[...selectedMapPeople]}:undefined;
+          renderPeopleSelection();refreshSelectedSheetPeek();
+        }
+        return;
+      }
       if (!event.repeat) selectMapObject(target.dataset.mapId);
     });
     function revealMapPreparationBlocker() {
