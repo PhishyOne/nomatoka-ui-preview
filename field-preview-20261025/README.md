@@ -1,7 +1,7 @@
 # Nomatoka interactive UI-only test — October 26 controls update
 
 This GitHub Pages UI build is derived from canonical game Draft PR #697
-at exact commit ff5890f66dd43a1d0df570f516e8db290ecb6787.
+at exact commit a762849ad131ef263fc7057bfad6b5e4e56419a8.
 The frontend JavaScript and CSS are byte-identical to that game tree.
 This nested static page uses synthetic mock-api.js as its only API layer.
 It blocks Send, Sign out and outside API calls; there is no game database,
@@ -105,3 +105,9 @@ after rotation or keyboard resize; explicit route text copying also restores
 the existing minimized command composer and focuses its REAL textarea.
 The waypoint red-X after extension is covered by full Chromium regression.
 No server command is submitted by any gesture or text-copy action.
+
+October 28 final independent keyboard-focus repair and touch recovery:
+waypoint deletion focuses the next surviving point, or the map after
+the final deletion. Immediate touch release on Use text works even if
+Chromium suppresses its compatibility click. The one real composer is
+visible and focused after text-copy, with no duplicate insertion or Send.

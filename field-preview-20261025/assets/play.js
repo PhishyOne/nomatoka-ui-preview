@@ -1046,7 +1046,7 @@
           renderDraftRoute();
           operationsMap.focus({preventScroll:true});
         });
-        use.addEventListener("click",()=>{
+        const copyRouteText=()=>{
           if(!mapRouteDraft||!canEditDraft())return;
           if(selectedMapPeople.length>1){
             label.textContent="Group movement commands are not supported yet; no order sent.";
@@ -1067,9 +1067,39 @@
             if(dockMinimized){
               field("#field-restore-dock")?.click();
               composer.focus({preventScroll:true});
+              // A touch pointerup copy runs before Chromium's compatibility
+              // click/focus default. Reassert focus on the next paint, but
+              // only while this same authenticated draft is still editable.
+              platform.requestAnimationFrame?.(()=>{
+                if(!dockMinimized && canEditDraft())composer.focus({preventScroll:true});
+              });
             }
             label.textContent="Route copied as planning TEXT only; not an executable waypoint. Nothing sent.";
           }
+        };
+        // A long SVG touch-drag can suppress the following compatibility
+        // click on Android, even when the player's finger genuinely releases
+        // on this control. Honor the button's touch pointerup directly while
+        // still supporting ordinary keyboard/mouse click, once per touch.
+        let lastRouteTouchCopyAt=0;
+        use.addEventListener("pointerup",event=>{
+          if(event.pointerType!=="touch")return;
+          lastRouteTouchCopyAt=Date.now();
+          copyRouteText();
+        });
+        use.addEventListener("click",event=>{
+          if(event.detail!==0 && Date.now()-lastRouteTouchCopyAt<450){
+            // Do not copy twice; the compatibility click can still alter
+            // focus after the pointerup restored the one real composer.
+            if(!dockMinimized && canEditDraft()){
+              composer.focus({preventScroll:true});
+              platform.requestAnimationFrame?.(()=>{
+                if(!dockMinimized && canEditDraft())composer.focus({preventScroll:true});
+              });
+            }
+            return;
+          }
+          copyRouteText();
         });
       }
       let peopleStatus=operationsMap.querySelector("#map-people-selection-status");
@@ -1297,6 +1327,23 @@
       mapRouteDraft.points.push(p);
       routeSelectedIndex=null;
       renderDraftRoute();
+    }
+    function removeDraftWaypoint(index){
+      if(!mapRouteDraft||!Number.isSafeInteger(index)||index<0
+        ||index>=mapRouteDraft.points.length)return false;
+      mapRouteDraft.points.splice(index,1);
+      if(!mapRouteDraft.points.length)mapRouteDraft=null;
+      routeSelectedIndex=null;
+      renderDraftRoute();
+      // Both touch and keyboard deletion destroy their own focused SVG node.
+      // Restore focus to the surviving route waypoint, or to the map if
+      // this was the last one. Never strand keyboard focus on <body>.
+      const next=mapRouteDraft
+        ?operationsMap.querySelector('[data-draft-waypoint-index="'+
+          Math.min(index,mapRouteDraft.points.length-1)+'"]')
+        :operationsMap;
+      (next??operationsMap).focus({preventScroll:true});
+      return true;
     }
     function selectMapPeopleInRect(a,b){
       const svg=operationsMap.querySelector(".synthetic-range svg");
@@ -3906,13 +3953,7 @@
       if(Date.now()<mapPinchSuppressUntil)return;
       const deletion=event.target.closest?.("[data-delete-draft-waypoint]");
       if(deletion?.dataset.deleteDraftWaypoint!==undefined){
-        const index=Number(deletion.dataset.deleteDraftWaypoint);
-        if(mapRouteDraft&&Number.isSafeInteger(index)&&index>=0
-          &&index<mapRouteDraft.points.length){
-          mapRouteDraft.points.splice(index,1);
-          if(!mapRouteDraft.points.length)mapRouteDraft=null;
-          routeSelectedIndex=null;renderDraftRoute();
-        }
+        removeDraftWaypoint(Number(deletion.dataset.deleteDraftWaypoint));
         return;
       }
       const wp=event.target.closest?.("[data-draft-waypoint-index]");
@@ -3941,13 +3982,9 @@
         if(deletion?.dataset.deleteDraftWaypoint!==undefined
           || wp?.dataset.draftWaypointIndex!==undefined){
           event.preventDefault();
+          if(event.repeat)return; // One keypress cannot delete several nodes.
           if(deletion?.dataset.deleteDraftWaypoint!==undefined){
-            const idx=Number(deletion.dataset.deleteDraftWaypoint);
-            if(mapRouteDraft&&idx>=0&&idx<mapRouteDraft.points.length){
-              mapRouteDraft.points.splice(idx,1);
-              if(!mapRouteDraft.points.length)mapRouteDraft=null;
-              routeSelectedIndex=null;renderDraftRoute();
-            }
+            removeDraftWaypoint(Number(deletion.dataset.deleteDraftWaypoint));
           }else{
             routeSelectedIndex=Number(wp.dataset.draftWaypointIndex);
             renderDraftRoute();
