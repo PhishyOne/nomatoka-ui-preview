@@ -1333,13 +1333,16 @@
       routeSelectedIndex=null;
       renderDraftRoute();
       // Both touch and keyboard deletion destroy their own focused SVG node.
-      // Restore focus to the surviving route waypoint, or to the map if
-      // this was the last one. Never strand keyboard focus on <body>.
-      const next=mapRouteDraft
-        ?operationsMap.querySelector('[data-draft-waypoint-index="'+
-          Math.min(index,mapRouteDraft.points.length-1)+'"]')
-        :operationsMap;
-      (next??operationsMap).focus({preventScroll:true});
+      // Prefer the nearest VISIBLE survivor; a hidden waypoint may still be
+      // programmatically focusable with tabindex=-1, so checking the index
+      // alone is insufficient after pan/zoom.
+      const visible=mapRouteDraft?[...operationsMap.querySelectorAll(
+        "[data-draft-waypoint-index]")].filter(n=>
+          n.getAttribute("aria-disabled")!=="true"
+          &&n.getAttribute("tabindex")!=="-1"):[];
+      const next=visible.find(n=>Number(n.dataset.draftWaypointIndex)>=index)
+        ??visible.at(-1)??operationsMap;
+      next.focus({preventScroll:true});
       return true;
     }
     function selectMapPeopleInRect(a,b){
@@ -1642,9 +1645,12 @@
       const zoomLabel = field("#field-map-zoom-readout");
       if (zoomLabel) zoomLabel.textContent =
         `ZOOM ${Math.round(Math.pow(1.35, mapZoom)*100)}% · TAP TO SELECT`;
+      // Position the delete hit target in its new camera coordinates FIRST.
+      // Otherwise the visibility pass can mark an old, offscreen position
+      // disabled even when the red X was just moved back into view.
+      positionDraftDeleteControl();
       sizeMapTargets();
       renderMapScale(size);
-      positionDraftDeleteControl();
       // Camera and window geometry change independently of route source.
       // Keep the local route / people HUD buttons inside the map after
       // rotation, visual keyboard resize, or dock restoration.
