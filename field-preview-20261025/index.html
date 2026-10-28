@@ -98,6 +98,11 @@
           <h2 id="people-title">People</h2>
           <button id="close-people" class="quiet-button" type="button" autofocus>Close</button>
         </div>
+        <section id="people-context" class="field-sheet-context" hidden aria-label="Selected map context">
+          <h3 id="people-context-title"></h3>
+          <p id="people-context-detail" class="panel-copy"></p>
+          <p id="people-context-note" class="panel-copy"></p>
+        </section>
         <p id="people-scope" class="panel-copy">Active mercenary · commander records and received reports. Last reported information is not a live position.</p>
         <div class="people-actions">
           <button id="people-view-reports" class="secondary-button" type="button" aria-describedby="people-reports-empty" disabled>View reports</button>
@@ -130,6 +135,11 @@
           <h2 id="field-items-title" tabindex="-1">Items</h2>
           <button id="close-field-items" type="button" class="quiet-button">Close</button>
         </div>
+        <section id="field-items-context" class="field-sheet-context" hidden aria-label="Selected map context">
+          <h3 id="field-items-context-title"></h3>
+          <p id="field-items-context-detail" class="panel-copy"></p>
+          <p id="field-items-context-note" class="panel-copy"></p>
+        </section>
         <p id="field-items-scope" class="panel-copy">No inventory or equipment observations are available in this alpha. Nothing here is simulated as an owned item.</p>
       </dialog>
       <dialog id="field-places" aria-labelledby="field-places-title" aria-describedby="field-places-scope">
@@ -137,6 +147,11 @@
           <h2 id="field-places-title">Places</h2>
           <button id="close-field-places" type="button" class="quiet-button">Close</button>
         </div>
+        <section id="field-places-context" class="field-sheet-context" hidden aria-label="Selected map context">
+          <h3 id="field-places-context-title"></h3>
+          <p id="field-places-context-detail" class="panel-copy"></p>
+          <p id="field-places-context-note" class="panel-copy"></p>
+        </section>
         <p id="field-places-scope" class="panel-copy">Places and routes from the authored synthetic test-range briefing, not live positions or confirmed passage.</p>
         <div class="field-place-options" role="group" aria-label="Select a known briefing target on the real map">
           <button type="button" data-place-focus="staging-area">Staging Area</button>

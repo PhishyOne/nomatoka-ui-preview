@@ -1,7 +1,7 @@
 # Nomatoka interactive UI-only test — October 26 controls update
 
 This GitHub Pages UI build is derived from canonical game Draft PR #697
-at exact commit ca114ba80716f419ad39ccc91ee2b58fe8cf43b7.
+at exact commit 9d411ade0a00b9b3a0036c9eda6bc1a2d7ec87df.
 The frontend JavaScript and CSS are byte-identical to that game tree.
 This nested static page uses synthetic mock-api.js as its only API layer.
 It blocks Send, Sign out and outside API calls; there is no game database,
@@ -50,3 +50,33 @@ rectangular SVG viewport under xMidYMid meet, not only the square viewBox.
 When the viewport is wider than the authored 10 km range on either axis,
 that axis stays centered instead of revealing extra unauthored geography.
 Scale and genuine tap/zoom behavior remain unchanged.
+
+Mobile contextual menu integration, owner-requested: an explicit map feature
+selection drives the first People, Items or Places peek from the admitted
+public operations picture. No selection means a general half-height peek.
+Second tap on the same tab expands its existing full list; third tap restores
+the contextual/general peek. Repeated taps alternate. The non-modal sheet
+leaves the map above, the command dock and nav below; private content clears
+on authority turnover. Ortega is a truthful area-contact label, not a live GPS
+coordinate. Items without received ownership evidence remain unknown.
+
+October 27 independent P2 corrections: Tools -> View known locations
+expands a contextual Places peek before focusing the actual location list.
+Place-specific People peeks now use admitted contact.area and contact.state:
+Ortega recorded present at Staging Area or last-known at Ridge is qualified
+precisely without claiming exact position or inventing other people.
+
+October 27 keyboard/touch review P2: Ortega area-contact badge now renders
+its keyboard focus ring on a separate visible backdrop, preserves a
+finger-sized invisible hit target, and no longer intercepts Staging Area or
+Ridge marker taps. Exact reported contact qualification is unchanged.
+
+October 27 disabled contact P2: use the existing range-feature enabled/
+disabled pointer-event rules for the Ortega badge, with keyboard focus and
+44px touch hit retained on normal phone geometry. A short/zoom-clipped
+disabled badge cannot consume map taps or create a dead region.
+
+October 28 Lower path overlap P2: the invisible contact hit target uses
+an authored shape that preserves 44px mobile touch coverage while avoiding
+the existing Lower-route line below the badge. Area/contact evidence,
+keyboard focus, disabled-state and mock no-write behavior are unchanged.
