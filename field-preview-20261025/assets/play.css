@@ -2861,3 +2861,30 @@ body[data-play-state="authenticated"] .workspace-header .field-top-icon.ico.big 
       max-height:3rem;
     }
 }
+
+
+/* Owner-selected map contextual peek with explicit second-tap expansion.
+   Read-only, nonmodal and confined above the ONE real command dock. The
+   measured viewport size, not a fixed vh guess, determines peek height. */
+.field-sheet-context[hidden]{display:none!important}
+#operational-workspace > :is(#people,#field-items,#field-places)[open][data-sheet-content="context"]
+  > :not(.notification-heading):not(.field-sheet-context) {
+  display:none!important;
+}
+.field-sheet-context h3 {margin:.4rem 0;color:var(--gold)}
+.field-sheet-context .panel-copy {margin:.35rem 0;overflow-wrap:anywhere}
+@media (max-width:64rem),(max-height:44rem) {
+  #operational-workspace > :is(#people,#field-items,#field-places)[open][data-sheet-size="peek"] {
+    top:var(--workspace-sheet-peek-top,var(--workspace-sheet-top))!important;
+  }
+}
+#map-contact-badge .range-contact-backdrop {
+  fill:#263329;stroke:#d1a75c;stroke-width:5px;rx:12px;
+}
+#map-contact-badge .range-place-hit {fill:transparent;stroke:transparent}
+#map-panel #map-contact-badge .range-contact-label {
+  font-size:24px;stroke:none;stroke-width:0;fill:#f2ddb1;font-weight:700;
+}
+#map-panel #map-contact-badge .range-contact-subline {
+  font-size:16px;stroke:none;stroke-width:0;fill:#c3d0b4;font-weight:400;
+}

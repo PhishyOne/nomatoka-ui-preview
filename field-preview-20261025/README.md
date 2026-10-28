@@ -1,7 +1,7 @@
 # Nomatoka interactive UI-only test — October 26 controls update
 
 This GitHub Pages UI build is derived from canonical game Draft PR #697
-at exact commit ca114ba80716f419ad39ccc91ee2b58fe8cf43b7.
+at exact commit f36fd1953a02938c455509cff09270fde28d4541.
 The frontend JavaScript and CSS are byte-identical to that game tree.
 This nested static page uses synthetic mock-api.js as its only API layer.
 It blocks Send, Sign out and outside API calls; there is no game database,
@@ -50,3 +50,12 @@ rectangular SVG viewport under xMidYMid meet, not only the square viewBox.
 When the viewport is wider than the authored 10 km range on either axis,
 that axis stays centered instead of revealing extra unauthored geography.
 Scale and genuine tap/zoom behavior remain unchanged.
+
+Mobile contextual menu integration, owner-requested: an explicit map feature
+selection drives the first People, Items or Places peek from the admitted
+public operations picture. No selection means a general half-height peek.
+Second tap on the same tab expands its existing full list; third tap restores
+the contextual/general peek. Repeated taps alternate. The non-modal sheet
+leaves the map above, the command dock and nav below; private content clears
+on authority turnover. Ortega is a truthful area-contact label, not a live GPS
+coordinate. Items without received ownership evidence remain unknown.

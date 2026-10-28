@@ -918,6 +918,9 @@
     }
     const quickPanel = () => operationsMap.querySelector(".map-selection-bar");
     let mapQuickAnchor, mapPinchSuppressUntil = 0;
+    // An explicit selection is distinct from the map's default Staging Area
+    // reference. Nothing is selected until a player taps an actual feature.
+    let mapPeekSelection;
     // Local planning cursor belongs to this device/authority observation,
     // NOT a discovered object or a server-confirmed waypoint. Nothing about
     // it enters the shared operations picture or durable history.
@@ -945,7 +948,9 @@
       if(point.x<0||point.x>1000||point.y<0||point.y>1000)return;
       const x=Math.round(point.x)*10,y=Math.round(1000-point.y)*10;
       localCoordinate={x,y,svgX:point.x,svgY:point.y};
+      mapPeekSelection={kind:"coordinate",x,y};
       renderLocalCoordinateMarker();
+      refreshSelectedSheetPeek();
       const panel=quickPanel();
       if(!panel)return;
       panel.dataset.selected="local-coordinate";
@@ -1061,7 +1066,14 @@
     });
     operationsMap.addEventListener("click", event=>{
       const close=event.target.closest?.("#map-quick-close");
-      if (close) {event.preventDefault();hideMapQuickActions();return;}
+      if (close) {
+        event.preventDefault();hideMapQuickActions();
+        // Dismiss also clears the explicit context. Staging Area remains the
+        // map's harmless default but no longer drives contextual menus.
+        mapPeekSelection=undefined;
+        refreshSelectedSheetPeek();
+        return;
+      }
       const add=event.target.closest?.("#map-quick-add-point");
       if(add && !quickPanel()?.hidden && quickPanel()?.dataset.selected==="local-coordinate"){
         event.preventDefault();
@@ -1546,6 +1558,12 @@
       const sheetTop=Math.max(visualTop+4,(header?.bottom??visualTop)+4);
       px("--workspace-sheet-top",sheetTop);
       px("--workspace-sheet-bottom",Math.max(0,platform.innerHeight-boundary));
+      const available=Math.max(0,boundary-sheetTop);
+      // Half of the region above the command dock stays visible as Map. On a
+      // 320x420 screen a 50px sheet is unusable: retain at least a small map
+      // strip while allocating as much of the scarce region as possible.
+      const preservedMap=Math.min(available*.5,Math.max(16,available-90));
+      px("--workspace-sheet-peek-top",sheetTop+Math.max(0,preservedMap));
       sizeMapTargets();
     }
     platform.visualViewport?.addEventListener("resize", sizeMobileWorkspace);
@@ -1932,18 +1950,86 @@
       if (contextPanel!==except) {contextPanel.hidden=true;contextButton.setAttribute("aria-expanded","false");}
       syncBottomNavSelection();
     }
+    function selectedPeekData(dialog) {
+      if (!mapPeekSelection || !picture || projection?.control.status!=="active") return null;
+      const selected=mapPeekSelection;
+      const record=selected.kind==="object" ? mapItems().get(selected.id) : null;
+      if(selected.kind==="object" && !record)return null;
+      const name=record?.title ?? `Local X ${selected.x}m · Y ${selected.y}m`;
+      const isOrtega=selected.kind==="object"&&selected.id==="ortega";
+      const reported=picture.contact;
+      const observedObject=selected.kind==="object"
+        ? picture.reports?.find(report=>report.id===selected.id) : null;
+      if(dialog===itemsDialog){
+        if(observedObject)return {title:`${name} / Items`,
+          detail:record.known,
+          note:`Received source: ${record.source}. ${record.unknown}`};
+        return {title:`${name} / Items`,
+          detail:`No received inventory or equipment observations identify items belonging to ${name}. Ownership and quantities are unknown.`,
+          note:"No items are invented from a map label or missing reports."};
+      }
+      if(dialog===placesDialog){
+        const related=isOrtega && reported
+          ? record.known : record?.known ?? "Local planning coordinate, not a confirmed location report.";
+        return {title:`${name} / Places`,detail:related,
+          note:record?.unknown ?? "No person or item position is established by this planning point."};
+      }
+      if(dialog===peopleDialog){
+        if(isOrtega && mercenary){
+          const person=personnelPresentation(mercenary,knowledge,[...observedOrders.values()],picture);
+          return {title:person.name,detail:`${person.status}. ${person.assignment}. ${person.location}.`,
+            note:record.unknown};
+        }
+        return {title:`${name} / People`,
+          detail:"Personnel present at this selected place or object are unconfirmed; received reports do not establish who is there.",
+          note:record?.known ?? "This local coordinate is a planning point, not a personnel sighting."};
+      }
+      return null;
+    }
+    function refreshSelectedSheetPeek(){
+      for(const [dialog,generalDescription] of [
+        [peopleDialog,"people-scope"],[itemsDialog,"field-items-scope"],[placesDialog,"field-places-scope"]]){
+        if(!dialog.open)continue;
+        const mode=dialog.dataset.sheetSize || "peek";
+        const entry=mode==="peek" ? selectedPeekData(dialog) : null;
+        const context=dialog.querySelector(".field-sheet-context");
+        context.replaceChildren(); // private content is never retained invisibly
+        context.hidden=!entry;
+        dialog.dataset.sheetContent=entry?"context":"all";
+        dialog.setAttribute("aria-describedby",entry?context.id:generalDescription);
+        if(!entry)continue;
+        const heading=platform.document.createElement("h3");
+        heading.textContent=entry.title;
+        context.append(heading);
+        for(const text of [entry.detail,entry.note]){
+          const line=platform.document.createElement("p");
+          line.className="panel-copy";line.textContent=text;
+          context.append(line);
+        }
+      }
+    }
+    function setSheetSize(dialog,size) {
+      dialog.dataset.sheetSize=size;
+      refreshSelectedSheetPeek();
+    }
     function openFieldDialog(button, dialog) {
-      if (!operationalVisible || button.disabled || dialog.open) return;
-      mainMenu.open = false;
-      if (mobileWorkspace?.matches === true && workspaceSection!=="map")
+      if(!operationalVisible || button.disabled)return;
+      if(dialog.open){
+        // The same bottom button cycles peek -> full list -> peek.
+        setSheetSize(dialog,dialog.dataset.sheetSize==="peek"?"full":"peek");
+        return;
+      }
+      mainMenu.open=false;
+      if(mobileWorkspace?.matches===true && workspaceSection!=="map")
         selectWorkspaceSection("map");
       closeWorkspaceSheets(dialog);
-      // Non-modal, dock-aware workspace sheet: the actual composer and bottom
-      // navigation remain usable at all times, including while typing.
-      dialog.show();
-      button.setAttribute("aria-expanded", "true");
+      // The map popup can be dismissed without forgetting its selected
+      // entity. Context belongs to admitted current picture data only.
+      hideMapQuickActions();
+      dialog.show();setSheetSize(dialog,"peek");
+      button.setAttribute("aria-expanded","true");
       syncBottomNavSelection();
-      field("#field-view-label").textContent=dialog===itemsDialog?"ITEMS":"PLACES";
+      field("#field-view-label").textContent=dialog===peopleDialog?"PEOPLE":dialog===itemsDialog?"ITEMS":"PLACES";
       dialog.querySelector(".notification-heading button")?.focus({preventScroll:true});
     }
     function closeFieldDialog(button, dialog) {
@@ -2088,6 +2174,12 @@
       navItems.setAttribute("aria-expanded", "false");
       navPlaces.setAttribute("aria-expanded", "false");
       if (peopleDialog.open) peopleDialog.close();
+      mapPeekSelection=undefined;
+      for(const sheet of [peopleDialog,itemsDialog,placesDialog]){
+        const context=sheet.querySelector(".field-sheet-context");
+        context?.replaceChildren();if(context)context.hidden=true;
+        delete sheet.dataset.sheetContent;delete sheet.dataset.sheetSize;
+      }
       contextPanel.hidden=true;contextButton.setAttribute("aria-expanded","false");contextButton.disabled=true;
       peopleButton.setAttribute("aria-expanded", "false");
       for (const id of ["name", "status", "assignment", "location", "order-reason"]) field(`#people-${id}`).textContent = "";
@@ -2123,6 +2215,7 @@
       field("#people-order-reason").textContent = peopleWrite.disabled
         ? "Writing is unavailable while command control or an order attempt is pending. Preserve the exact retry."
         : "Opens your existing draft. Review VIA and send when ready.";
+      refreshSelectedSheetPeek();
     }
     peopleButton.addEventListener("click", () => {
       if (!peopleActive()) return;
@@ -2131,14 +2224,8 @@
       mainMenu.open = false;
       if (mobileWorkspace?.matches===true && workspaceSection!=="map")
         selectWorkspaceSection("map");
-      renderPeople(); returnPeopleFocus = true;
-      closeWorkspaceSheets(peopleDialog);
-      if (!peopleDialog.open) peopleDialog.show();
-      peopleButton.setAttribute("aria-expanded", "true");
-      navPeople.setAttribute("aria-expanded", "true");
-      syncBottomNavSelection();
-      field("#field-view-label").textContent="PEOPLE";
-      field("#close-people").focus({preventScroll:true});
+      renderPeople();returnPeopleFocus=true;
+      openFieldDialog(peopleButton,peopleDialog);
     });
     field("#close-people").addEventListener("click", () => peopleDialog.close());
     for (const [trigger,dialog] of [[navPeople,peopleDialog],[navItems,itemsDialog],[navPlaces,placesDialog]]) {
@@ -2726,6 +2813,48 @@
       list.scrollLeft = scroll;
       scheduleChipAffordance();
     }
+    function renderContactMapBadge(){
+      const svg=operationsMap.querySelector(".synthetic-range svg");
+      if(!svg)return;
+      let badge=svg.querySelector("#map-contact-badge");
+      const contact=picture?.contact;
+      // This marker is an AREA CONTACT label, not a person's GPS point.
+      // Only an admitted contact state tied to an authored area may render.
+      const areaId=contact?.area==="Staging Area"?"staging-area":
+        contact?.area==="Ridge"?"ridge":null;
+      const admitted=contact?.id==="ortega" &&
+        ["present","last-known"].includes(contact.state) && !!areaId;
+      const place=admitted?svg.querySelector('g[data-map-id="'+areaId+'"] circle.range-place'):null;
+      if(!place){badge?.remove();return;}
+      const cx=Number(place.getAttribute("cx")),cy=Number(place.getAttribute("cy"));
+      if(!Number.isFinite(cx)||!Number.isFinite(cy)){badge?.remove();return;}
+      if(!badge){
+        const ns="http://www.w3.org/2000/svg",make=(tag,attrs={})=>{
+          const node=platform.document.createElementNS(ns,tag);
+          for(const [key,value] of Object.entries(attrs))node.setAttribute(key,value);
+          return node;
+        };
+        badge=make("g",{id:"map-contact-badge",class:"range-feature",
+          role:"button",tabindex:"0","data-map-id":"ortega",
+          "aria-pressed":"false"});
+        const outline=make("rect",{x:"-100",y:"-39",width:"200",height:"77",
+          rx:"12",class:"range-contact-backdrop range-place-hit"});
+        const title=make("text",{x:"0",y:"-3","text-anchor":"middle",
+          class:"range-contact-label"});
+        const qualifier=make("text",{x:"0",y:"22","text-anchor":"middle",
+          class:"range-contact-subline"});
+        badge.append(outline,title,qualifier);
+        svg.append(badge);
+      }
+      // Offset is badge *layout*, not a claimed contact coordinate.
+      badge.setAttribute("transform",
+        `translate(${Math.max(106,Math.min(894,cx+88))} ${Math.max(48,Math.min(948,cy+85))})`);
+      const label=contact.state==="present"?"AREA CONTACT":"LAST-KNOWN AREA";
+      badge.querySelector(".range-contact-label").textContent="Ortega";
+      badge.querySelector(".range-contact-subline").textContent=label;
+      badge.setAttribute("aria-label",
+        `Ortega · ${label.toLowerCase()} at ${contact.area}; exact position not reported`);
+    }
     function renderOperations() {
       if (terminal || projection?.control.status !== "active") return;
       if (!operationsMap.firstElementChild) {
@@ -2740,6 +2869,7 @@
       if (!hasReports || reportLayer.hidden) reportLayer.open = false;
       reportLayer.hidden = !hasReports;
       const items = mapItems();
+      renderContactMapBadge();
       const routeReport = routeKnowledge(picture);
       const routeStatus = field("#route-knowledge");
       if (routeStatus.textContent !== routeReport.text) routeStatus.textContent = routeReport.text;
@@ -2830,6 +2960,7 @@
         else positionMapQuickActions();
       }
       scheduleChipAffordance();
+      refreshSelectedSheetPeek();
     }
     function render() {
       field("#commander-name").textContent = terminal ? "" : projection?.commander.displayName ?? "";
@@ -2964,7 +3095,7 @@
         node.removeAttribute("data-order-id"); node.removeAttribute("data-order"); node.removeAttribute("data-outcome");
         node.removeAttribute("title"); node.removeAttribute("aria-label");
       }
-      hideMapQuickActions();localCoordinate=undefined;
+      hideMapQuickActions();localCoordinate=undefined;mapPeekSelection=undefined;
       mapTouches.clear();pinchBase=undefined;panGesture=undefined;
       mapZoom=0;mapCenterX=500;mapCenterY=500;
       historyList.replaceChildren(); reportedMapItems.replaceChildren(); operationsMap.replaceChildren();
@@ -2985,7 +3116,7 @@
       latestOrder = undefined; orderVersions.clear(); observedOrders.clear(); status.dataset.outcome = "";
       pageCursors = [null]; pageIndex = 0; beforeVersion = null; newItems = false; knownNewest = 1;
       knowledge = undefined; knowledgeFloor = 0; picture = undefined; pictureFloor = 0;
-      selectedMapId = "staging-area"; localCoordinate=undefined;
+      selectedMapId = "staging-area"; localCoordinate=undefined;mapPeekSelection=undefined;
       composer.value = ""; fenceObservations(); renderHistory();
     }
     function invalidateControl() {
@@ -3242,8 +3373,11 @@
     }
     function selectMapObject(id, anchor) {
       if (terminal || projection?.control.status !== "active" || !mapItems().has(id)) return;
-      selectedMapId = id; localCoordinate=undefined;renderLocalCoordinateMarker();
-      mapActionStatus.textContent = ""; renderOperations();
+      selectedMapId=id;localCoordinate=undefined;
+      mapPeekSelection={kind:"object",id};
+      renderLocalCoordinateMarker();
+      mapActionStatus.textContent="";renderOperations();
+      refreshSelectedSheetPeek();
       showMapQuickActions(id,anchor);
     }
     operationsMap.addEventListener("click", event => {
