@@ -1,7 +1,7 @@
 # Nomatoka interactive UI-only test — October 26 controls update
 
 This GitHub Pages UI build is derived from canonical game Draft PR #697
-at exact commit c0d00ddc48a284408437fc04b7ee0f37cb0e49a3.
+at exact commit b849b1ee19d15001e915e5ea74b00d91d4dad913.
 The frontend JavaScript and CSS are byte-identical to that game tree.
 This nested static page uses synthetic mock-api.js as its only API layer.
 It blocks Send, Sign out and outside API calls; there is no game database,
@@ -70,3 +70,8 @@ October 27 keyboard/touch review P2: Ortega area-contact badge now renders
 its keyboard focus ring on a separate visible backdrop, preserves a
 finger-sized invisible hit target, and no longer intercepts Staging Area or
 Ridge marker taps. Exact reported contact qualification is unchanged.
+
+October 27 disabled contact P2: use the existing range-feature enabled/
+disabled pointer-event rules for the Ortega badge, with keyboard focus and
+44px touch hit retained on normal phone geometry. A short/zoom-clipped
+disabled badge cannot consume map taps or create a dead region.

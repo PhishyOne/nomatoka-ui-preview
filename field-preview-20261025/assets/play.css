@@ -2883,8 +2883,10 @@ body[data-play-state="authenticated"] .workspace-header .field-top-icon.ico.big 
   pointer-events:none;
 }
 #map-contact-badge .range-place-hit {
+  /* Do not override the native .range-feature[aria-disabled] contract.
+     The base .range-place-hit owns enabled touch events; the base disabled
+     selector owns suppression when a contact is clipped or the map tiny. */
   fill:transparent;stroke:transparent;stroke-width:0;
-  pointer-events:all;
 }
 #map-panel #map-contact-badge:focus-visible .range-contact-backdrop {
   fill:#496038;stroke:#fff2c7;stroke-width:9px;
