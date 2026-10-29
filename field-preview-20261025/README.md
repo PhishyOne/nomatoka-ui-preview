@@ -1,10 +1,8 @@
 # Nomatoka interactive UI-only test — October 26 controls update
 
 This GitHub Pages UI build is derived from canonical game Draft PR #697
-at exact commit 29ae19b1b88b9292c4a4114d0a4e55758b9a129f.
-The frontend JavaScript is byte-identical to that game tree.
-The preview CSS adds one isolated phone tap-highlight fix for Ortega, pending
-sync into the canonical game Draft when its writer lock is available.
+at exact commit 24f0afc8e8c6054fc4394f60142bd1242e6bbe12.
+The frontend JavaScript and CSS are byte-identical to that game tree.
 This nested static page uses synthetic mock-api.js as its only API layer.
 It blocks Send, Sign out and outside API calls; there is no game database,
 real account, multiplayer, or persistent gameplay in this preview.
@@ -157,3 +155,12 @@ October 28 preview-only Android touch polish: remove native cyan/blue
 oversized invisible hit circle. Preserve 44px+ contact hit area, normal
 pointer gestures, authored map, and gold :focus-visible keyboard cues.
 The change does not issue an order, change source truth or call production.
+
+
+October 28 route drawing origin repair: holding Ortega and dragging makes the
+temporary line AND the completed local route leave his VISIBLE compact marker,
+not the separate authored Staging Area place. The marker is an illustrative
+area-qualified label: his exact coordinates remain unreported. The visual
+anchor is never an authoritative movement origin or dispatched as a command.
+Route waypoints still stay local until the player deliberately uses the
+existing Use text control; mock Send and external APIs remain blocked.
