@@ -947,6 +947,21 @@
         && ["Staging Area","Ridge"].includes(c.area)
         ? [c.id,c.state,c.area,c.source].join("|") : null;
     };
+    // The Ortega dot is a positioned SCREEN SYMBOL for an area-level report,
+    // not an observed world position. Local draft lines must visually leave
+    // THAT DOT (what the user actually drags), never the authored Staging
+    // Area point. This SVG anchor is not a movement origin sent to the server.
+    function contactVisualDraftOrigin(node){
+      if(node?.id!=="map-contact-badge" || node.dataset.mapPerson!=="true"
+        ||node.dataset.personId!=="ortega"
+        ||node.getAttribute("aria-disabled")==="true")return null;
+      const rawX=node.dataset.displayX,rawY=node.dataset.displayY;
+      if(!rawX||!rawY)return null;
+      const x=Number(rawX),y=Number(rawY);
+      if(!Number.isFinite(x)||!Number.isFinite(y)
+        ||x<0||x>1000||y<0||y>1000)return null;
+      return {x,y,visualOnly:true};
+    }
     function clearMapHoldTimer(){
       if(mapGestureHoldTimer!==null){
         platform.clearTimeout(mapGestureHoldTimer);
@@ -1386,7 +1401,7 @@
       if(deleteNode)wpLayer.append(deleteNode);
       routeStatus.hidden=false;
       field("#map-route-draft-caption").textContent=
-        `Ortega · ${mapRouteDraft.points.length} waypoint${mapRouteDraft.points.length===1?"":"s"} · Area-origin draft only, not sent`;
+        `Ortega · ${mapRouteDraft.points.length} waypoint${mapRouteDraft.points.length===1?"":"s"} · Marker start only; exact position unknown · Not sent`;
       if(focusDeleteIndex!==undefined){
         wpLayer.querySelector('[data-delete-draft-waypoint="'+focusDeleteIndex+'"]')
           ?.focus({preventScroll:true});
@@ -1430,10 +1445,10 @@
       if(extend && (!mapRouteDraft || mapRouteDraft.source!==source))return;
       if(!extend){
         const badge=operationsMap.querySelector("#map-contact-badge");
-        if(!badge || badge.getAttribute("aria-disabled")==="true")return;
+        const visualOrigin=contactVisualDraftOrigin(badge);
+        if(!visualOrigin)return;
         mapRouteDraft={source,personIds:["ortega"],
-          origin:{x:Number(badge.dataset.originX),y:Number(badge.dataset.originY)},
-          points:[]};
+          origin:visualOrigin,points:[]};
       }
       if(mapRouteDraft.points.length>=MAX_DRAFT_WAYPOINTS)return;
       mapRouteDraft.points.push(p);
@@ -1857,10 +1872,13 @@
               !mapTouches.has(gesture.id)||!routeSourceIdentity())return;
             const start=mapPointFromScreen(gesture.startX,gesture.startY);
             if(!start)return;
+            const visualOrigin=candidate==="route"
+              ?contactVisualDraftOrigin(object):null;
+            if(candidate==="route"&&!visualOrigin)return;
             gesture.mode=candidate;
             gesture.origin=candidate==="route"
-              ? {x:Number(object.dataset.originX),y:Number(object.dataset.originY)}
-              : candidate==="extend"?mapRouteDraft.points.at(-1):start;
+              ?visualOrigin
+              :candidate==="extend"?mapRouteDraft.points.at(-1):start;
             hideMapQuickActions();
             mapPinchSuppressUntil=Date.now()+750;
             if(candidate==="marquee")
@@ -3548,8 +3566,8 @@
       badge.setAttribute("transform",`translate(${mx} ${my})`);
       badge.dataset.displayX=String(mx);
       badge.dataset.displayY=String(my);
-      badge.dataset.originX=String(cx);
-      badge.dataset.originY=String(cy);
+      // Do not advertise Staging Area coordinates as Ortega's actual
+      // position or as the route's origin. The marker is area-qualified.
       badge.dataset.reportArea=contact.area;
       const qualifier=contact.state==="present"?"AREA CONTACT":"LAST-KNOWN AREA";
       badge.querySelector(".range-contact-label").textContent="Ortega";
